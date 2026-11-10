@@ -467,6 +467,45 @@ public sealed partial class OnlineRoomEditModeTests
         motion.serverTime = 0; motion.bombId = 0; Assert.IsFalse(BombermanNetworkManager.ValidWorldBombMotion(motion));
     }
 
+
+    [TestCase(true)] [TestCase(false)]
+    public void A14CarryStopCannotConfirmOrRestartAPendingThrowEvenWithANewerBatchedTick(bool approved)
+    {
+        using var fixture = new WorldBombFixture(true);
+        var motion = fixture.Motion(4, NetworkBombFx.BombMotionKind.Throw);
+        motion.worldMotion = false; motion.inputTick = 10;
+        Assert.IsTrue(fixture.fx.BeginAbilityPrediction(fixture.bomb, motion, Vector2.right, .1f));
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var playbacks = (System.Collections.IDictionary)typeof(NetworkBombFx).GetField("kickPlayback", flags).GetValue(fixture.fx);
+        var pending = playbacks[fixture.bomb];
+        pending.GetType().GetField("elapsed").SetValue(pending, .12f);
+        Vector3 before = fixture.replica.transform.position;
+        var stop = fixture.Motion(3, NetworkBombFx.BombMotionKind.Carry);
+        stop.worldMotion = false; stop.inputTick = 12; stop.moving = false; stop.first = false; stop.duration = 0;
+        fixture.fx.ReceiveKickMotion(stop);
+        Assert.IsTrue(fixture.fx.HasUnconfirmedClientMotion(fixture.bomb), "Carry termination is not Throw approval.");
+        Assert.AreEqual(before, fixture.replica.transform.position);
+        if (approved)
+        {
+            motion.inputTick = 12; motion.serverTime = NetworkBombFx.KickServerNow - .02;
+            fixture.fx.ReceiveKickMotion(motion);
+            Assert.IsFalse(fixture.fx.HasUnconfirmedClientMotion(fixture.bomb));
+            var confirmed = playbacks[fixture.bomb];
+            Assert.GreaterOrEqual((float)confirmed.GetType().GetField("elapsed").GetValue(confirmed), .119f,
+                "The matching Throw keeps the owner's phase instead of restarting after Carry stop.");
+            Assert.AreEqual(4u, fixture.bomb.ClientMotionRevision);
+            fixture.fx.ReceiveKickMotion(stop);
+            Assert.AreEqual(4u, fixture.bomb.ClientMotionRevision, "The old trailer cannot return later.");
+        }
+        else
+        {
+            fixture.fx.ReconcilePredictedKicks(12);
+            Assert.IsFalse(fixture.fx.HasUnconfirmedClientMotion(fixture.bomb));
+            Assert.IsTrue(fixture.bomb.GetComponent<Collider2D>().enabled, "Ignoring Carry stop cannot prevent rejection rollback.");
+            Assert.IsFalse(fixture.fx.AbilityPredictionLocksMovement);
+        }
+    }
+
     sealed class WorldBombFixture : IDisposable
     {
         public const uint ActorId = uint.MaxValue - 240, BombId = uint.MaxValue - 241;

@@ -807,6 +807,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         Assets.Scripts.Netcode.NetworkBombFx presenter = null,
         Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind motionKind = Assets.Scripts.Netcode.NetworkBombFx.BombMotionKind.Punch)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         bool canEarlyPunch = !HasExploded && !isKicked && !isPunched;
 
         bool willPunch = CanBePunched || canEarlyPunch;

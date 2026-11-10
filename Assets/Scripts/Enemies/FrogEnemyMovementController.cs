@@ -425,6 +425,23 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
         }
     }
 
+    private void OnDisable()
+    {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || gameObject.activeInHierarchy) return;
+        // The ground shadow is deliberately outside the actor hierarchy.
+        // Disabling the native actor must not leave that separate view alive.
+        DestroyJumpShadow();
+        ClearJumpArc();
+        if (!isDead) RestoreCollidersAfterJump();
+        state = FrogState.LandingIdle;
+        stateTimer = LandingIdleDuration;
+        if (!isDead)
+        {
+            ShowVisual(idleSprite);
+            SetWaterSubmerged(true);
+        }
+    }
+
     protected override void OnDestroy()
     {
         DestroyJumpShadow();
@@ -504,7 +521,10 @@ public sealed class FrogEnemyMovementController : EnemyMovementController
     private void DestroyJumpShadow()
     {
         if (jumpShadow != null)
+        {
+            jumpShadow.SetActive(false);
             Destroy(jumpShadow);
+        }
 
         jumpShadow = null;
     }

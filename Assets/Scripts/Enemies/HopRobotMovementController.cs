@@ -207,6 +207,7 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
 
     public bool TryBarrelCrushStun(float seconds)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return false;
         if (isDead || !TryGetComponent(out StunReceiver stun) || !stun.TryCrushStun(seconds, squishedPose))
             return false;
 
@@ -289,7 +290,15 @@ public sealed class HopRobotMovementController : JunctionTurningEnemyMovementCon
         base.OnDeathAnimationEnded();
     }
 
-    private void OnDisable() => RestoreMovementVisuals();
+    private void OnDisable()
+    {
+        RestoreMovementVisuals();
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || gameObject.activeInHierarchy) return;
+        StopMotion();
+        phase = HopPhase.Idle;
+        phaseElapsed = 0f;
+        if (!isDead) SetPose(0);
+    }
 
     protected override void OnDestroy()
     {

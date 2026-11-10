@@ -741,3 +741,30 @@ not only the visual objects, and test reuse in real Play Mode. Require each
 client's committed-cell set to equal actual server landings in integration
 captures, plus pause evidence. This does not add lobby permission to join an
 already-running Battle room or establish human-perceived zero latency.
+
+
+Native manual-frame animators must not advance autonomously on observers. Freeze
+the approved playback rate for manual frames and preserve automatic clips. Send
+discrete visibility/pose edges through the same approved stream and include the
+rest vertex when an edge starts moving. Anchor eligibility uses the last actual
+send, not the last capture: an unchanged capture can refresh a timestamp without
+reaching the client. Regression-test that unsent capture explicitly.
+
+Runtime shader/property-block effects need a validated approved recipe, not an
+unknown runtime material catalog id. Restore regular material/properties when the
+effect ends, and bump the protocol when extending a wire frame. Native death
+shadows may intentionally outlive death start; compare their lifetime with the
+authority instead of hiding them early. Use actual-renderer references for curves;
+ideal unobstructed formulas do not model native collision/grid corrections.
+
+Keep real `-online-join` clients out of a synthetic `-load-test-client` bootstrap.
+Confirm no hidden load generator runs before accepting smoke/performance data.
+When optional fixture setup lengthens a benchmark interval, fix a shared steady
+window before reading cost results and preserve the raw setup and full logs.
+
+Automatic animation phase alone does not reproduce quantized native frame
+boundaries exactly. The R03 experiment that omitted automatic sprite edges
+produced wrong Snow/Koro frames despite correct position. Keep approved sprite
+edges for automatic clips too; their local phase remains useful between samples.
+Use cached Shader references instead of shader.name in per-frame detection to
+avoid managed string churn without changing the transmitted state sequence.

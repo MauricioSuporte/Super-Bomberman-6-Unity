@@ -410,5 +410,94 @@ public sealed partial class OnlineRoomEditModeTests
         }
         finally { Object.DestroyImmediate(root); }
     }
+    [TestCase(16)] [TestCase(32)] [TestCase(64)] [TestCase(128)]
+    public void A14BatchedPressConfirmsFirstTickAcrossPhysicsStepsButNextFrameAcceptsNewPress(int bit)
+    {
+        var root = new GameObject("A14 batched input");
+        root.AddComponent<BoxCollider2D>();
+        var input = root.AddComponent<NetworkPlayerInput>();
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var record = typeof(NetworkPlayerInput).GetMethod("RecordServerActionEdges", flags);
+        uint Tick() => bit == 16 ? input.CurrentActionATick : bit == 32 ? input.CurrentActionBTick :
+            bit == 64 ? input.CurrentActionCTick : input.CurrentSelectTick;
+        void Press(uint tick, int frame, uint merged = 0)
+        {
+            var queued = new NetworkPlayerInput.QueuedInput { frame = new NetworkInputFrame { tick = tick, pressed = bit } };
+            queued.SetEdgeTick(bit, merged);
+            record.Invoke(input, new object[] { queued, frame });
+        }
+        try
+        {
+            Press(20, 100, 19); Press(21, 100); // overflow carrier followed by another real press
+            Assert.AreEqual(19u, Tick(), "One gameplay GetDown must confirm the first owner's prediction, not the last.");
+            record.Invoke(input, new object[] { default(NetworkPlayerInput.QueuedInput), 100 });
+            Press(22, 100); // another FixedUpdate before the same gameplay Update
+            Assert.AreEqual(19u, Tick());
+            Assert.AreEqual(bit, typeof(NetworkPlayerInput).GetField("serverFrameActionEdges", flags).GetValue(input));
+            record.Invoke(input, new object[] { default(NetworkPlayerInput.QueuedInput), 101 });
+            Assert.AreEqual(0, typeof(NetworkPlayerInput).GetField("serverFrameActionEdges", flags).GetValue(input), "No replay of the old A.");
+            Press(23, 101); Assert.AreEqual(23u, Tick(), "A later real press still works.");
+            Press(0, 102); Press(1, 102); Assert.AreEqual(0u, Tick(), "Tick rollover must not relabel the first press.");
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [TestCase(false, true)] [TestCase(true, true)] [TestCase(false, false)]
+    public void A14GloveFinishingDuringPauseRestoresItsBaselineWithoutRemovingOtherGlobalLocks(bool baseline, bool paused)
+    {
+        var root = new GameObject("A14 glove pause"); root.tag = "Player";
+        root.AddComponent<BoxCollider2D>();
+        var movement = root.AddComponent<MovementController>();
+        var glove = root.AddComponent<PowerGloveAbility>();
+        var instance = BindingFlags.Instance | BindingFlags.NonPublic;
+        var pause = typeof(GamePauseController).GetField("<IsPaused>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        bool oldPause = GamePauseController.IsPaused;
+        try
+        {
+            typeof(PowerGloveAbility).GetField("movement", instance).SetValue(glove, movement);
+            typeof(PowerGloveAbility).GetField("movementLockCaptured", instance).SetValue(glove, true);
+            typeof(PowerGloveAbility).GetField("prevMovementLocked", instance).SetValue(glove, baseline);
+            movement.SetInputLocked(true, false); pause.SetValue(null, paused);
+            typeof(PowerGloveAbility).GetMethod("RestoreMovementLockToBaseline", instance).Invoke(glove, new object[] { true, "A14 release end" });
+            Assert.AreEqual(paused ? baseline : true, movement.InputLocked,
+                "Pause must not become a permanent actor lock; an external global lock must stay locked.");
+            Assert.AreEqual(paused, GamePauseController.IsPaused, "Restoring the actor cannot resume global gameplay.");
+            if (paused) Assert.IsTrue((bool)typeof(NetworkPlayerInput).GetProperty("Blocked", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null),
+                "NetworkPlayerInput's global pause gate still prevents simulation and prediction.");
+        }
+        finally { pause.SetValue(null, oldPause); Object.DestroyImmediate(root); }
+    }
+
+    [Test]
+    public void A14InputSilenceKeepsGloveHoldWithoutAnEdgeButStopsWalkingAndAutoPunch()
+    {
+        var root = new GameObject("A14 release-sensitive input"); root.AddComponent<BoxCollider2D>();
+        var network = root.AddComponent<NetworkPlayerInput>();
+        var input = PlayerInputManager.Instance;
+        var owned = input == null ? new GameObject("A14 synthetic controls") : null;
+        if (owned != null) input = owned.AddComponent<PlayerInputManager>();
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var apply = typeof(NetworkPlayerInput).GetMethod("ApplyServerControls", flags);
+        try
+        {
+            // EditMode does not run the component Awake cache initialization.
+            typeof(NetworkPlayerInput).GetField("setup", flags).SetValue(network, root.GetComponent<NetworkPlayerSetup>());
+            typeof(NetworkPlayerInput).GetField("movement", flags).SetValue(network, root.GetComponent<MovementController>());
+            input.ClearSyntheticPlayer(1);
+            var taps = (int[,])typeof(PlayerInputManager).GetField("syntheticTapFrame", flags).GetValue(input);
+            for (int i = 0; i < taps.GetLength(1); i++) taps[1, i] = -1;
+            int held = NetworkPlayerInput.RetainReleaseSensitiveActions(16 | 64 | 8);
+            apply.Invoke(network, new object[] { input, held, 0 });
+            Assert.IsTrue(input.Get(1, PlayerAction.ActionA), "A packet gap is not a glove release.");
+            Assert.IsFalse(input.GetDown(1, PlayerAction.ActionA), "Retaining A must not pick up a new bomb.");
+            Assert.IsFalse(input.Get(1, PlayerAction.ActionC)); Assert.IsFalse(input.Get(1, PlayerAction.MoveRight));
+            // A fresh neutral command, unlike silence, really releases the button.
+            apply.Invoke(network, new object[] { input, 0, 0 });
+            Assert.IsFalse(input.Get(1, PlayerAction.ActionA)); Assert.IsFalse(input.GetDown(1, PlayerAction.ActionA));
+            Assert.AreEqual(0, NetworkPlayerInput.RetainReleaseSensitiveActions(64 | 8));
+        }
+        finally { input.ClearSyntheticPlayer(1); Object.DestroyImmediate(root); if (owned != null) Object.DestroyImmediate(owned); }
+    }
+
 }
 #endif

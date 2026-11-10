@@ -24,6 +24,7 @@ Rules (pre-registered in Docs/multiplayer/progresso-predicao-online.md before an
 """
 import argparse
 import json
+import math
 import statistics
 import sys
 from collections import Counter
@@ -347,7 +348,17 @@ def server_metric_windows(folder, start, end, scene):
     return rows
 
 
-def cost_run(folder):
+def steady_cost_window(markers, seconds):
+    """Select a fixed steady tail, excluding optional fixture setup before it."""
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise ValueError("steady duration must be finite and positive")
+    start = markers["pause"] - seconds * 1000
+    if start < markers["start"]:
+        raise ValueError("fixture window is shorter than the requested steady duration")
+    return dict(markers, fixtureStart=markers["start"], start=start, steadySeconds=seconds)
+
+
+def cost_run(folder, steady_seconds=None):
     folder = Path(folder)
     config = json.loads((folder / "config.json").read_text(encoding="utf-8"))
     problems, metrics = [], {}
@@ -356,6 +367,11 @@ def cost_run(folder):
     markers = fixture_markers(folder)
     if "start" not in markers or "pause" not in markers:
         problems.append("fixture window markers missing")
+    elif steady_seconds is not None:
+        try:
+            markers = steady_cost_window(markers, steady_seconds)
+        except ValueError as error:
+            problems.append(str(error))
     reported = {}
     for name in PROCESSES:
         log = folder / (name + ".log")
@@ -479,6 +495,8 @@ def main():
     cost.add_argument("--group", action="append", nargs="+", required=True, metavar=("NAME", "FOLDER"),
                       help="NAME followed by capture-off run folders; the first group is the reference")
     cost.add_argument("--output", type=Path, required=True)
+    cost.add_argument("--steady-seconds", type=float,
+                      help="Measure only this fixed tail before the first pause; excludes optional fixture setup")
     spikes = sub.add_parser("spikes")
     spikes.add_argument("folders", nargs="+", type=Path)
     spikes.add_argument("--output", type=Path, required=True)
@@ -500,10 +518,11 @@ def main():
                   "validRuns": {name: sum(not r["problems"] for r in rs) for name, rs in runs.items()},
                   "comparisons": {f"{other}-vs-{names[0]}": compare_tables(tables[names[0]], tables[other]) for other in names[1:]}}
     else:
-        runs = {name: [cost_run(f) for f in folders] for name, folders in groups.items()}
+        runs = {name: [cost_run(f, args.steady_seconds) for f in folders] for name, folders in groups.items()}
         summaries = {name: summary(r) for name, r in runs.items()}
         names = list(groups)
         report = {"rules": __doc__.split("Rules", 1)[1].strip(), "runs": runs, "summary": summaries,
+                  "steadySeconds": args.steady_seconds,
                   "validRuns": {name: sum(not r["problems"] for r in rs) for name, rs in runs.items()},
                   "differences": {f"{other}-minus-{names[0]}": difference(summaries[names[0]], summaries[other]) for other in names[1:]}}
         budget = 1000.0 / 60

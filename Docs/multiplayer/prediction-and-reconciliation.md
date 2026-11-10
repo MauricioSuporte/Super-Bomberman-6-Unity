@@ -1847,3 +1847,35 @@ by existing room policy, independently of snapshot recovery.
 - **Localhost spikes.** Spikes are classified by each process's logged `frameMs` within ±2 s. Most are server stalls: Mirror answers
   pings on the main thread, so the RTT rises with the stall and is not evidence of the network. The rest are reported as
   Mirror-observed delay with the origin not isolated.
+
+## R03 — native enemy presentation (10/11/2026, protocol 68)
+
+- Frog/SnowMan can select animation frames manually. `CaptureCoopPlayback` freezes their approved playback speed at zero; ordinary automatic clips still advance. Publish approved visibility/pose edges through the existing late co-op stream, without running enemy AI, navigation, contact, RNG or damage on observers.
+- A discrete pose edge may also begin movement after rest. Use the same `TryCoopRestAnchor` path as periodic full states. **Last captured time is not last sent time**: an unchanged capture updates `coopLastSprites` but sends nothing. Anchor eligibility must use the last actual send; otherwise AttachedVisual starts interpolating before the native movement. The regression reproduces a previous capture at the anchor time that was never sent.
+- Runtime water materials are not catalog material identities. `CoopWaterSurface` carries the four approved MaterialPropertyBlock values and the observer uses the existing water template, validates the recipe and restores the regular material/properties when suppression changes. This extends the wire to68; client/server must match.
+- Frog/Hop disable cleanup hides separately parented shadows. Component-only freezes/stun must not be mistaken for disabling the whole GameObject. When cleanup resets a native phase, restore its corresponding pose too. Preserve native death shadows: Snow/Koro can show them during the death animation.
+- Development-only `-r03-enemy-probe` records actual source renderers each frame and observers at20Hz. `-r03-native-curves` provides offline/server phase references; the offline fixture requires `SB6_SAVE_DIRECTORY` isolation. `-r03-enemy-interruptions` exercises native barrel stun, GameObject disable and death of each priority family. These probes do not add release simulation.
+- Real clients also pass `-load-test-client`; exclude `-online-join` from the raw synthetic-client bootstrap. Otherwise a second client generator can connect to its default18777 port, contaminate performance and stall the fixture.
+- `Tools/Diagnostics/r03_enemy_report.py` compares actual renderers at presentation/state time, approved water, sprite and paused pose; retains gaps, transitions, unknown sprites and held samples as distinct coverage. Reject capped/dropped captures. A source/observer shadow lifetime comparison uses the native source's last visible shadow, not death start: hiding every shadow at death start would change offline presentation.
+- Native ideal-curve probes do not model collisions that snap position/change target. Compare actual approved server renderers for visual acceptance; do not change native collision behavior to make a formula fit. Independent offline runs are not identical RNG replays.
+- For R03 cost, `r02_coop_report.py cost --steady-seconds 30` uses the last30s before pause1, after optional room/ability setup. Default R02 behavior remains unchanged. Report complete process CPU/traffic separately from per-family instrumentation (which excludes some envelopes, definitions, fanout and overhead). Final numerical evidence/status lives in the checkpoint and matrix.
+
+Automatic animation phase alone does not reproduce quantized native frame
+boundaries exactly. The R03 experiment that omitted automatic sprite edges
+produced wrong Snow/Koro frames despite correct position. Keep approved sprite
+edges for automatic clips too; their local phase remains useful between samples.
+Use cached Shader references instead of shader.name in per-frame detection to
+avoid managed string churn without changing the transmitted state sequence.
+
+
+### Cache de material por vista (R03)
+
+Não limpar MaterialPropertyBlock nem reatribuir material a cada frame. Manter estado de água/id comum aplicado e invalidar nas transições para blackout, troca de material, remoção e limpeza de cena. O teste percorre água→normal→material conhecido→padrão→água. A candidata final manteve equivalência visual e eliminou o aumento mensurável de work/frame dos clientes observado antes do cache; custo total de bytes/alocação adicional continua documentado, sem promessa de custo zero.
+
+### A14: bordas, hold e frame de criação
+
+Gameplay consome um GetDown por render frame: manter o primeiro tick por botão ao agregar pacotes e vários passos físicos. Não fabricar soltura de A por silêncio; expirar direção/auto-C e manter só o hold release-sensitive até um input real, com pause/reset/teardown adequados. Pausa global não é proprietária de InputLocked: ao terminar gesto nessa borda, restaurar baseline sem criar lock persistente e conservar gates de intro/ending.
+
+Uma predição criada em Update/FixedUpdate não pode consumir no primeiro LateUpdate o delta anterior ao input; inicializar avanço limitado, marcar frame e usar timeout com rollback para estados não confirmados. Testar delta pré-input1,2s e timeout em frame realmente posterior. Stop do Carry anterior ao Throw não confirma o novo pedido, mesmo com inputTick mais novo por agrupamento; aguardar tipo correspondente ou rejeição. Não aplicar esse filtro a cancelamentos autoritativos worldMotion.
+
+Receita de validação A14: Tools/Diagnostics/analyze_bomb_abilities.py <pasta-do-smoke> --output <json>; exigir begin+confirm de cada tipo no dono e apply+samples no observador. Asserções de servidor e flags de componente sem runtime stats replicados não provam predição. Geometria nativa/testes não equivalem a captura temporal offline independente ou aceite humano.

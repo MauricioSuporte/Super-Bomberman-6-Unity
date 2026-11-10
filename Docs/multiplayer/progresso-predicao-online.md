@@ -255,7 +255,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] A11: implementado/testado56: arcos X/Y por assento/HeadOnly e origem pré-snap; contato conhecido e Select previstos, confirmação/rollback e fila visual. Unity928/928; dois peers com3Mount+4Dismount previstos/confirmados porowner, ovos intactos. Capturas URP inspecionadas; comparação perceptual humana permanece no QA global.
 - [x] A12: concluído. Motor/replay, carga/mira, recoil/muzzle, release tick, retorno confirmado e handoff testados; integração55 com2clientes, C e3cargas/releases porowner,6confirmações. Usuário confirmou validação com2clientes reais e conclusão em29/10/2026.
 - [x] A13: velocidade/BombPass/DestructiblePass confirmados no replay; manual pendente.
-- [ ] A14: parcial46: descoberta/fixtures COM e regressões ampliadas,423 testes combinados aprovados; matriz completa/manual pendentes.
+- [x] A14: concluído e aprovado pelo usuário em10/11/2026 nos cenários testados do pacote SB6-QA-A14. Protocolo68 local; coreUnity1078/1078, dois owners/observadores normal e stall, Search/Magnet e transferência validados. Tick agrupado, hold A, pausa da luva, primeiro frame e Carry→Throw corrigidos. Evidências/limitações mantidas; publicação pendente.
 - [x] C01: fase/curva/velocidade no tick e replay, testes; manual pendente.
 - [x] C02: protocolo57: curvas nativas compartilhadas de mola/Battle4/canhão/geyser, pausa longa/sem recuo, lift/sombras, cancelamento e handoff ao motor/bounce.971/971Unity;3cenários com2clientes reais e câmeraURP,0erros/avisos. Aceite humano de sensação/offline segue na matriz geral; publicação57 concluída com sucesso no Actions40964582861.
 - [x] C03: protocolo 59: curva nativa e pixel grid compartilhados, prefixo aprovado sem extrapolar obstáculos, início/fim confiáveis, relógio e poses alinhados, pausa/timeout/cancelamento e retorno ao motor. Full3 995/995; Peers3 com 2 clientes reais renderizados apresentou endpoints de 750/20/240 ms em ambos, sem erros/avisos. Validação perceptual manual segue no QA global.
@@ -267,8 +267,8 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] C09: protocolo64: caldeira com transporte WorldBombMotion e cancelamento; tiles com frames aprovados/clock headless sem RNG; prefab/Startup seguro; câmera aprovada em transições; foguete com pausa; dinamite Battle com Fx confirmados. Full2 1037/1037; Full3 1037/1038 corrigido e Final2 5/5. Cinco cenários com2clientes renderizados (Peers5/6/7), 0erros/avisos servidor e imagens inspecionadas. QA perceptual/offline segue global; publicação64 concluída no Actions42152138685.
 - [x] C10: protocolo65: timeline aprovada de SuddenDeath com pausa, snapshots tardios, curva/sombra e commit explícito de terreno/colisão; cancelamento nativo e reuso offline. FallingBomb com alvo/blink aprovados; teto/powder auditados. Full1041/1041 + Final4/4; quatro cenários com2clientes renderizados e repetição finalSD,0erros/avisos servidor.104células servidor=104porcliente; QA perceptual/manual segue global. Publicação65 concluída no Actions42204673208.
 - [x] R01: concluído e publicado em homologação (07/11/2026; protocolo 65 inalterado; runtime `b01817c73`, Actions 42403939455). Implementação, validação automatizada (EditMode 1046/1046; smokes com 2 clientes renderizados, 0 passos para trás reais, 0 lacunas, 0 poses duplas) e aceite manual (aprovado pelo usuário nos cenários testados) concluídos. **Pendências obrigatórias do R01:** (1) custo CPU/bytes do player remoto (baseline comparável); (2) comparação online × offline com `analyze_prediction.py` (Logs/R01-comparacao.json). **Atualização 07/11:** (2) demonstrada; (1) medida, revelou custo de diagnósticos (+56 KiB/s de alocação no servidor) e +5–6% de ciclos no observador; a correção Development-only ainda precisa de compilação/EditMode e da medição sem captura. **Atualização 07/11 (tarde):** EditMode 1046/1046; sem captura não há diferença resolvida (Δ frame ≤ 0,05 ms); R01 concluído nos critérios obrigatórios. **Publicação 07/11:** servidor, cliente e atualizador conferidos em `b01817c73`/65. Limitações: borderline de amostragem em locomotion, cenários parados, morte inferida, poucas repetições só na CPU nova, teardown antigo não reproduzido (não corrigido).
-- [ ] R02: PARCIAL, publicado em homologação (08/11; protocolo 67; runtime `b2d90fb7b`, Actions 42473009178; validado no binário r02c `020208c8…`). Parte 1: amostras de posição por frame + âncoras de repouso; forma das famílias de gameplay corrigida (p95 0,1 px). Parte 2: reposicionamento explícito no wrap; reconexão 3/3; teto de 60 Hz (`frame`); fome real separada. Parte 3: resíduo das sobreposições isolado (captura do servidor antes do LateUpdate da areia/câmera) e corrigido com captura após todos os LateUpdate; reprodução controlada com travadas de 120 ms: fase antiga 10,5 px, r02c 1,06–1,16 px (p95 0,8) em 6/6 execuções. Campo removido sem redução de alocação demonstrada (alocador em blocos de 4 KiB: ≈ 0 no servidor); custo total r02c − baseline +25/+23/+22 KiB/s, sem regressão contra r02b. Picos de localhost: 41/48 janelas são travadas do servidor; o restante é atraso observado pelo Mirror ou travada de cliente. EditMode 1055/1055. Aceite perceptual humano pendente mesmo após a publicação (`C:\Users\mauri\SB6-QA-R02`).
-- [ ] R03: parcial55 local: perfil de corte/pausa ampliado para todas EnemyMovementController, guardas nativas auditadas com regressões parametrizadas; suíte878. Curvas/capturas por família e manual pendentes.
+- [x] R02: aprovado pelo usuário em 09/11/2026, publicado em homologação (08/11; protocolo 67; runtime `b2d90fb7b`, Actions 42473009178; validado no binário r02c `020208c8…`). Parte 1: amostras de posição por frame + âncoras de repouso; forma das famílias de gameplay corrigida (p95 0,1 px). Parte 2: reposicionamento explícito no wrap; reconexão 3/3; teto de 60 Hz (`frame`); fome real separada. Parte 3: resíduo das sobreposições isolado (captura do servidor antes do LateUpdate da areia/câmera) e corrigido com captura após todos os LateUpdate; reprodução controlada com travadas de 120 ms: fase antiga 10,5 px, r02c 1,06–1,16 px (p95 0,8) em 6/6 execuções. Campo removido sem redução de alocação demonstrada (alocador em blocos de 4 KiB: ≈ 0 no servidor); custo total r02c − baseline +25/+23/+22 KiB/s, sem regressão contra r02b. Picos de localhost: 41/48 janelas são travadas do servidor; o restante é atraso observado pelo Mirror ou travada de cliente. EditMode 1055/1055. Aceite perceptual aprovado pelo usuário em 09/11/2026 nos cenários testados; custos e limitações anteriores preservados.
+- [x] R03: concluído e aprovado visualmente pelo usuário em 10/11/2026 nos cenários do pacote SB6-QA-R03. Protocolo68 local; Unity1068/1068, dois clientes reais, comparação offline, interrupções e três pares CPU/bytes concluídos. Evidências e limitações preservadas no checkpoint. Publicação pendente.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
 - [ ] R05: parcial47 publicado: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
 - [ ] R06: parcial50 validado: gates de SunMask/ClownMask/FreezerVenus/Mecha, Heart/Star e colisão global testados;19 focados R06/R08 passaram. Intro/telegraph/curvas/áudio/demais bosses e manual pendentes.
@@ -5557,3 +5557,250 @@ Publicado em homologação com a autorização do usuário. **O R02 continua PAR
 - redução de alocação do campo removido não demonstrada (≈ 0 pelo alocador);
 - custo total contra a baseline medido (+25/+23/+22 KiB/s);
 - poucos picos registrados como atraso observado pelo Mirror, com origem não isolada.
+
+## R02 aprovado e abertura do R03 — 09/11/2026
+
+O usuário solicitou explicitamente marcar R02 como aprovado e iniciar o próximo item. R02 concluído com aceite humano nos cenários testados, preservando custos, cobertura e limitações das rodadas anteriores. A publicação existente permanece b2d90fb7b/protocolo 67; esta atualização documental não inicia novo deploy.
+
+R03 autorizado para continuidade pelo Claude Code, responsável pela implementação conforme a divisão de trabalho vigente. Auditoria inicial de escopo: caminhada, saltos e avanços aprovados de EnemyMovementController e especializações, priorizando FrogEnemyMovementController, HopRobotMovementController, SnowManMovementController e KorobokkuruMovementController; reaproveitar OnlineCoopSprites/OnlineCoopWorld e as melhorias publicadas do R02. IA, alvo, pathfinding, RNG, contato, dano e morte continuam autoritativos.
+
+Próxima ação concreta: Claude extrair critérios R03 do plano/matriz, mapear por família a trajetória nativa e a apresentação existente e preparar reprodução dirigida. Validar forma/continuidade/pose, pausa, interrupção, snapshots tardios e cleanup, com comparação offline/online e custo aplicáveis aos critérios. Executar compilação, testes e dois clientes reais no código final, sem parar em scripts não executados. Nenhuma implementação C# ou validação R03 foi realizada nesta atualização; R03 permanece parcial. Sem autorização nova de publicação ou avanço para R05 nesta etapa.
+
+
+## R03 — implementação Codex e critérios prévios (09/11/2026)
+
+Usuário transferiu explicitamente a execução integral do R03 ao Codex. Sem publicação/commit/push nesta etapa. Baseline atual 392dd3326/protocolo67; verificar alterações anteriores de documentação e preservar. Runner livre inicialmente e ~6,9 GiB RAM livre; baseline Unity iniciada em Logs/R03-baseline.
+
+Famílias prioritárias confirmadas por GUID de prefab/cena: Frog Stage_3-1; Hop Robot Stage_3-4; SnowMan e Korobokkuru Stage_3-5. Native Start/Fixed/AI/RNG permanecem exclusivamente na autoridade. Reusar stream R02.
+
+Critérios antes das novas capturas: (1) frame manual aprovado não avança autonomamente no cliente, mas animações automáticas continuam; (2) corpo, sombras e efeitos usam o mesmo clock, sem congelamento fora de pausa; (3) curva comparada com referência nativa por família: p95 <=1px e máximo <=2px onde a referência densa cobre o intervalo, sem adivinhar movimento em gaps/cortes; (4) pausas em salto mantêm posição/pose e retomam; stun/morte/disable/cena não ressuscitam estado; (5) snapshots atrasados/duplicados, corte de wrap e histórico limitado testados; (6) servidor e 2 clientes reais, incluindo imagens gráficas; (7) custo/bytes medidos contra baseline com mesma instrumentação e sem captura para custo total; (8) compilação C#/Unity, suite pertinente e Python aprovados no código final, UTF-8 e warnings revisados. Resultados sem movimento/referência são inconclusivos, não aprovação.
+
+Hipótese confirmada por leitura: CapturePlayback não inclui manualAnimationUpdate; PresentCoopAnimation avança a partir do frame manual da autoridade. Preparar regressão direta antes da correção. Avaliar publicação das transições aprovadas de visibilidade/frame manual sem esperar 20Hz; não antecipar IA nem lançar uma curva desconhecida. QA humano não será inventado; deixar roteiro/pacote se necessário.
+
+### R03 — baseline e orçamento antes das medições finais
+
+Baseline 392dd3326: EditMode 1062/1063; única falha em OnlineChatEditModeTests.RoomChatUsesAuthenticatedNameAndOwnsKeyboardAcrossSceneChanges, anterior ao R03. Core gameplay sem falha; não atribuir ao R03 nem esconder. Build baseline concluída. Três smokes gráficos de entrada de fase: 3-1/3-4 sem erros; 3-5 falhou por floco procedural não legível em CoopSpriteId. Causa identificada em Stage35SnowfallEffect.Apply(false,true); correção mínima mantém a textura legível e ganha regressão.
+
+As famílias prioritárias estavam inativas nas salas não visitadas; essas três capturas não comprovam saltos. Baseline-fixture inclui o mesmo harness/probes, sem as correções de produção R03, e percorre as transições nativas. Smokes baseline-fixture 3-1 e 3-4 concluídos sem erros/avisos; preservados em Logs/R03-peers-baseline-fixture.
+
+Orçamento adicional pré-comparação final: avaliar CPU real de captura/publicação por frame e bytes de frames/motion por família; se incremento >0,25 ms/frame de CPU de apresentação/transporte ou >10 KiB/s/cliente por família, investigar/otimizar antes de aceitar. Custo total sem captura será relatado separadamente, com repetições comparáveis; ranges sobrepostos não provam custo zero. Custos de descoberta, diagnóstico, fanout e GPU devem ser discriminados onde não isoláveis. Capturas iniciais não foram usadas para escolher tolerâncias de erro nem descartar falhas.
+
+Sincronização temporária aplicada no runner por Logs/R03-runner-sync.ps1, backup Logs/R03-runner-sync/backup-20261109-194652. Estado ativo em state.json; restaurar após processos terminarem. Suíte final/build em execução no runner; fontes originais do usuário preservadas.
+
+### R03 — segunda rodada e correção da água (09/11/2026)
+
+Build `final-render` compilada, testes focados 9/9; três smokes gráficos reais concluídos (3-1, 3-4, 3-5), sem erros de execução. Referências offline nas três cenas concluídas. C# com zero erros/avisos. Python Tools/Ci 153/153 antes da nova regressão de água (agora 12 testes específicos). Suíte core anterior 1060/1060. Isso não encerra o item: medições finais precisam usar a correção de água.
+
+A referência de renderer do servidor a 20Hz deixou candidatos isolados não resolvidos: Frog um frame divergente e Hop quatro amostras acima de 2px. Referência nativa agora por frame, cliente continua 20Hz. Não descartar candidatos nem elevar tolerâncias: a nova captura distingue subamostragem de defeito. Holds por falta de continuação aprovada são separados do erro no instante aprovado; máximos antigos incluem períodos imóveis e pausa. Não alegar ausência de travamentos por isso.
+
+Lacuna confirmada: Frog usa PlayerWaterSubmersionEffect com material runtime e MaterialPropertyBlock; CoopSpriteFrame não transportava esses parâmetros. Adicionada receita de água aprovada (linha d’água, altura, linha e premultiplicação), com validação e restauração do material padrão. Nenhuma consulta de terreno ou IA roda no observador. Mudança de wire exige protocolo **68**; servidor publicado continua 67. Teste de round-trip inclui parâmetros inválidos. Build final-water/suíte core e medições sequenciais em execução; cadeia anterior interrompida antes de custo para não medir versão superada.
+
+Offline: quatro famílias registradas. Desvio da fórmula ideal sem colisão em Hop/Koro não comprova defeito online: colisões nativas ajustam grid/target/direção durante o arco. Comparação real usa renderer aprovado do servidor por instante, não impõe seno ideal a colisão. Guardar essas limitações e os gaps explicitamente.
+
+### R03 — retomada Codex em 10/11/2026
+
+Conferido em disco: final-water passou 1064/1064 core EditMode e gerou a build; smokes gráficos 3-1/3-4/3-5 e referências offline nas três cenas concluíram. Tools/Ci 154/154 e RoomDirectory 16/16. Frog: zero divergência de sprite/água/pausa nos dois observadores, máximo de posição abaixo de 1px nos trechos verificáveis. Hop: zero divergência de sprite/água/pausa, mas até 4,36px em visuais AttachedVisual durante instantes de repouso. Portanto R03 continua parcial.
+
+Causa identificada: o publicador novo de arestas de pose não usava TryCoopRestAnchor, que já existia na publicação periódica. Ao trocar sprite e iniciar movimento no mesmo frame, omitia o vértice de repouso; a interpolação podia começar cedo. Correção reaproveita o helper existente e adiciona regressão do caminho real de publicação. Sem elevar tolerâncias ou alterar IA/curva offline.
+
+Lote rest-edge: core Unity/build em execução; sequência automatizada aguarda identidade da build para smokes normais, offline, smokes adicionais `-r03-enemy-interruptions` (barrel Hop, desativação real e morte de todas as quatro famílias), reconstrução da baseline comparável e três pares de custo. A captura de custo final-water foi interrompida no primeiro caso e revelou clientes sintéticos espúrios na baseline antiga; inválida. Nova baseline-guard mantém a produção pré-R03 e usa o mesmo harness com a guarda de clientes reais. Originais do runner continuam em backup reversível; não publicar nem avançar R05.
+
+#### R03 — âncora capturada mas não enviada
+
+Lote rest-edge compilou e passou 1065/1065; smokes gráficos concluíram, porém Hop ainda teve quatro candidatos no observador1 (até 5,76px). Investigação por linhas reais mostra a autoridade parada de 26,3209 a 26,4376 e o client interpolando cedo para a posição de 26,4543. O helper recusava a âncora porque previous.time tinha sido atualizado por uma captura periódica inalterada, nunca enviada. Removida essa dependência: vértice finito/anterior ao frame e horário do último envio são os critérios. A regressão agora usa precisamente previous.time==âncora e último envio mais antigo. Nenhum resultado anterior foi promovido a aprovação.
+
+Lote rest-capture em execução: inclui a correção e restaura pose idle/água do Frog e pose idle do Hop após desativação, em coerência com a fase reiniciada pela limpeza. Analisador agora valida integridade da captura e conta água ativa separadamente; 15 testes específicos aprovados. Rest-edge interrompido antes das medições restantes por estar superado. Runner segue sincronizado temporariamente, com backup original preservado.
+
+#### R03 — rest-capture: geometria confirmada em dois observadores
+
+Build Development `C:/Users/mauri/SB6-R03/rest-capture`, Assembly-CSharp SHA256 `6578928d44125064fe7b6d76cbc5aad9d3e47b9571de0a6c3442cb3fc446dd81`, protocolo68. Core Unity 1065/1065. Três smokes gráficos completos, sem erros/avisos do servidor. Reports `Logs/R03-{frog,hop,snow}-rest-capture.json`: todas capturas íntegras; zero sprite divergente, zero movimento em pausa, zero erro de água e zero amostras acima de2px. Frog máximo0,342px e água ativa comparada em231/225 amostras dos observadores; Hop/SnowMan/Korobokkuru máximo<0,000031px nos trechos verificáveis. Gaps/transições/retencões continuam contados separadamente; não implicam perfeição em WAN.
+
+Inspeção visual inicial Codex: PNGs do Hop em ambiente normal, blackout, olhos, visual anexado e pausa, sem corrupção visível. Isso não é aceite humano nem avaliação completa de GPU/latência Internet. Referências offline rest-capture em execução, depois interrupções por família, baseline-guard e três pares de custo. **R03 continua parcial até terminar esses critérios.**
+
+#### R03 — definição da janela de custo (antes de examinar números de CPU/tráfego)
+
+O harness R03 faz transição de sala/salto/stun antes da espera nativa de30s. O intervalo started→pause1 ficou maior que30s e inclui preparação. Para comparar custo de regime sem essa preparação, usar **os últimos30s imediatamente anteriores ao primeiro pause1**, em todos os três pares baseline-guard/rest-capture. Não selecionar janelas por valores observados. Nova opção `r02_coop_report.py cost --steady-seconds 30`, mantendo comportamento padrão R02 intacto, com regressões de duração inválida/insuficiente. Duração do processo cost100s (mesma para ambos) continua cobrindo toda a janela; logs e intervalos completos são preservados. Custos de transição não são representados por essa janela de regime.
+
+Baseline-guard compilada: assembly `a709a71ae0fcc806740f1a4c7f441fb6b3b496e3aa423729c3e6f2115c5de95a`, produção pré-R03 + mesmo harness/guarda de clientes reais. Primeiro caso baseline saiu0, ainda sem análise dos números. Interrupções: todos três smokes gráficos saíram0; morte visível em ambos observadores para quatro famílias; nenhuma sombra permaneceu além do último estado visível da autoridade. Snow/Koro têm sombra nativa durante parte da morte: preservar, não apagar antecipadamente. Reports por cena em Logs/R03-entrega-20261110.
+
+#### R03 — custo rest-capture e otimização antes da entrega
+
+Seis casos rest-capture/ baseline-guard concluídos, três pares válidos, captura desligada e janela final30s. `Logs/R03-entrega-20261110/custo.json`: saída total servidor +21,30KiB/s (+3,20%); alocação servidor +409,33KiB/s (+23,16%); clientes +33,69/+29,90KiB/s. CPU por ciclos teve ranges sobrepostos; não provar aumento nem custo zero. Frame work cliente1 delta+0,351ms, com ranges sobrepostos e picos de parede; investigar e repetir, não declarar otimização validada ainda.
+
+Causas de alocação redundante encontradas por revisão: consulta de shader.name em todos renderers a cada frame (trocar por referência Shader em cache) e publicação de sprite de clipes automáticos, que já avançam pela fase aprovada. Lote lowalloc mantém eventos de frames manuais/static/idle e transições de visibilidade/speed, com regressão do publicador real para manual versus automático. Core/build e nova cadeia completa em execução; baseline-guard será reutilizada somente após conferir SHA da DLL e igualdade exata do harness de input/fixtures. Custos anteriores são preservados, não substituídos por alegação de ganho sem nova medição.
+
+#### R03 — experimento lowalloc rejeitado por frame divergente
+
+Core lowalloc 1067/1067 e smokes gráficos completos, mas a comparação densa detectou SnowMan8 frames divergentes por observador e Korobokkuru2/3. Geometria/água/pausa continuaram corretas. Remover publicação de frames automáticos **não preserva equivalência exata**: a animação nativa muda em frames quantizados, enquanto avanço contínuo no cliente pode cruzar a borda antes/depois. Experimento rejeitado; não relaxar o analisador para aceitar.
+
+Publicação de arestas automáticas restaurada, com regressão de ambos modos no caminho real de envio. Otimização shadercache mantém apenas a troca de comparação por shader.name por referência Shader em cache, sem mudar quais estados são enviados. Nova suíte/build/cadeia completa shadercache iniciada. Lowalloc interrompido após detectar a regressão; não usar como build de entrega. Baseline-guard a709a71a continua válida, mesmo harness. QA será copiado só da build final aceita; C:/Users/mauri/SB6-QA-R03 já contém atalhos/roteiro, ainda sem build.
+
+#### R03 — shadercache: código final candidato e validações
+
+Candidato atual **shadercache**, assembly `72006e013f1c8ae4f585de894a35ca773fa040680746ef2ebc2a781ad5a2aefa`, protocolo68. Publicações automáticas preservadas; só o cache de Shader é a otimização aceita para medir. Core Unity1067/1067, C#0 erros/0 avisos, Python Tools/Ci161 e RoomDirectory16 aprovados. Três smokes gráficos normais concluídos, zero divergência de sprite/pausa/água em quatro famílias e ambos clientes; Frog máximo0,163px, água ativa233/230 amostras; Hop/Snow/Koro máximo<0,000031px.
+
+Três referências offline shadercache concluídas. Três smokes gráficos adicionais de interrupção saíram0; análise final desses logs ainda deve rodar, sem presumir aceite por marcador. Nova rodada de três pares de custo em `Logs/R03-cost-shadercache`: primeiro par já concluído, demais em andamento. Não usar custo rest-capture como custo do candidato shadercache. Baseline-guard reaproveitada com SHA/harness conferidos, sem compilação concorrente com benchmark.
+
+Ao retomar: acompanhar `Logs/R03-measure-all.py shadercache` (processo próprio), conferir todos seis resultados e gerar custo com `--steady-seconds 30`; gerar reports normais com offline + reports de interrupções pelo analisador; conferir baseline/dados/limites, inspecionar PNGs, finalizar docs/matriz/checklist conforme cobertura real, copiar shadercache para `C:/Users/mauri/SB6-QA-R03/build` e identidade, restaurar fontes do runner por `Logs/R03-runner-sync.ps1 -Mode Restore` ao terminar processos. Sem publicar/commit/push ou avançar R05.
+
+#### R03 — cliente: custo adicional investigado e cache de apresentação
+
+Shadercache cumpriu geometria/pose/água, mas custo de três pares mostrou cliente1 +12,29% ciclos/s e +0,238ms work/frame; cliente2 +13,82% ciclos/s e +0,344ms work/frame, ranges separados. Alocação extra servidor caiu para+58,71KiB/s (+3,35%), contra+409,33KiB/s do lote anterior; tráfego médio+13,83KiB/s total, ranges sobrepostos (não ganho/custo zero demonstrado). Resultados guardados em Logs/R03-resultado-final-20261110/custo.json, ainda **não** custo do novo candidato.
+
+Chamadas nativas redundantes encontradas: SetPropertyBlock(null) e reatribuição de material em cada apresentação, inclusive vistas sem água. Candidato viewcache2 mantém parâmetros aplicados por vista e id de material comum; só reaplica quando há mudança; invalida ao sair de água/blackout, remover vista e limpar cena. Novo teste do caminho real faz água→normal→material conhecido→padrão→água e verifica limpeza de caches. A primeira execução falhou só por catálogo de teste com arrays nulos; fixture inicializada como catálogo real. Core viewcache2 **1068/1068**, build assembly `2c3bb067ec602195d5dc069a05ecb4166b9cbdc3d6b1e49f55ee979732dd34f7`, protocolo68.
+
+Três smokes gráficos e três referências offline viewcache2 concluídos. Reports em Logs/R03-viewcache2-reports: zero divergência sprite/pausa/água nos quatro tipos, Frog máximo0,420px e água ativa224/231 amostras; demais máximo<0,000031px. Interrupções e custo final em curso por Logs/R03-measure-all.py viewcache2. Não transferir números de shadercache para viewcache2. QA na tela aguardará benchmarks terminarem para não contaminar CPU. Sky/Computer Use inicializado; clientes batchmode não expõem janela interativa. A checagem visual em janelas reais deve usar clientes sem -batchmode, mantendo mesmo exe e fixture local, sem terminal por UI.
+
+
+## R03 — entrega técnica final em 10/11/2026
+
+Candidato final **viewcache2**, protocolo **68**, assembly `2c3bb067ec602195d5dc069a05ecb4166b9cbdc3d6b1e49f55ee979732dd34f7`. Implementação e validação técnica concluídas; **aceite perceptual humano pendente**, sem publicação/commit/push, sem avançar o plano. QA preservado em `C:/Users/mauri/SB6-QA-R03` (build, identidade, quatro atalhos visíveis e saves isolados). Nenhuma cena/prefab foi alterada ou depende de novo wiring.
+
+Correções: frames manuais obedecem à autoridade; arestas de pose/visibilidade e vértices de repouso são publicados sem antecipar a locomoção; água preserva parâmetros do shader; corpo/sombra seguem o mesmo histórico aprovado; Frog/Hop limpam e reiniciam estado nas interrupções nativas. IA, RNG, colisão e dano continuam no servidor. Cache por vista evita limpar MaterialPropertyBlock/reatribuir material a cada frame; transições água/normal/blackout e remoção invalidam o cache.
+
+Validação final: core EditMode online/COM **1068/1068**, build Development, C# **0 erros/0 avisos**, Tools/Ci **161** e RoomDirectory **16** testes aprovados. Não é a suíte inteira do projeto: a falha de chat de teclado encontrada na baseline continua registrada fora deste core. Três smokes gráficos com servidor e dois clientes Mirror reais, três referências offline nativas e três smokes de interrupções concluídos. Sem descarte por limite de captura. Em ambos clientes e nas quatro famílias: zero divergências verificáveis de sprite, movimento em pausa ou água; zero amostras verificáveis acima de2px. Frog máximo **0,420px**, água ativa **224/231** amostras; demais máximos <0,000031px (erro numérico do renderer, não garantia de precisão física). Lacunas, cortes e referência ausente continuam explicitamente separados.
+
+Interrupções: morte nativa de Frog/Hop/SnowMan/Korobokkuru visível nos dois clientes; esmagamento por barrel aplicado nos dois Hops; desativação/reativação e recarga verificadas. Sombra Frog teve cauda de **7,1/20,6ms** após a última amostra visível da autoridade, compatível com cadências diferentes; não declarar remoção instantânea. Snow/Koro mantêm sombra durante parte da morte nativa e isso foi preservado.
+
+Custo final: **três pares** baseline-guard/viewcache2, mesma fixture, captura desligada, últimos30s antes de pause1 (janela definida antes da análise). Baseline assembly `a709a71ae0fcc806740f1a4c7f441fb6b3b496e3aa423729c3e6f2115c5de95a`. Clientes: delta ciclos **+2,97%/+0,59%**, work/frame **−0,0177/+0,0039ms**, todos com ranges sobrepostos; não demonstram custo zero. O incremento separado de +0,238/+0,344ms da candidata shadercache foi resolvido nesta medição. Servidor: alocação **+71,97KiB/s (+4,10%)**, saída total **+42,83KiB/s (+6,55%)**, ranges separados. Saída agrega o mundo inteiro/2clientes (~21,4KiB/s por cliente), não é custo isolado de uma família. Não escondê-la como otimização de tráfego.
+
+Evidências: `Logs/R03-entrega-viewcache2-20261110/{identity,custo,familias}.json`, `Stage_3-X-comparacao.json` e `Stage_3-X-interrupcoes.json`; capturas originais em `Logs/R03-peers-viewcache2`, `Logs/R03-offline-viewcache2`, `Logs/R03-interruptions-viewcache2`, custos em `Logs/R03-cost-viewcache2`. Os somatórios instrumentados por família excluem envelopes, âncoras e fanout, têm durações/RNG nativos diferentes e não substituem a medição total sem captura. A comparação offline valida curva/fase nativa; execuções independentes não repetem exatamente o RNG ou colisões.
+
+Inspeção Codex: imagens finais Snow/Koro e janelas reais de ambos observadores do Hop/blackout/olhos conferidas sem corrupção evidente. Firewall resolvido manualmente pelo usuário; nenhum controle de segurança automatizado. Não equivale a aceite humano ou estudo perceptual contínuo. Limites: uma máquina Windows, Development, poucas repetições, sem GPU/WAN/jitter/produção Linux medidos, intervalos sem referência inconclusivos e transições excluídas da janela de custo de regime. Pacote e roteiro prontos para aceite humano.
+
+
+### R03 — encerramento da validação técnica e restauração (10/11/2026)
+
+Janelas reais sem batchmode: smokes adicionais Stage_3-4 e Stage_3-5 concluíram com dois clientes, zero erros/avisos do servidor, mesma DLL final. Inspeção Codex do Hop nos dois observadores, blackout/olhos e Snow/Koro em poses diferentes sem corrupção evidente; PNG final Frog/água/sombra também conferido. Não houve aceite humano nem teste manual de todos os inputs, e não foram inferidos a partir das imagens. O aviso de Firewall foi resolvido manualmente pelo usuário.
+
+Pacote final em C:/Users/mauri/SB6-QA-R03: cópia da DLL 2c3bb067ec602195d5dc069a05ecb4166b9cbdc3d6b1e49f55ee979732dd34f7 verificada, identity.json, RESULTADO.md, LEIA-ME.md, quatro atalhos com clientes visíveis e launcher com sintaxe verificada. Antes da restauração, todos scripts de runtime no runner conferiram com identity.json e com as fontes do checkout (normalizando somente CRLF/LF).
+
+Runner restaurado pelo sync reversível com exit0: dez arquivos originais restaurados e dois arquivos novos removidos apenas do runner. Conferência independente dos 12 hashes/ausências originais passou; estado arquivado em Logs/R03-runner-sync/backup-20261109-194652/state-restored.json. Library/build/cache não foram revertidos. Fontes implementadas permanecem no checkout principal. Sem reset/clean, Packages ou fontes/URP/settings preexistentes alterados.
+
+Conferência final: git diff --check sem erro; UTF-8 estrito nos 11 C# alterados/novos sem BOM corrompido/duplicado ou replacement character; dotnet0avisos/0erros; Tools/Ci161/161 repetidos após empacotamento. R03 permanece com checkbox aberto exclusivamente pelo aceite perceptual humano; implementação, evidência automatizada, custo e pacote estão entregues. Nenhuma publicação/commit/push nem avanço ao próximo ID.
+
+
+## R03 aprovado pelo usuário — 10/11/2026
+
+Após receber o roteiro de QA visual do pacote C:/Users/mauri/SB6-QA-R03, o usuário confirmou: "está aprovado". Aceite perceptual registrado nos cenários testados; R03 passa a CONCLUÍDO no checklist. Implementação, core Unity1068/1068, comparação online/offline, interrupções e três pares de custo permanecem como descritos na entrega técnica viewcache2 (protocolo68, assembly2c3bb067…). Todas as limitações de amostragem, ambiente e custo permanecem; o aceite não equivale a medição WAN/GPU/Linux. Seções anteriores com aceite pendente são histórico, superado por esta seção.
+
+Publicação do R03 continua pendente. Este aceite não executou commit/push/deploy nem iniciou outro ID.
+
+Checklist por ID após este aceite: 28/32 itens marcados. A01–A13, C01–C10, R01–R04 e R07 marcados; A14, R05, R06 e R08 continuam parciais. A contagem descreve os checkboxes existentes, não aprovação de todas as pendências de QA global anotadas nos itens marcados. Próximo R pendente: R05; A14 também permanece aberto.
+
+
+## A14 — retomada e associação do primeiro comando (10/11/2026)
+
+Usuário autorizou terminar A14. R03 aprovado permanece no checkout; não publicar. Cruzamento com C08/R07/R01 confirma cobertura posterior de segmentos Search/Magnet/Kick, lifecycle e transporte sem presenter. Não reimplementar esses sistemas. Lacuna ainda presente em NetworkPlayerInput.FixedUpdate: múltiplas bordas iguais no mesmo lote sobrescrevem CurrentAction*Tick com o último tick, embora gameplay só receba um GetDown. Correção candidata preserva primeiro tick por botão no mesmo frame renderizado, inclusive múltiplos FixedUpdates, sem criar segundo A; próximo frame aceita novo toque. Quatro regressões cobrem overflow carrier, held-only, segundo passo físico, frame seguinte e rollover0. Ainda não compilado/rodado neste checkpoint.
+
+Pendente real: executar regressões/corpo online+COM, smokes entre peers atuais por família com inputs e interrupções, organizar matriz/evidências e QA visual. Runner será sincronizado reversivelmente com fontes R03+A14; backup próprio em Logs/A14-runner-sync.
+
+
+### A14 — primeiro lote de testes aprovado
+
+Core online/COM1072/1072 passou no candidato input-fix (quatro casos novos de tick por frame); build Development concluída. Novo harness opt-in -load-test-bomb-abilities em LocalBombAbilitySmoke.cs + cliente sintético existente (ordem-150) preparado: A via transporte real deve plantar sem levantar; segundo A explícito levanta e release arremessa; Kick/Punch/Blue/Yellow/Rubber por ambos owners, pausa e remoção; recovery bounce nativo. Novos testes/build abilities1 em execução, ainda sem resultado. Fixtures desativam COM nesse cenário e removem/publicam apenas destrutíveis do corredor de spawn; não desabilitam colisão do client. Search/Magnet e presenter-removal reutilizam o cenário C08/R07 existente. Sem publicação. Runner temporário ativo em Logs/A14-runner-sync/state.json; restaurar no final.
+
+
+### A14 — ponto de retomada do harness
+
+Código novo salvo em Assets/Scripts/Netcode/LocalBombAbilitySmoke.cs (.meta pareado), hooks em LocalServerLoadTest e extensão de smoke_full_clients.py via --extra-args=-load-test-bomb-abilities. Cada peer atua como owner nas seis famílias; outro observa. Glove tem primeiro A plant/hold sem pickup, segundo A explícito e release/throw. Bounce usa PlayerPushedOutOfInvalidTile.NotifyExternalPushed contra um blocker local Development, pausa e recuperação. Não há IA/colisão simulada no cliente. Ainda não afirmar cenário executado.
+
+Unity atual: python Logs/A14-unity.py abilities1, sessão66814, core+build no runner. Compilação de scripts passou sem CS errors/warnings até aqui, aguardando fim dos testes. Em seguida executar python Logs/A14-smokes.py abilities1 (normal170s, stall120ms/3s170s, field-transfer90s), após Unity terminar; script interrompe na primeira falha e preserva erro. Binário fica em C:/Users/mauri/SB6-A14/abilities1 e identidade em Logs/A14-abilities1/identity.json. Se necessário corrigir fixture, Update no sync e novo label de build; não sobrescrever provas anteriores. Ao final: comparar logs de predição/confirmação/cleanup por bombNetId/player/família, conferir capturas, matriz e pacote de QA, testes finais/UTF-8/diffcheck e Restore do runner. Ainda falta aceite perceptual A14.
+
+
+A14 auditoria adicional: Bomb.StartPunch (usado também por Throw/Rubber) não tinha a guarda de pure client presente em StartKick/StartMagnetPull/TryRedirectKick. Adicionada a mesma guarda no entrypoint e estendido BombClientEntryPointsCannotStartOrRedirectNativeMotion. Ainda não está na build abilities1 nem no runner: incorporar no próximo candidato antes do fechamento. Evitar mudar fontes do runner enquanto os smokes abilities1 estão ativos. Sem publicação.
+
+
+### A14 — defeito nativo reproduzido durante pausa da luva
+
+Abilities1 passou1072/1072 e buildf89ada37. Smoke real em Logs/A14-peers-abilities1/abilities: owner1 Kick/Punch/Glove iniciados/concluídos; Blue falhou. Logs do servidor mostram input_locked desde35,087s (throw) atéBlue42s, clientmountedsemInputLocked e predição dePunch rejeitada. Causa em RestoreMovementLockToBaseline: IsGlobalLockActive incluiPause, end de coroutine pode chegar depois do último yield na borda da pausa, grava InputLocked=true e descarta baseline; pausa não desfaz esse campo no resume. Correção candidata distingue pausa global (que já bloqueia gameplay) de intro/ending, restaurando baseline quando só pausa existe e preservando locks externos/prévios. Três regressões novas do helper real. Não desbloquear ator pelo fixture.
+
+Também corrigida exigência de checkpoints de spawn clássico no script para o fixture A14, que intencionalmente desativa aquele cenário concorrente; mantém exigência de conclusão por família/2owners. Capturas da rodada falha copiadas depois do fechamento (server/client1/client2-motion.jsonl); rodada não aceita. Fontes novas de Bomb.StartPunch guard e PowerGlove ainda aguardam Update+core/build abilities2. Ajuste de facing montado no fixture e logs de pré-condição ajudam separar erro de setup.
+
+
+A14 checagem dos logs de predição da rodada abilities1 revelou setup incompleto adicional: fixture ligava AbilitySystem, mas NetworkPlayerState transmite PlayerPersistentStats.GetRuntime; owner não recebia Kick/Punch/Glove e só o Blue preparou predição. Corrigido o fixture para semear os flags de runtime por caso, antes de aguardar replicação; não mudar produção para aceitar grant local. Não chamar os três primeiros casos de prova de predição, apenas ação nativa/observador. Waiter abilities2 (PID16624 próprio, ainda aguardando build, sem clientes) parado para não iniciar smokes de setup superado. Unity abilities2 continua até resultado core/compile; depois Update e abilities3 com runtime flags corretos.
+
+
+Abilities2 core1074/1075: restauração da luva e guarda nativa de Punch passaram, mas um assert novo usava MovementController.CanPredictNetworkMovement como se fosse gate de pausa. Essa propriedade descreve capacidade local; a pausa é aplicada em NetworkPlayerInput.Blocked e no loop nativo. Assert corrigido para conferir o gate real, sem alterar gameplay para atender teste incorreto. Nenhuma build/smoke abilities2 foi produzida/iniciada; waiter cancelado antes. Próximo abilities3 incorpora este ajuste e flags runtime do fixture.
+
+
+### A14 — abilities3 em integração (10/11/2026)
+
+Core1075/1075 e build Development concluídos. Assembly6a321e5b23ba4010f130efea96ce00d558322473dbfffb1eda924561a38fccee em C:/Users/mauri/SB6-A14/abilities3; protocolo68 mantido. Scripts/identidade Logs/A14-abilities3. Smokes via Logs/A14-after-build.py abilities3, sessão17564, em andamento. Primeiro owner completou Kick/Punch/Glove/Blue/Yellow/Rubber/Bounce; Blue registra locked=False, fechando o bloqueio que reproduziu após throw/pausa. Segundo owner em curso. Não presumir conclusão final ou predição só pelo checkpoint servidor.
+
+Novo Tools/Diagnostics/analyze_bomb_abilities.py exige, por bombNetId e owner: begin+confirm para Kick/Punch/Blue/Yellow/Rubber e Lift+Throw, sem rejeições em ações válidas; observador não pode prever ação alheia e deve ter apply+samples; bounce aplicado nos dois roles; identidades iguais e capturas íntegras. Cinco testes sintéticos passaram e Tools/Ci166/166, RoomDirectory16/16. Depois dos smokes usar esse analisador em abilities e abilities-hitches, validar field-transfer pelo validador C08 existente, conferir imagens, rodar dotnet/UTF8/diffcheck e restaurar19 fontes/ausências do runner (estado ativo Logs/A14-runner-sync/state.json). Sem publicação/commit/push.
+
+
+### A14 — lacuna de entrega soltava a luva indevidamente
+
+Abilities3 completou todas sete famílias do owner1 (incluindo Blue desbloqueado após pausa), owner2 Kick/Punch; falhou "explicit second A did not lift" no Glove. Investigação real: servidor recebeu segundo A68,655s, pickup68,656/Lift e Carry68,756, mas publicou Throw68,922 enquanto os logs de input não mostram soltura e amostras antes/depois ainda têm A16. A luva chegou a pegar e arremessou antes da checagem0,4s. O timeout de held100ms zera todos botões; captura gráfica pode atrasar entrega e produzir um falso release de A.
+
+Correção candidata em NetworkPlayerInput: expirar caminhada/auto-C, reter somente A já recebido até o próximo comando real. Pause limpa ações/direções mas conserva esse hold lógico; comandos mascarados durante pausa continuam ignorados; primeiro comando real após resume decide soltura. Reset de retorno/morte e remoção de ator continuam limpando normalmente. Nenhum GetDown é sintetizado. Nova regressão usa ApplyServerControls real e verifica A held sem Down, sem caminhada/C, neutral explícito solta. Ainda não compilado/medido; incorporar em abilities4, repetir normal/stall/field antes de aceitar. Capturas falhas3 preservadas, não aprovadas.
+
+
+### A14 — outra causa medida de hitch inicial: delta anterior à predição
+
+Análise por bombId em abilities3: owner1 tem begin+confirm para todas seis habilidades, owner2 Kick também; Punch owner2 id10 começou59,522 e foi descartado por segment_timeout59,526 (apenas4ms!), antes do RPC59,648. PresentBombMotions adicionava todo deltaTime do frame anterior ao estado recém-criado em Update; um hitch pré-input >1s extinguia a predição no próprio primeiro LateUpdate, sem confirmação nem rollback apropriado. Correção candidata marca predictedFrame nas duas entradas, preserva primeiro passo limitado e não consome delta pré-input. Timeout não confirmado passa pelo rollback explícito; expiração genérica fica para estados confirmados. Regressões reais de Kick e Punch incluem frame inicial1,2s e timeout de frame posterior. Limite inicial Lift/Yellow capado por fixedDeltaTime. Ainda não compilado: levar ao candidato abilities5 após validação4 finalizar. Não declarar abilities3 aprovado nem aceitar RPC posterior como confirmação de uma predição já extinta.
+
+
+Waiter de smokes abilities4 (PID23840 próprio, ainda sem filho/sem identidade publicada) parado enquanto build4 terminava, pois a regressão comprovada de expiração no primeiro frame precisa entrar em abilities5. Não houve smoke4. Build/core4 continuam para guardar compilação dos ajustes de A held. Após saída do Unity: sync Update (inclui NetworkBombFx e NetworkBombMotion novos na lista), rodar python Logs/A14-unity.py abilities5 e depois python Logs/A14-after-build.py abilities5. Ao final aplicar analyze_bomb_abilities.py em normal e hitches; não aceitar evidência apenas nativa. Runner ainda não restaurado; não publicar.
+
+
+### A14 — término Carry confirmava Throw incorretamente
+
+Abilities5 core1076/1076/buildf00f1275. Native normal e stall concluíram ambos owners sem erros de gameplay, inclusive Glove hold/pausa. Porém analyze_bomb_abilities normal FAILED: owner1Throw não teve confirmação correspondente. Logs id5: beginThrow31,442/tick1188; confirmação31,555 veio como Carry stop/tick1191, seguida Throw primeiro segmento sem histórico. Fim de Carry com tick agrupado mais novo tomava a predição de Throw e reiniciava a fase. Guard estreito agora ignora esse trailer Carry/Lift stop no owner enquanto há Throw não confirmado; aguarda matching Throw, ack/rejeição ou timeout normal. Não ignora mudanças autoritativas worldMotion. Duas regressões cobrem confirmação com fase preservada e rejeição com collider/lock restaurados. Ainda não compilado no candidato5; próximo abilities6 após smokes5 terminarem. Não mudar o analisador para aceitar Carry como confirmação de Throw.
+
+Metadados do smoke atualizados para identificar A14 explicitamente (spawn clássico não roda; syntheticHardwareInput=true); dados5 carregaram versão anterior do módulo com campos legacy — não usar aqueles booleans como prova de cenário, usar config extraArgs e marcadores. Também preparada opção capture_frames=False para QA humano sem custo de PNG, mantendo captura padrão intacta para as provas automatizadas.
+
+
+## A14 — implementação e validação técnica finais (10/11/2026)
+
+Status: **implementação/validação técnica concluídas; aceite visual humano pendente**. R03 continua aprovado. Protocolo68 local, sem publicação/commit/push, sem avanço ao R05. Candidato final abilities6, assembly `30bbbefd4bd8ef8457cf0ed4a67636f9203ac8bd899b006d361fad820709236b`; fonte/build/testes em `Logs/A14-abilities6`, integrações em `Logs/A14-peers-abilities6`. Pacote preservado em `C:/Users/mauri/SB6-QA-A14`, com identidade e DLL conferidas. Nenhuma cena/prefab exigiu alteração ou novo wiring.
+
+### Correções comprovadas nesta rodada
+
+- Comandos agrupados: um GetDown por frame conserva o primeiro tick de cada botão, inclusive entre vários FixedUpdates, e não é relabelado pelo último toque do lote. Replay continua apenas de movimento.
+- A da Power Glove: silêncio de rede não equivale a soltar o botão. Só o A já recebido é retido até um comando real; caminhada e auto-C continuam expirando. Pause preserva esse hold lógico sem executar ações; reset/remoção de ator mantêm a limpeza existente. Sem fabricar GetDown.
+- Lock da luva: finalizar coroutine na borda da pausa não torna InputLocked permanente; restaura baseline e preserva locks de intro/ending ou anteriores. Reproduzido em abilities1, corrigido e retomada validada.
+- Predição recém-criada: não herda deltaTime do frame anterior ao input. Um hitch1,2s pré-input não pode apagar o estado em4ms antes do RPC. A expiração não confirmada passa pelo rollback explícito; primeiro passo permanece limitado.
+- Carry→Throw: stop do Carry/Lift não confirma um Throw pendente nem reinicia sua fase, mesmo com tick agrupado mais novo. Confirmação correspondente preserva fase; rejeição continua restaurando collider e lock. Reproduzido em abilities5 e corrigido em6.
+- Autoridade: StartPunch/Throw/Rubber agora tem a mesma guarda de pure client dos outros entrypoints nativos. Cliente continua apresentando receitas, sem iniciar gameplay.
+
+### Matriz A14 e evidência
+
+| Critério | Evidência final | Estado |
+|---|---|---|
+| Tick do primeiro comando, inclusive lote/overflow carrier/frame seguinte/rollover | Quatro testes A14BatchedPress… | aprovado |
+| Gap não solta A nem duplica press; movimento/auto-C expiram | A14InputSilence… + luva real em dois owners | aprovado |
+| Baseline de lock na pausa | Três A14GloveFinishingDuringPause… + pausa/retomada nas integrações | aprovado |
+| Kick/Punch/Glove/Blue/Yellow/Rubber por owner/observador | 12 casos nativos por execução, begin+confirm correspondente por dono e apply+samples no outro cliente; Glove exige Lift **e** Throw | aprovado, normal e stall120ms/3s |
+| Bounce do jogador | Recovery nativo contra blocker Development, pausa, recuperação de input; receipt/apply nos dois papéis; curva/fila/stop nos testes existentes | aprovado |
+| Rubber determinístico/curvas, rejeição, obstáculos, replay e cleanup | Core atual inclui BombAbilityPresentation…, InitialKickPrediction…, RubberBounceSequence…, InactiveOwner… e WorldBombMotion… | aprovado |
+| Search/Magnet/Kick com curva/corner/stop | Cenário C08 field-transfer; ambos clientes passaram kind=Magnet/Search/Kick | aprovado |
+| Remoção do presenter no arco vivo | Mesmo cenário, ambos clientes têm8 amostras móveis após transferência | aprovado |
+| Trailer Carry stop versus Throw e rejeição | Dois A14CarryStop… + confirmação Throw real nos dois owners | aprovado |
+| Visual/sensação comparada ao offline | Pacote guiado e jogo livre para Search/Magnet, com roteiro | **pendente humano** |
+
+Core Unity online+COM **1078/1078**, não a suíte inteira do projeto. Tools/Ci166 e RoomDirectory16 aprovados. Compilação dotnet final:0erros; seis avisos de dependências Mirror/Core/Editor/Examples/Edgegap, nenhum nos arquivos alterados; Packages não foram editados para suprimi-los. O primeiro --no-restore não encontrou project.assets.json após Unity limpar Temp; build normal restaurou os artefatos NuGet e passou. UTF-8 estrito verificado nos20 C# alterados/novos; diffcheck sem erros. Avisos de shutdown de ComputeBuffer já existentes não foram declarados corrigidos.
+
+`normal-analysis.json` e `hitches-analysis.json`: PASSED, problems vazio, capturas servidor/clientes válidas. Ambos donos têm predição+confirmação de Kick/Punch/Lift/Throw/Blue/Yellow/Rubber; observadores não preveem comandos alheios e apresentam segmentos. Zero rejeições inesperadas nesses casos válidos. Não confundir checkpoints do servidor com essa prova: o analisador inicialmente recusou abilities5 por Carry confirmar Throw. Todos resultados superados/falhos foram preservados. Cinco testes do analisador impedem aprovar apenas ação nativa/observador, Lift sem Throw, outro bombId, rejeição ou captura vazia/truncada/dropped.
+
+Inspeção Codex dos PNGs finais de throw e Yellow sem corrupção evidente. A silhueta branca do outro player ocioso corresponde a Afk2 no trace, com dead=False, não a uma morte/remoção indevida. Isso não equivale a aceite humano. QA guiado sem PNG evita custo de codificação durante a avaliação; os smokes automatizados mantêm PNGs e logs. Jogo livre separado usa menu nativo, sem inputs sintéticos. Saves isolados; não usa servidor publicado.
+
+Limites explícitos: Windows Development, localhost, dois peers e stalls programados; não mede GPU/hardware de input/WAN/perda real, todos controles físicos ou sessão gráfica host. Offline: geometria/fórmulas e caminho nativo são cobertos pelos testes/referência autoritativa; não foi produzida uma captura offline temporal independente de A14 nesta rodada. Comparação perceptual com offline permanece no aceite humano. Não foram feitas novas medições isoladas de CPU/bytes A14; não transferir custos medidos de R03 para esta DLL nem afirmar custo zero.
+
+
+### A14 — pacote executado e encerramento técnico (10/11/2026)
+
+O próprio pacote C:/Users/mauri/SB6-QA-A14/run-qa.py normal foi executado: servidor+2clientes visíveis, sem PNG (captureFrames=false),170s, ambos owners completaram7famílias,0erros/avisos de rede do servidor. Análise adicional qa-no-png-analysis.json PASSED, sem problemas. Não é aceite humano; demonstra que o launcher de entrega realmente roda, além dos smokes gráficos com PNG e do teste C08.
+
+Runner restaurado com exit0, conferidos independentemente os22 hashes/ausências originais:18 arquivos restaurados,4 novos removidos somente do runner. Estado em Logs/A14-runner-sync/backup-20261110-124655/state-restored.json. Não houve reset/clean nem alteração de Packages; Library/build/cache não foram revertidos. Implementação permanece no checkout principal. QA preserva a DLL30bbbefd4bd8ef8457cf0ed4a67636f9203ac8bd899b006d361fad820709236b conferida. UTF8 final20 C# válido. Comparação de runtime source antes da restauração passou (normalizando só CRLF/LF).
+
+A14 fica aberto só pelo aceite visual/comparação perceptual offline: 1-normal.cmd (guiado, observar sem enviar comandos), 2-hitches.cmd (stalls deliberados), e jogo livre3/4/5 para Search/Magnet pelo menu nativo. Roteiro em LEIA-ME.md. Nenhuma publicação, commit/push ou avanço a outro ID.
+
+
+## A14 aprovado pelo usuário — 10/11/2026
+
+Usuário confirmou explicitamente: "Está aprovado A14." Após o roteiro fornecido e a entrega do pacote SB6-QA-A14, aceite humano registrado nos cenários testados. A14 passa a CONCLUÍDO no checklist; os registros anteriores de aceite pendente são históricos, superados por este aceite. Permanecem as evidências e limitações da entrega abilities6/protocolo68 (assembly30bbbefd…), sem ampliar o aceite para cenários não testados ou afirmar medição independente offline/GPU/WAN inexistente.
+
+Estado dos checkboxes:29/32 marcados (90,625%). A01–A14 e C01–C10 marcados; R01–R04 e R07 marcados; R05, R06 e R08 parciais. Algumas linhas marcadas mantêm ressalvas de QA global, que não foram apagadas. Próximo item aberto na sequência: R05. Publicação de R03/A14 permanece pendente; este registro não fez commit, push, deploy nem iniciou outro ID.

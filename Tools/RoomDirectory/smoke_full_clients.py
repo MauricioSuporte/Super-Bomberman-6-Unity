@@ -29,7 +29,7 @@ def process_counters(process):
 
 
 def run(server, client, output, port, mount_input, seconds, prediction_items=False,
-        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False, field_motion=False, mechanism_kind=None, remote_walk=False, extra_args=(), coop_world=False, cycle_samples=False):
+        mode='BattleMode', scene=None, diagnostics=False, require_unlocked=False, presenter_removal=False, revenge_input=False, mount_cycles=False, rendered=False, launcher_kind=None, mount_visuals=False, field_motion=False, mechanism_kind=None, remote_walk=False, extra_args=(), coop_world=False, cycle_samples=False, capture_frames=True):
     if mechanism_kind and (mechanism_kind not in ('boiler', 'blackout', 'world-blackout', 'rocket', 'dynamite', 'sudden', 'falling', 'powder', 'roof') or not diagnostics or not rendered):
         raise ValueError('mechanism fixture requires diagnostics and rendered clients')
     if field_motion and (not presenter_removal or not diagnostics):
@@ -42,7 +42,10 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         raise ValueError('launcher fixture requires diagnostics and no other input fixture')
     if coop_world and (mode == 'BattleMode' or not scene or mount_input or launcher_kind or mechanism_kind or presenter_removal or revenge_input or mount_visuals):
         raise ValueError('coop world fixture requires a cooperative Stage_* scene without other fixtures')
-    if rendered and not (mount_cycles or launcher_kind or mount_visuals or mechanism_kind or remote_walk or coop_world):
+    bomb_abilities = '-load-test-bomb-abilities' in extra_args
+    if bomb_abilities and (mode != 'BattleMode' or not diagnostics or mount_input or mount_visuals or presenter_removal or launcher_kind or mechanism_kind or remote_walk or revenge_input):
+        raise ValueError('bomb ability fixture requires BattleMode diagnostics without other fixtures')
+    if rendered and not (bomb_abilities or mount_cycles or launcher_kind or mount_visuals or mechanism_kind or remote_walk or coop_world):
         raise ValueError('rendered captures require mount cycles or launchers')
     if mount_cycles and (not mount_input or not diagnostics):
         raise ValueError('mount cycles require mount input and diagnostics')
@@ -61,7 +64,7 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 raise RuntimeError('the durable actor smoke requires Development players')
             assembly_hashes[role] = hashlib.sha256(assembly).hexdigest()
         (output/'config.json').write_text(json.dumps(dict(mode=mode, scene=scene, seconds=seconds, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
-            revengeInput=revenge_input, mountCycles=mount_cycles, rendered=rendered, launcherKind=launcher_kind, mountVisuals=mount_visuals, mechanismKind=mechanism_kind, remoteWalk=remote_walk, coopWorld=coop_world, cycleSamples=cycle_samples, extraArgs=list(extra_args), assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
+            revengeInput=revenge_input, mountCycles=mount_cycles, rendered=rendered, launcherKind=launcher_kind, mountVisuals=mount_visuals, mechanismKind=mechanism_kind, remoteWalk=remote_walk, coopWorld=coop_world, cycleSamples=cycle_samples, captureFrames=capture_frames, extraArgs=list(extra_args), assemblySha256=assembly_hashes), indent=2), encoding='utf-8')
         env = dict(os.environ, SB6_ROOM_ID='spawn-regression', SB6_ROOM_TOKEN=secrets.token_hex(32),
                    SB6_ROOM_STATUS=str(output/'status.json'))
         def launch(binary, name, arguments, environment=None):
@@ -115,8 +118,8 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                    (['-load-test-coop-world'] if coop_world else []) +
                    (['-load-test-mount-visuals'] if mount_visuals else []) +
                    (['-load-test-mechanisms', mechanism_kind] if mechanism_kind else []) +
-                   (['-load-test-mount-captures', str(output/('client-'+str(index+1)+'-frames')), '-screen-width', '512' if mechanism_kind else '1024', '-screen-height', '448' if mechanism_kind else '896'] if rendered else
-                    ['-screen-width', '1024', '-screen-height', '896'] if cycle_samples else []) +
+                   (['-load-test-mount-captures', str(output/('client-'+str(index+1)+'-frames')), '-screen-width', '512' if mechanism_kind else '1024', '-screen-height', '448' if mechanism_kind else '896'] if rendered and capture_frames else
+                    ['-screen-width', '1024', '-screen-height', '896'] if rendered or cycle_samples else []) +
                    (['-load-test-item-motion'] if prediction_items else []) +
                    list(extra_args) +
                    ['-local-diagnostic-name', 'SB6Smoke'+str(index+1)])
@@ -149,8 +152,9 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
         server_text = (output/'server.log').read_text(encoding='utf-8-sig', errors='replace')
         markers = ['[LoadTest] completed']
         if mode == 'BattleMode':
-            markers += ['revealed=LineBomb', 'revealed=Mole', 'revealed=Tank',
-                        'spawn regression removed LineBomb/Mole/Tank']
+            if not bomb_abilities:
+                markers += ['revealed=LineBomb', 'revealed=Mole', 'revealed=Tank',
+                            'spawn regression removed LineBomb/Mole/Tank']
         else:
             markers += ['[Room] scene='+scene]
             if len(set(re.findall(r'\[Room\] join connection=(-?\d+)', server_text))) != 2:
@@ -192,11 +196,17 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
                 if 'presenter-removal '+marker+' bomb='+str(removed_bomb) not in server_text:
                     raise RuntimeError('missing presenter removal '+marker)
         round_reloads = server_text.count('[Room] scene='+('BattleMode_4' if launcher_kind == 'arena' else 'BattleMode_11' if launcher_kind == 'rope' else 'BattleMode_15'))
-        if mode == 'BattleMode' and seconds >= 180 and round_reloads < 2: raise RuntimeError('round reload was not exercised')
+        if mode == 'BattleMode' and not bomb_abilities and seconds >= 180 and round_reloads < 2: raise RuntimeError('round reload was not exercised')
         if mount_input:
             for marker in ('full-input dismount confirmed players=2', 'full-input world pickup replicated type=Mole',
                            'full-input world pickup replicated type=Tank'):
                 if marker not in server_text: raise RuntimeError('missing input checkpoint: '+marker)
+        if bomb_abilities:
+            if '[LoadTest] a14 completed actors=2' not in server_text:
+                raise RuntimeError('A14 did not complete both real owners')
+            for family in ('Kick', 'Punch', 'Glove', 'Blue', 'Yellow', 'Rubber', 'Bounce'):
+                if server_text.count('[LoadTest] a14 completed family='+family+' ') != 2:
+                    raise RuntimeError('A14 missing family: '+family)
         failures = {}
         captures = {}
         portal_expected = []
@@ -289,15 +299,15 @@ def run(server, client, output, port, mount_input, seconds, prediction_items=Fal
             errors = [event['message'] for event in entries if event.get('level') in ('Error', 'Exception', 'Assert')]
             warning_events = [event['message'] for event in entries if event.get('level') == 'Warning']
             if errors: failures['server-events'] = list(dict.fromkeys(errors))
-        if rendered:
+        if rendered and capture_frames:
             for index in (1, 2):
                 if len({hashlib.sha256(frame.read_bytes()).digest() for frame in (output/('client-'+str(index)+'-frames')).glob('*.png')}) < 3:
                     raise RuntimeError('missing distinct rendered arc captures for client '+str(index))
         result = dict(actualMirrorClients=2, simulatedClients=False, rendered=rendered, mountCycles=mount_cycles, launcherKind=launcher_kind, mountVisuals=mount_visuals,
                       mode=mode, scene=scene, captures=captures, assemblySha256=assembly_hashes, requireUnlocked=require_unlocked, presenterRemoval=presenter_removal,
-                      spawnCheckpoints=mode == 'BattleMode', arenaLoadRequests=round_reloads,
-                      syntheticHardwareInput=mount_input or revenge_input or bool(launcher_kind) or mount_visuals or remote_walk, remoteWalk=remote_walk, revengeInput=revenge_input, approvedItemMotion=prediction_items,
-                      coopWorld=coop_world, cycleSamples=len(samples),
+                      spawnCheckpoints=mode == 'BattleMode' and not bomb_abilities, arenaLoadRequests=round_reloads,
+                      syntheticHardwareInput=bomb_abilities or mount_input or revenge_input or bool(launcher_kind) or mount_visuals or remote_walk, remoteWalk=remote_walk, revengeInput=revenge_input, approvedItemMotion=prediction_items,
+                      coopWorld=coop_world, cycleSamples=len(samples), bombAbilityFixture=bomb_abilities, captureFrames=capture_frames,
                       serverDevelopmentDurableActors=True, requestedSeconds=seconds,
                       serverWarningEvents=len(warning_events), serverWarnings=list(dict.fromkeys(warning_events)),
                       errors=failures, seconds=time.monotonic()-started)

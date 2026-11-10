@@ -7,6 +7,280 @@ using UnityEngine;
 
 public sealed partial class OnlineRoomEditModeTests
 {
+    [Test]
+    public void R03WaterAndRegularMaterialTransitionsRestorePropertiesAndClearViewCaches()
+    {
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var type = typeof(BombermanNetworkManager);
+        var root = new GameObject("R03MaterialStateManager"); root.SetActive(false);
+        var viewsRoot = new GameObject("R03MaterialViews");
+        var catalog = ScriptableObject.CreateInstance<CoopSceneCatalog>();
+        catalog.sprites = System.Array.Empty<Sprite>();
+        catalog.materials = System.Array.Empty<Material>();
+        Material regular = null;
+        try
+        {
+            var manager = root.AddComponent<BombermanNetworkManager>();
+            type.GetField("coopViewRoot", flags).SetValue(manager, viewsRoot);
+            type.GetField("coopCatalog", flags).SetValue(manager, catalog);
+            var present = type.GetMethod("PresentCoopSprite", flags);
+            var frame = new CoopSpriteFrame { id = 31, sprite = -1, material = -1, visible = true,
+                rotation = Quaternion.identity, scale = Vector3.one, color = Color.white };
+            present.Invoke(manager, new object[] { frame, 0d });
+            var view = ((Dictionary<int, SpriteRenderer>)type.GetField("coopViews", flags).GetValue(manager))[frame.id];
+            var defaultMaterial = view.sharedMaterial;
+            regular = new Material(defaultMaterial); catalog.materials = new[] { regular };
+            frame.water = new CoopWaterSurface { parameters = new Vector4(12.25f, .15f, 1, 0) };
+            present.Invoke(manager, new object[] { frame, 0d });
+            present.Invoke(manager, new object[] { frame, 0d });
+            var properties = new MaterialPropertyBlock(); view.GetPropertyBlock(properties);
+            Assert.AreEqual(12.25f, properties.GetFloat("_WaterSurfaceY"));
+            frame.water = new CoopWaterSurface { parameters = new Vector4(15.5f, .15f, 0, 1) };
+            present.Invoke(manager, new object[] { frame, 0d }); view.GetPropertyBlock(properties);
+            Assert.AreEqual(15.5f, properties.GetFloat("_WaterSurfaceY"));
+            frame.water = null;
+            present.Invoke(manager, new object[] { frame, 0d });
+            Assert.IsFalse(view.HasPropertyBlock()); Assert.AreSame(defaultMaterial, view.sharedMaterial);
+            frame.material = 0; present.Invoke(manager, new object[] { frame, 0d });
+            Assert.AreSame(regular, view.sharedMaterial);
+            frame.material = -1; present.Invoke(manager, new object[] { frame, 0d });
+            Assert.AreSame(defaultMaterial, view.sharedMaterial, "Unknown/default must not retain the previous catalog material.");
+            frame.water = new CoopWaterSurface { parameters = new Vector4(12.25f, .15f, 1, 0) };
+            present.Invoke(manager, new object[] { frame, 0d }); view.GetPropertyBlock(properties);
+            Assert.AreEqual(12.25f, properties.GetFloat("_WaterSurfaceY"));
+            type.GetMethod("ClearCoopBlackoutMasks", flags).Invoke(manager, null);
+            Assert.AreEqual(0, ((Dictionary<SpriteRenderer, Vector4>)type.GetField("coopWaterViewStates", flags).GetValue(manager)).Count);
+            Assert.AreEqual(0, ((Dictionary<int, int>)type.GetField("coopViewMaterialIds", flags).GetValue(manager)).Count);
+        }
+        finally
+        {
+            Object.DestroyImmediate(viewsRoot); Object.DestroyImmediate(root); Object.DestroyImmediate(catalog);
+            if (regular != null) Object.DestroyImmediate(regular);
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void R03SpriteEdgesKeepManualAndAutomaticFramesAtNativeBoundaries(bool manual)
+    {
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var type = typeof(BombermanNetworkManager);
+        var root = new GameObject("R03ClipEdgeManager"); root.SetActive(false);
+        var actor = new GameObject("R03ClipEdge", typeof(SpriteRenderer));
+        var texture = new Texture2D(4, 4);
+        var first = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.zero);
+        var second = Sprite.Create(texture, new Rect(2, 0, 2, 2), Vector2.zero);
+        try
+        {
+            var manager = root.AddComponent<BombermanNetworkManager>();
+            var renderer = actor.GetComponent<SpriteRenderer>();
+            var animation = actor.AddComponent<AnimatedSpriteRenderer>();
+            animation.animationSprite = new[] { first, second }; animation.idle = false;
+            animation.loop = true; animation.SetManualAnimationUpdate(manual); animation.CurrentFrame = 1;
+            renderer.sprite = second;
+            int id = renderer.GetEntityId().GetHashCode();
+            type.GetField("coopRenderers", flags).SetValue(manager, new[] { renderer });
+            var sprites = (Dictionary<Sprite, int>)type.GetField("coopSpriteIds", flags).GetValue(manager);
+            sprites[first] = 1; sprites[second] = 2;
+            var frames = (Dictionary<int, CoopSpriteFrame>)type.GetField("coopLastSprites", flags).GetValue(manager);
+            var limits = (Dictionary<int, float>)type.GetField("coopEnemyVisualLimits", flags).GetValue(manager);
+            frames[id] = new CoopSpriteFrame { id = id, sprite = 1, visible = true, enemyStepLimit = 24,
+                time = NetworkTime.localTime - .1, position = actor.transform.position, rotation = Quaternion.identity,
+                scale = Vector3.one, playback = R03Playback(animation) };
+            limits[id] = 24;
+            type.GetMethod("PublishCoopEnemyTransitions", flags).Invoke(manager, new object[] { false });
+            var published = (List<CoopSpriteFrame>)type.GetField("coopEnemyTransitions", flags).GetValue(manager);
+            Assert.AreEqual(1, published.Count, "Automatic clips also need approved edges at quantized native frame boundaries.");
+            Assert.AreEqual(2, published[0].sprite);
+            Assert.AreEqual(manual ? 0 : animation.CapturePlayback().speed, published[0].playback.speed);
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(root);
+            Object.DestroyImmediate(first); Object.DestroyImmediate(second); Object.DestroyImmediate(texture);
+        }
+    }
+
+    [Test]
+    public void R03DiscreteEnemyPosePreservesTheRestVertexBeforeMovement()
+    {
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var type = typeof(BombermanNetworkManager);
+        var legacy = type.GetField("coopLegacyState", BindingFlags.Static | BindingFlags.NonPublic);
+        object oldLegacy = legacy.GetValue(null);
+        var root = new GameObject("R03RestEdgeManager"); root.SetActive(false);
+        var actor = new GameObject("R03RestEdge", typeof(SpriteRenderer));
+        try
+        {
+            legacy.SetValue(null, 2);
+            var manager = root.AddComponent<BombermanNetworkManager>();
+            var renderer = actor.GetComponent<SpriteRenderer>();
+            int id = renderer.GetEntityId().GetHashCode();
+            double now = NetworkTime.localTime;
+            type.GetField("coopRenderers", flags).SetValue(manager, new[] { renderer });
+            var frames = (Dictionary<int, CoopSpriteFrame>)type.GetField("coopLastSprites", flags).GetValue(manager);
+            var sent = (Dictionary<int, double>)type.GetField("coopLastSentTime", flags).GetValue(manager);
+            var poses = (Dictionary<int, Vector3>)type.GetField("coopPreviousPose", flags).GetValue(manager);
+            var limits = (Dictionary<int, float>)type.GetField("coopEnemyVisualLimits", flags).GetValue(manager);
+            frames[id] = new CoopSpriteFrame { id = id, sprite = 99, visible = true, enemyStepLimit = 24,
+                time = now - .0167, position = Vector3.zero, rotation = Quaternion.identity, scale = Vector3.one };
+            sent[id] = now - .2; poses[id] = Vector3.zero; limits[id] = 24;
+            type.GetField("coopPreviousFrameTime", flags).SetValue(manager, now - .0167);
+            actor.transform.position = Vector3.up;
+            type.GetMethod("PublishCoopEnemyTransitions", flags).Invoke(manager, new object[] { false });
+            var published = (List<CoopSpriteFrame>)type.GetField("coopEnemyTransitions", flags).GetValue(manager);
+            Assert.AreEqual(2, published.Count, "The pose edge must preserve the approved rest before its new position.");
+            Assert.AreEqual(now - .0167, published[0].time, 1e-9);
+            Assert.AreEqual(Vector3.zero, published[0].position);
+            Assert.AreEqual(Vector3.up, published[1].position);
+            Assert.Greater(published[1].time, published[0].time);
+        }
+        finally { Object.DestroyImmediate(actor); Object.DestroyImmediate(root); legacy.SetValue(null, oldLegacy); }
+    }
+
+    [Test]
+    public void R03ApprovedWaterlineRoundTripsWithoutClientTerrainQueries()
+    {
+        var managerObject = new GameObject("R03WaterManager"); managerObject.SetActive(false);
+        var actor = new GameObject("R03WaterSource");
+        var observer = new GameObject("R03WaterObserver");
+        Material runtime = null;
+        try
+        {
+            var manager = managerObject.AddComponent<BombermanNetworkManager>();
+            var source = actor.AddComponent<SpriteRenderer>();
+            var view = observer.AddComponent<SpriteRenderer>();
+            runtime = new Material(Resources.Load<Material>("Materials/PlayerWaterSubmersion"));
+            source.sharedMaterial = runtime;
+            var properties = new MaterialPropertyBlock();
+            properties.SetFloat("_WaterSurfaceY", 12.25f); properties.SetFloat("_SurfaceLineHeight", .15f);
+            properties.SetFloat("_UseSurfaceLine", 1); properties.SetFloat("_PremultiplyUnderwaterOpacity", 1);
+            source.SetPropertyBlock(properties);
+            var state = (CoopWaterSurface)typeof(BombermanNetworkManager).GetMethod("CaptureCoopWater", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager, new object[] { source });
+            var writer = new NetworkWriter(); writer.Write(new CoopSpriteFrame { water = state });
+            var received = new NetworkReader(writer.ToArray()).Read<CoopSpriteFrame>().water;
+            Assert.IsTrue(state.Equals(received));
+            Assert.IsTrue((bool)typeof(BombermanNetworkManager).GetMethod("ApplyCoopWater", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager, new object[] { view, received }));
+            view.GetPropertyBlock(properties);
+            Assert.AreEqual(12.25f, properties.GetFloat("_WaterSurfaceY"));
+            Assert.AreEqual(.15f, properties.GetFloat("_SurfaceLineHeight"));
+            Assert.AreEqual(1, properties.GetFloat("_UseSurfaceLine"));
+            Assert.AreEqual(1, properties.GetFloat("_PremultiplyUnderwaterOpacity"));
+            Assert.IsFalse(new CoopWaterSurface { parameters = new Vector4(float.NaN, .15f, 1, 0) }.IsValid());
+            Assert.IsFalse(new CoopWaterSurface { parameters = new Vector4(0, 2, 1, 0) }.IsValid());
+            Assert.IsFalse(new CoopWaterSurface { parameters = new Vector4(0, .15f, 2, 0) }.IsValid());
+            Assert.IsFalse(new CoopSpriteFrame { water = state }.Matches(new CoopSpriteFrame()));
+        }
+        finally
+        {
+            Object.DestroyImmediate(observer); Object.DestroyImmediate(actor); Object.DestroyImmediate(managerObject);
+            if (runtime != null) Object.DestroyImmediate(runtime);
+        }
+    }
+
+    static AnimatedSpriteRenderer.PlaybackState R03Playback(AnimatedSpriteRenderer source) =>
+        (AnimatedSpriteRenderer.PlaybackState)typeof(BombermanNetworkManager).GetMethod("CaptureCoopPlayback", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { source });
+    static bool R03Transition(SpriteRenderer renderer, CoopSpriteFrame previous) =>
+        (bool)typeof(BombermanNetworkManager).GetMethod("NeedsCoopEnemyTransition", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { renderer, previous });
+    [TestCase(true)]
+    [TestCase(false)]
+    public void R03ManualEnemyFrameStaysApprovedWhileAutomaticAnimationAdvances(bool manual)
+    {
+        var actor = new GameObject("R03NativeManualPose"); actor.SetActive(false);
+        var texture = new Texture2D(4, 4);
+        var first = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.zero);
+        var second = Sprite.Create(texture, new Rect(2, 0, 2, 2), Vector2.zero);
+        try
+        {
+            actor.AddComponent<SpriteRenderer>();
+            var animation = actor.AddComponent<AnimatedSpriteRenderer>();
+            animation.animationSprite = new[] { first, second };
+            animation.animationTime = .1f;
+            animation.loop = true; animation.idle = false;
+            animation.CurrentFrame = 0;
+            animation.SetManualAnimationUpdate(manual);
+            var state = R03Playback(animation);
+            Assert.AreEqual(manual ? 0f : Time.timeScale, state.speed);
+            animation.PresentPlayback(state, .15f, false);
+            Assert.AreEqual(manual ? 0 : 1, animation.CurrentFrame,
+                "An observer must not invent the Frog/SnowMan controller's next manually selected frame.");
+        }
+        finally { Object.DestroyImmediate(actor); Object.DestroyImmediate(first); Object.DestroyImmediate(second); Object.DestroyImmediate(texture); }
+    }
+
+    [Test]
+    public void R03EnemyVisibilityAndManualFrameEdgesAreApprovedDiscreteChanges()
+    {
+        var actor = new GameObject("R03ApprovedEdge"); actor.SetActive(false);
+        try
+        {
+            var renderer = actor.AddComponent<SpriteRenderer>();
+            var animation = actor.AddComponent<AnimatedSpriteRenderer>();
+            var frame = new CoopSpriteFrame { visible = false, playback = animation.CapturePlayback() };
+            Assert.IsFalse(R03Transition(renderer, frame));
+            // Renderer visibility is authoritative even when a native animator is disabled.
+            frame.visible = true;
+            Assert.IsTrue(R03Transition(renderer, frame));
+            frame.visible = false; renderer.enabled = false;
+            Assert.IsFalse(R03Transition(renderer, frame));
+        }
+        finally { Object.DestroyImmediate(actor); }
+    }
+
+    [Test]
+    public void R03SnowSceneProceduralFlakeCanBePublishedWithoutMissingCatalogAsset()
+    {
+        var actor = new GameObject("R03SnowScene"); actor.SetActive(false);
+        Sprite sprite = null;
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var effect = actor.AddComponent<StageAssets.Stage35SnowfallEffect>();
+        typeof(StageAssets.Stage35SnowfallEffect).GetField("pixelsPerUnit", flags).SetValue(effect, 16);
+        try
+        {
+            sprite = (Sprite)typeof(StageAssets.Stage35SnowfallEffect).GetMethod("CreateFlakeSprite", flags).Invoke(effect, null);
+            Assert.IsTrue(sprite.texture.isReadable, "CoopSpriteId must be able to publish the generated flake's pixels.");
+            Assert.Greater(sprite.texture.GetPixels32().Length, 0);
+        }
+        finally
+        {
+            if (sprite != null) { Object.DestroyImmediate(sprite.texture); Object.DestroyImmediate(sprite); }
+            typeof(StageAssets.Stage35SnowfallEffect).GetField("flakeTexture", flags).SetValue(effect, null);
+            Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void R03LeavingAManualPosePublishesTheReturnToAutomaticPlayback()
+    {
+        float oldScale = Time.timeScale;
+        var actor = new GameObject("R03ManualHandoff"); actor.SetActive(false);
+        try
+        {
+            Time.timeScale = 1;
+            var renderer = actor.AddComponent<SpriteRenderer>();
+            var animation = actor.AddComponent<AnimatedSpriteRenderer>();
+            actor.SetActive(true);
+            animation.SetManualAnimationUpdate(true);
+            var previous = new CoopSpriteFrame { visible = true, playback = R03Playback(animation) };
+            animation.SetManualAnimationUpdate(false);
+            Assert.IsTrue(R03Transition(renderer, previous),
+                "A landing must not keep the previous frozen playback until the periodic full capture.");
+        }
+        finally { Object.DestroyImmediate(actor); Time.timeScale = oldScale; }
+    }
+
+    [TestCase(false, false, false)]
+    [TestCase(true, false, true)]
+    [TestCase(true, true, false)]
+    public void R03ActualMirrorClientsNeverStartTheRawKcpLoadGenerator(bool client, bool join, bool expected)
+    {
+        var args = new List<string>();
+        if (client) args.Add("-load-test-client");
+        if (join) { args.Add("-online-join"); args.Add("kcp://127.0.0.1:29730"); }
+        var method = typeof(LocalServerLoadTest).GetMethod("UseSyntheticLoadClients", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.AreEqual(expected, method.Invoke(null, new object[] { args.ToArray() }));
+    }
+
     [TestCase(typeof(EnemyMovementController))]
     [TestCase(typeof(JunctionTurningEnemyMovementController))]
     [TestCase(typeof(FrogEnemyMovementController))]
@@ -31,6 +305,7 @@ public sealed partial class OnlineRoomEditModeTests
             Assert.AreEqual(new Vector3(21.3f, 22.4f), actor.transform.position);
             Assert.IsFalse((bool)typeof(EnemyMovementController).GetField("isDead", flags).GetValue(enemy));
             Assert.AreEqual(random, Random.state); Assert.IsTrue(actor.GetComponent<Collider2D>().enabled);
+            if (enemy is HopRobotMovementController hop) Assert.IsFalse(hop.TryBarrelCrushStun(1));
             if (enemy is SnowManMovementController)
             {
                 Assert.IsFalse((bool)type.GetMethod("TryBeginJump", flags).Invoke(enemy, null));

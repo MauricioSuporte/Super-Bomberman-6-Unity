@@ -1290,7 +1290,10 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!movementLockCaptured)
             return;
 
-        if (globalLock)
+        // Pause gates gameplay globally; it does not own movement.InputLocked.
+        // A coroutine can finish its final yield on the frame pause begins. Do
+        // not turn that temporary pause into a permanent movement lock after resume.
+        if (globalLock && (!GamePauseController.IsPaused || IsNonPauseGlobalLockActive()))
         {
             movement.SetInputLocked(true, false);
             movementLockCaptured = false;
@@ -1416,9 +1419,10 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         RestoreBombControllerInputModeIfNeeded("ForceDropIfHolding");
     }
 
-    private bool IsGlobalLockActive()
+    private bool IsGlobalLockActive() => GamePauseController.IsPaused || IsNonPauseGlobalLockActive();
+
+    private bool IsNonPauseGlobalLockActive()
     {
-        if (GamePauseController.IsPaused) return true;
         if (ClownMaskBoss.BossIntroRunning) return true;
         if (IsExternalBlockingDismount()) return true;
 

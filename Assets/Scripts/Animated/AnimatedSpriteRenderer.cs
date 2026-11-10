@@ -81,6 +81,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     float frameTimer;
     float loopRestartTimer;
     bool manualAnimationUpdate;
+    public bool ManualAnimationUpdate => manualAnimationUpdate;
 
     // Playback state is visual only; remote peers never run animation owners or gameplay.
     public struct PlaybackState

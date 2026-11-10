@@ -209,7 +209,8 @@ namespace StageAssets
             var pixels = new Color[flakeSizePixels * flakeSizePixels];
             for (int i = 0; i < pixels.Length; i++) pixels[i] = Color.white;
             flakeTexture.SetPixels(pixels);
-            flakeTexture.Apply(false, true);
+            // The co-op sprite definition reads this tiny procedural texture on the authority.
+            flakeTexture.Apply(false, false);
 
             return Sprite.Create(flakeTexture, new Rect(0f, 0f, flakeSizePixels, flakeSizePixels), new Vector2(0.5f, 0.5f), pixelsPerUnit);
         }

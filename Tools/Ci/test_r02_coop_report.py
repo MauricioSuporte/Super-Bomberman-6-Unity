@@ -34,6 +34,23 @@ def client_item(identity, moving, stalls, starved, continuous, delay_sum=0.0):
 
 
 class R02CoopReportTests(unittest.TestCase):
+    def test_steady_cost_tail_excludes_setup_without_mutating_markers(self):
+        markers = {"start": 1000, "pause": 46000}
+        selected = report.steady_cost_window(markers, 30)
+        self.assertEqual(selected["start"], 16000)
+        self.assertEqual(selected["fixtureStart"], 1000)
+        self.assertEqual(selected["steadySeconds"], 30)
+        self.assertEqual(markers["start"], 1000)
+
+    def test_steady_cost_tail_rejects_insufficient_data(self):
+        with self.assertRaisesRegex(ValueError, "shorter"):
+            report.steady_cost_window({"start": 1000, "pause": 20000}, 30)
+
+    def test_steady_cost_tail_rejects_invalid_duration(self):
+        for seconds in (0, -1, float("nan"), float("inf")):
+            with self.subTest(seconds=seconds), self.assertRaises(ValueError):
+                report.steady_cost_window({"start": 1000, "pause": 46000}, seconds)
+
     def test_percentile_uses_upper_bin_edge_and_handles_empty(self):
         self.assertIsNone(report.percentile_from_bins([], .95))
         self.assertAlmostEqual(0.1, report.percentile_from_bins([95, 5], .95))

@@ -98,13 +98,13 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopSprites()
         {
-            ClearCoopBlackoutMasks(); ClearCoopPresentationMetrics();
+            ClearCoopBlackoutMasks(); ClearCoopPresentationMetrics(); ClearR03Diagnostics();
             foreach (var sprite in coopDynamicSprites.Values) if (sprite != null) Destroy(sprite);
             foreach (var texture in coopDynamicTextures.Values) if (texture != null) Destroy(texture);
             coopAnimationDefinitions.Clear(); coopAnimationClips.Clear(); coopVisualSamples.Clear();
             coopVisualRemovals.Clear(); coopViewClips.Clear(); bombVisualSamples.Clear();
             coopExpiredViews.Clear(); expiredBombViews.Clear(); coopPendingRenderers.Clear(); nextBombAnimation = 0;
-            coopEnemyVisualLimits.Clear(); coopPhysicsPause.Clear(); coopCartCarriers.Clear();
+            coopEnemyVisualLimits.Clear(); coopPhysicsPause.Clear(); coopCartCarriers.Clear(); coopEnemyTransitions.Clear();
             coopDynamicIds.Clear(); coopDynamicVersions.Clear(); coopDefinitions.Clear();
             coopDynamicSprites.Clear(); coopDynamicTextures.Clear(); coopViewSpriteIds.Clear();
         }
@@ -202,6 +202,15 @@ namespace Assets.Scripts.Netcode
         void ApplyCoopAnimationDefinition(CoopAnimationDefinition message)
         {
             if (CanApplyCoop(message.scene)) coopAnimationDefinitions[message.id] = message;
+        }
+
+        // A native jump controller may select each frame itself (Frog/SnowMan).
+        // Only its approved frame is known; do not run its animation autonomously on the observer.
+        internal static AnimatedSpriteRenderer.PlaybackState CaptureCoopPlayback(AnimatedSpriteRenderer source)
+        {
+            var state = source.CapturePlayback();
+            if (source.ManualAnimationUpdate) state.speed = 0;
+            return state;
         }
 
         void PresentCoopAnimation(SpriteRenderer view, CoopSpriteFrame frame, double playbackOrigin)
@@ -319,7 +328,9 @@ namespace Assets.Scripts.Netcode
             if (CoopR02Legacy || !previous.visible || !frame.visible) return false;
             if (previous.position == frame.position && previous.rotation == frame.rotation && previous.scale == frame.scale) return false;
             double at = coopPreviousFrameTime;
-            if (at <= previous.time || at >= frame.time) return false;
+            // An unchanged periodic capture refreshes previous.time without sending it.
+            // The last SENT time below, not the last capture time, decides whether this vertex is missing.
+            if (!double.IsFinite(at) || at >= frame.time) return false;
             if (coopLastSentTime.TryGetValue(id, out double sent) && sent >= at) return false;
             anchor.time = at;
             if (coopPreviousPose.TryGetValue(id, out var pose)) anchor.position = pose;
@@ -358,6 +369,72 @@ namespace Assets.Scripts.Netcode
                 coopRepositionIds.Add(id);
                 if (shapeDiagnostics) RecordCoopRepositionMetric(renderer, id, approved, before, previous, position, now);
             }
+        }
+
+        // Discrete enemy pose/visibility changes must not wait for the next 20 Hz world tick.
+        // This publishes only approved edges, not a second simulation or a second presenter.
+        readonly List<CoopSpriteFrame> coopEnemyTransitions = new();
+        internal static bool NeedsCoopEnemyTransition(SpriteRenderer renderer, in CoopSpriteFrame previous)
+        {
+            bool visible = renderer.gameObject.activeInHierarchy && renderer.enabled && !renderer.forceRenderingOff;
+            if (visible != previous.visible) return true;
+            if (!visible) return false;
+            bool water = UsesCoopWater(renderer);
+            if (water != (previous.water != null)) return true;
+            // Automatic clips already advance from their approved phase. Manual/idle poses are discrete.
+            return renderer.TryGetComponent<AnimatedSpriteRenderer>(out var animation) && animation.isActiveAndEnabled &&
+                (CaptureCoopPlayback(animation).speed != previous.playback.speed ||
+                 ((animation.ManualAnimationUpdate || animation.idle) && renderer.sprite != null &&
+                  (animation.CurrentFrame != previous.playback.frame || animation.idle != previous.playback.idle)));
+        }
+
+        void PublishCoopEnemyTransitions(bool shapeDiagnostics)
+        {
+            coopEnemyTransitions.Clear();
+            // A freshly created ground shadow/ripple is registered synchronously by its native owner.
+            // Publish its first approved pose with the body's edge, not at the later discovery tick.
+            foreach (var renderer in coopPendingRenderers)
+            {
+                if (renderer == null) continue;
+                int id = renderer.GetEntityId().GetHashCode();
+                if (coopLastSprites.ContainsKey(id) || CoopEnemyVisualLimit(renderer) <= 0) continue;
+                var frame = CaptureCoopFrame(renderer);
+                coopEnemyTransitions.Add(frame); coopLastSprites[id] = frame; coopLastSentTime[id] = frame.time;
+                if (shapeDiagnostics) CoopShapePendingList(id).Add(CoopVisualSample.Full(frame));
+            }
+            foreach (var renderer in coopRenderers)
+            {
+                if (renderer == null) continue;
+                int id = renderer.GetEntityId().GetHashCode();
+                if (!coopLastSprites.TryGetValue(id, out var previous) || previous.enemyStepLimit <= 0) continue;
+                // Even automatic clips change on quantized native frames. Their approved edges
+                // prevent a continuous client clock from crossing the boundary one frame early.
+                var sprite = renderer.sprite;
+                int spriteId = sprite == null ? -1 :
+                    (coopSpriteIds.TryGetValue(sprite, out int known) || coopDynamicIds.TryGetValue(sprite, out known) ? known : -2);
+                bool changedSprite = previous.visible && renderer.enabled && renderer.gameObject.activeInHierarchy && spriteId != previous.sprite;
+                if (!changedSprite && !NeedsCoopEnemyTransition(renderer, previous)) continue;
+                long started = shapeDiagnostics ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+                var frame = CaptureCoopFrame(renderer);
+                RecordCoopPresentationMetric(renderer, frame, true, started);
+                // A discrete pose edge can also be the first moving frame after a rest.
+                // Preserve its previous-frame vertex just like the periodic full-state path.
+                if (TryCoopRestAnchor(id, previous, frame, out var anchor))
+                {
+                    coopEnemyTransitions.Add(anchor);
+                    if (shapeDiagnostics) CoopShapePendingList(id).Add(CoopVisualSample.Full(anchor));
+                }
+                coopEnemyTransitions.Add(frame);
+                coopLastSprites[id] = frame;
+                coopLastSentTime[id] = frame.time;
+                if (shapeDiagnostics)
+                {
+                    var pending = CoopShapePendingList(id);
+                    pending.Add(CoopVisualSample.Full(frame));
+                }
+            }
+            if (coopEnemyTransitions.Count > 0)
+                SendCoopSpriteDeltas(coopPeerBuffer, coopEnemyTransitions, System.Array.Empty<int>());
         }
 
         void PublishCoopMotion(bool shapeDiagnostics)
@@ -545,7 +622,12 @@ namespace Assets.Scripts.Netcode
                     if (coopVisualRemovals.TryGetValue(id, out double removed) && clock >= removed)
                     {
                         ReleaseCoopMaskMaterial(id, null);
-                        if (coopViews.Remove(id, out var view) && view != null) Destroy(view.gameObject);
+                        coopViewMaterialIds.Remove(id);
+                        if (coopViews.Remove(id, out var view) && view != null)
+                        {
+                            ReleaseCoopWater(view);
+                            Destroy(view.gameObject);
+                        }
                         coopViewSpriteIds.Remove(id); coopViewClips.Remove(id);
                         coopExpiredViews.Add(id); continue;
                     }
@@ -555,6 +637,7 @@ namespace Assets.Scripts.Netcode
                     // Buffered pre-pause samples must not advance or rewind it.
                     if (GamePauseController.IsPaused && samples.Count > 0 && (samples[^1].frame.enemyStepLimit > 0 || samples[^1].frame.pauseWithGameplay) && coopViews.ContainsKey(id))
                     {
+                        RecordR03View(samples[^1].frame, clock, coopViews[id]);
                         if (presentDiagnostics) CoopPresentStat(id).pausedHeld++;
                         continue;
                     }
@@ -636,6 +719,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!NetworkServer.active || !IsCoopStage || singleton is not BombermanNetworkManager manager) return;
             if (!manager.TrackCoopRenderer(renderer)) return;
+            manager.TrackR03Owner(renderer, motionOwner);
             float limit = EnemyVisualLimit(motionOwner);
             if (limit > 0) manager.coopEnemyVisualLimits[renderer.GetEntityId().GetHashCode()] = limit;
         }

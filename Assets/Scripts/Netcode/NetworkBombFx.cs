@@ -73,6 +73,7 @@ namespace Assets.Scripts.Netcode
         {
             public KickMotion motion;
             public float elapsed, staleSeconds;
+            public int predictedFrame = -1;
             public double endpointWaitAt = -1;
             public Vector2 presented, correction;
             public bool predictedContinuation, unconfirmed, predictedBounce, predictedLandingBounce, approvedOnly;
@@ -129,7 +130,7 @@ namespace Assets.Scripts.Netcode
             var history = new KickInputHistory(input.CurrentMovementTick, origin);
             history.Remember(input.CurrentMovementTick, origin);
             var playback = new KickPlayback { unconfirmed = true, history = history, startInputTick = input.CurrentMovementTick,
-                predictedAt = Time.realtimeSinceStartupAsDouble, replicaPosition = movingBomb.transform.position,
+                predictedAt = Time.realtimeSinceStartupAsDouble, predictedFrame = Time.frameCount, replicaPosition = movingBomb.transform.position,
                 motion = new KickMotion { bombId = identity.netId, inputTick = input.CurrentMovementTick,
                     start = origin, end = origin + direction * tileSize, duration = duration,
                     moving = true, first = true, serverTime = KickServerNow }, elapsed = Time.fixedDeltaTime };
@@ -364,6 +365,11 @@ namespace Assets.Scripts.Netcode
                 !NetworkInputHistory.IsNewer(motion.revision, movingBomb.ClientMotionRevision)) return;
             if (motion.worldMotion) rejectedStarts.Remove(movingBomb);
             kickPlayback.TryGetValue(movingBomb, out var previous);
+            // Native glove release emits a Carry stop immediately before Throw.
+            // A batched newer tick on that trailer does not confirm the owner's
+            // pending throw or authorize resetting its already-presented phase.
+            if (!motion.worldMotion && previous != null && previous.unconfirmed && previous.motion.kind == BombMotionKind.Throw &&
+                !motion.moving && (motion.kind == BombMotionKind.Carry || motion.kind == BombMotionKind.Lift)) return;
             if (!motion.worldMotion && previous != null && previous.unconfirmed && previous.motion.kind != motion.kind &&
                 !NetworkInputHistory.IsNewer(motion.inputTick, previous.history.startTick)) return;
             if (!applyingQueuedBombArc && previous != null && previous.pendingArcs.Count > 0)
@@ -526,16 +532,19 @@ namespace Assets.Scripts.Netcode
                     // NetworkTransform is still decoding/updating its authoritative
                     // timeline; retain that replica as the rollback destination.
                     playback.replicaPosition = LatestReplicaPosition(movingBomb, playback.replicaPosition);
-                    if (playback.staleSeconds > Mathf.Clamp((float)NetworkTime.rtt * 3, 0.5f, 1f))
-                    {
-                        RollbackPrediction(movingBomb, playback, "confirmation_timeout");
-                        expiredKicks.Add(movingBomb); continue;
-                    }
                 }
-                if (!GamePauseController.IsPaused)
+                // deltaTime describes the PREVIOUS rendered interval. A prediction
+                // created in this frame already applied its bounded first step; it
+                // must not inherit a pre-input hitch and expire before its first RPC.
+                if (!GamePauseController.IsPaused && (!playback.unconfirmed || playback.predictedFrame != Time.frameCount))
                 {
                     playback.elapsed += deltaTime;
                     playback.staleSeconds += unscaledDeltaTime;
+                }
+                if (playback.unconfirmed && playback.staleSeconds > Mathf.Clamp((float)NetworkTime.rtt * 3, 0.5f, 1f))
+                {
+                    RollbackPrediction(movingBomb, playback, "confirmation_timeout");
+                    expiredKicks.Add(movingBomb); continue;
                 }
                 var motion = playback.motion;
                 bool hasReadyArc = playback.pendingArcs.Count > 0 && playback.elapsed >= motion.duration;
@@ -567,7 +576,7 @@ namespace Assets.Scripts.Netcode
                     transformOffset = NetworkClient.sendInterval * (sync.sendIntervalMultiplier - 1 +
                         (sync.timelineOffset ? sync.sendIntervalMultiplier : 0));
                 bool caughtUp = !motion.moving && NetworkTime.time >= motion.serverTime + transformOffset;
-                if (!hasReadyArc && (caughtUp || (playback.motion.kind != BombMotionKind.Carry && playback.motion.kind != BombMotionKind.Lift &&
+                if (!playback.unconfirmed && !hasReadyArc && (caughtUp || (playback.motion.kind != BombMotionKind.Carry && playback.motion.kind != BombMotionKind.Lift &&
                     playback.staleSeconds > Mathf.Max(1f, motion.duration + 0.5f))))
                 {
                     expiredKicks.Add(movingBomb);

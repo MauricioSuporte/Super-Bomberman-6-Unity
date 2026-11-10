@@ -87,6 +87,7 @@ namespace Assets.Scripts.Netcode
         MovementController movement;
         uint localTick, receivedTick, processedTick, movementTick;
         int sampledHeld, pendingPressed, serverHeldMask;
+        int serverActionFrame = -1, serverFrameActionEdges;
         float nextSnapshot;
         uint lastSnapshotTick;
         Vector2 lastSnapshotPosition;
@@ -172,7 +173,8 @@ namespace Assets.Scripts.Netcode
             // Pause uses unscaled Update; stale gameplay inputs must not survive resume.
             if (Blocked)
             {
-                serverInputs.Clear(); processedTick = receivedTick; serverHeldMask = 0;
+                serverInputs.Clear(); processedTick = receivedTick;
+                serverHeldMask = RetainReleaseSensitiveActions(serverHeldMask); serverFrameActionEdges = 0;
                 serverStepBudget.Reset();
                 return;
             }
@@ -208,25 +210,22 @@ namespace Assets.Scripts.Netcode
             serverStepBudget.Advance();
             if (Blocked)
             {
-                serverInputs.Clear(); processedTick = receivedTick; serverHeldMask = 0;
+                serverInputs.Clear(); processedTick = receivedTick;
+                serverHeldMask = RetainReleaseSensitiveActions(serverHeldMask); serverFrameActionEdges = 0;
                 lastServerInputAt = double.NegativeInfinity;
                 serverStepBudget.Reset();
                 ApplyServerControls(PlayerInputManager.Instance, 0, 0);
                 return;
             }
-            int actionEdges = 0, steps = 0;
+            int steps = 0;
+            RecordServerActionEdges(default, Time.frameCount);
             while (steps < 4 && serverInputs.Count > 0 && serverStepBudget.TryConsume())
             {
                 var queued = serverInputs.Dequeue();
                 var frame = queued.frame;
                 processedTick = frame.tick;
                 serverHeldMask = frame.held;
-                actionEdges |= frame.pressed;
-                // Edges merged from an overflow-dropped tick keep that tick, the one the owner predicted with.
-                if ((frame.pressed & 16) != 0) CurrentActionATick = queued.EdgeTick(16);
-                if ((frame.pressed & 32) != 0) CurrentActionBTick = queued.EdgeTick(32);
-                if ((frame.pressed & 128) != 0) CurrentSelectTick = queued.EdgeTick(128);
-                if ((frame.pressed & 64) != 0) CurrentActionCTick = queued.EdgeTick(64);
+                RecordServerActionEdges(queued, Time.frameCount);
                 lastServerInputAt = Time.realtimeSinceStartupAsDouble;
                 MotionDiagnosticProbe.TickApplied(gameObject,
                     (Time.realtimeSinceStartupAsDouble - queued.receivedAt) * 1000);
@@ -238,16 +237,35 @@ namespace Assets.Scripts.Netcode
                 steps++;
             }
             if (steps == 0 && !RetainHeldInput(Time.realtimeSinceStartupAsDouble - lastServerInputAt))
-                serverHeldMask = 0;
+                serverHeldMask = RetainReleaseSensitiveActions(serverHeldMask);
             // Held buttons survive ordinary message gaps. Only transmitted action
             // edges become GetDown, once for the gameplay Update in this render frame.
-            ApplyServerControls(PlayerInputManager.Instance, serverHeldMask, actionEdges);
+            ApplyServerControls(PlayerInputManager.Instance, serverHeldMask, serverFrameActionEdges);
+        }
+
+        // Gameplay consumes one GetDown per rendered frame, even if physics drains
+        // several packets/steps. Its confirmation must retain the FIRST press tick,
+        // never the last press coalesced into that same GetDown (A/glove in particular).
+        void RecordServerActionEdges(QueuedInput queued, int renderFrame)
+        {
+            if (serverActionFrame != renderFrame)
+            {
+                serverActionFrame = renderFrame;
+                serverFrameActionEdges = 0;
+            }
+            int first = queued.frame.pressed & ~serverFrameActionEdges;
+            if ((first & 16) != 0) CurrentActionATick = queued.EdgeTick(16);
+            if ((first & 32) != 0) CurrentActionBTick = queued.EdgeTick(32);
+            if ((first & 64) != 0) CurrentActionCTick = queued.EdgeTick(64);
+            if ((first & 128) != 0) CurrentSelectTick = queued.EdgeTick(128);
+            serverFrameActionEdges |= queued.frame.pressed;
         }
 
         public uint ResetForConfirmedRevengeReturn(uint acknowledged = 0)
         {
             serverInputs.Clear(); pending.Clear(); serverStepBudget.Reset();
-            sampledHeld = pendingPressed = serverHeldMask = 0;
+            sampledHeld = pendingPressed = serverHeldMask = serverFrameActionEdges = 0;
+            serverActionFrame = -1;
             CurrentActionATick = CurrentActionBTick = CurrentActionCTick = CurrentSelectTick = 0;
             lastServerInputAt = double.NegativeInfinity; receivedSnapshot = serverAllowsPrediction = false;
             sentSnapshot = false;
@@ -259,6 +277,12 @@ namespace Assets.Scripts.Netcode
         }
 
         public static bool RetainHeldInput(double ageSeconds) => ageSeconds >= 0 && ageSeconds <= HeldInputGraceSeconds;
+
+        // Silence is not an A release: Power Glove throws on release. Keep only
+        // that already-received hold until a fresh input frame supplies its state.
+        // Movement/auto-punch still expire; pause, death/return and disconnect own
+        // their usual simulation/actor cleanup. This never creates a GetDown.
+        public static int RetainReleaseSensitiveActions(int held) => held & 16;
 
         void ApplyServerControls(PlayerInputManager input, int held, int pressed)
         {

@@ -539,6 +539,8 @@ public sealed partial class OnlineRoomEditModeTests
             typeof(Bomb).GetField("isKicked", flags).SetValue(bomb, false);
             Assert.IsFalse(bomb.StartKick(Vector2.up, 1, 0, null));
             Assert.IsFalse(bomb.StartMagnetPull(Vector2.up, 1, 3, 0, null, 1));
+            Assert.IsFalse(bomb.StartPunch(Vector2.up, 1, 3, 0, null), "Presentation cannot start native punch/throw/Rubber coroutines.");
+            Assert.IsFalse(bomb.IsBeingPunched);
             Assert.AreEqual(Vector2.right, typeof(Bomb).GetField("kickDirection", flags).GetValue(bomb));
             Assert.IsFalse(bomb.IsBeingMagnetPulled); Assert.IsFalse(bomb.IsBeingKicked);
         }
@@ -3337,6 +3339,9 @@ public sealed partial class OnlineRoomEditModeTests
             wall.enabled = false; Physics2D.SyncTransforms();
             Assert.IsTrue(fx.TryPredictKick(movingBomb, Vector2.right, 1));
             Assert.Greater(bombObject.transform.position.x, origin.x, "The bomb moves inside the contact call, before any server response.");
+            typeof(NetworkBombFx).GetMethod("PresentBombMotions", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(fx, new object[] { 1.2f, 1.2f });
+            Assert.IsTrue(fx.HasUnconfirmedClientMotion(movingBomb), "A pre-input frame hitch cannot expire a new kick on its creation frame.");
             Assert.IsFalse(movingBomb.IsBeingKicked, "Prediction must not start the gameplay coroutine.");
             Assert.IsFalse(fx.IsKickMovingForTick(movingBomb, 24));
             Assert.IsTrue(fx.IsKickMovingForTick(movingBomb, 25));
@@ -3498,6 +3503,15 @@ public sealed partial class OnlineRoomEditModeTests
                 kind = NetworkBombFx.BombMotionKind.Search, moving = false, start = origin, end = origin, serverTime = NetworkBombFx.KickServerNow });
             Assert.AreEqual(immediatePunch, (Vector2)replica.transform.position, "Another presenter's in-flight stop must not cancel our pending command.");
             Assert.IsTrue(fx.HasUnconfirmedClientMotion(bomb));
+            typeof(NetworkBombFx).GetMethod("PresentBombMotions", flags).Invoke(fx, new object[] { 1.2f, 1.2f });
+            Assert.IsTrue(fx.HasUnconfirmedClientMotion(bomb), "A pre-input hitch is not a confirmation timeout for a fresh Punch/Throw.");
+            var firstFramePlayback = (System.Collections.IDictionary)typeof(NetworkBombFx).GetField("kickPlayback", flags).GetValue(fx);
+            var firstFrameState = firstFramePlayback[bomb];
+            Assert.AreEqual(0f, firstFrameState.GetType().GetField("staleSeconds").GetValue(firstFrameState));
+            // A genuinely later frame with no approval still times out and rolls back.
+            firstFrameState.GetType().GetField("predictedFrame").SetValue(firstFrameState, Time.frameCount - 1);
+            typeof(NetworkBombFx).GetMethod("PresentBombMotions", flags).Invoke(fx, new object[] { 1.2f, 1.2f });
+            Assert.IsFalse(fx.HasUnconfirmedClientMotion(bomb));
             fx.ReconcilePredictedKicks(10);
             Assert.IsTrue(collider.enabled); Assert.IsFalse(bomb.ClientMotionNonBlocking); Assert.AreEqual(origin, (Vector2)replica.transform.position);
             Assert.IsFalse(fx.AbilityPredictionLocksMovement);

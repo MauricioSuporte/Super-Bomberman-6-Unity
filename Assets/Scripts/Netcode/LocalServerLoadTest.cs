@@ -66,6 +66,7 @@ namespace Assets.Scripts.Netcode
                 Debug.Log("[LoadTest] Synthetic durable actors; network controls at 30 Hz. Not normal game rules.");
             }
             if (!loadTestEnabled) return;
+            TickBombAbilitySmoke();
             if (Time.realtimeSinceStartup - loadTestStart > loadTestDuration)
             {
                 Debug.Log("[LoadTest] completed");
@@ -102,7 +103,7 @@ namespace Assets.Scripts.Netcode
                         global::SaveSystem.SetBattleModeSuddenDeathSetting(BattleModeSuddenDeathSetting.On);
                     if (HasArg("-load-test-revenge-input")) global::SaveSystem.SetBattleModeRevengeBomberEnabled(true);
                     var modes = global::SaveSystem.GetBattleModePlayerControlModes();
-                    bool fillCom = !HasArg("-load-test-mechanisms") && !HasArg("-load-test-mount-visuals") && HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles") && loadTestLauncherKind == null;
+                    bool fillCom = !HasArg("-load-test-bomb-abilities") && !HasArg("-load-test-mechanisms") && !HasArg("-load-test-mount-visuals") && HasArg("-load-test-com") && !HasArg("-load-test-mount-cycles") && loadTestLauncherKind == null;
                     if (fillCom) global::SaveSystem.SetBattleModeComputerLevel(BattleModeComputerLevel.Hard);
                     for (int i = 0; i < modes.Length; i++) modes[i] = IsConnectedSlot(i + 1) ? BattleModePlayerControlMode.Man :
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
@@ -117,7 +118,7 @@ namespace Assets.Scripts.Netcode
                 loadTestNextHealth = Time.unscaledTime + 1;
                 foreach (var health in FindObjectsByType<CharacterHealth>())
                     if (!health.IsDead) health.life = 200;
-                if (!loadTestSpawnsChecked && HasArg("-load-test-spawns") && !IsCoopRoom && Time.timeSinceLevelLoad > 3)
+                if (!loadTestSpawnsChecked && !HasArg("-load-test-bomb-abilities") && HasArg("-load-test-spawns") && !IsCoopRoom && Time.timeSinceLevelLoad > 3)
                 {
                     loadTestSpawnsChecked = true;
                     StartCoroutine(CheckLoadTestSpawns());
@@ -166,6 +167,7 @@ namespace Assets.Scripts.Netcode
             string scene = SceneManager.GetActiveScene().name;
             static string U() => " u=" + (DateTime.UtcNow.Ticks / 10000 - 63900000000000L).ToString(System.Globalization.CultureInfo.InvariantCulture);
             Debug.Log("[LoadTest] coop-world started scene=" + scene + U());
+            if (HasArg("-load-test-enemies")) yield return CheckLoadTestEnemyTransitions();
             // 30 s of steady native world first: the pre-registered cost window ends at the first pause.
             // R02 controlled reproduction: "-load-test-hitch-ms N" blocks the server main thread N ms every 2.5 s (12 times)
             // inside that window, so long server frames happen at known instants. Without the flag nothing changes.
@@ -199,6 +201,96 @@ namespace Assets.Scripts.Netcode
             ToggleNativePause(false); Debug.Log("[LoadTest] coop-world resumed index=2" + U());
             yield return new WaitForSecondsRealtime(5f);
             Debug.Log("[LoadTest] coop-world completed scene=" + scene + U());
+        }
+
+        // R03: exercise the real scene enemies, not a client-side clone or an invented path.
+        internal static System.Collections.IEnumerator CheckLoadTestEnemyTransitions()
+        {
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            bool HasPriorityEnemy()
+            {
+                foreach (var actor in FindObjectsByType<EnemyMovementController>())
+                    if (actor is FrogEnemyMovementController or HopRobotMovementController or SnowManMovementController or KorobokkuruMovementController) return true;
+                return false;
+            }
+            // World 3 suspends enemies in unvisited rooms. Traverse the authored transition,
+            // including camera/room lifecycle replication, rather than claiming coverage of inactive prefabs.
+            for (int room = 0; !HasPriorityEnemy() && room < 3; room++)
+            {
+                global::StageAssets.World3RoomTwoTransition transition = null;
+                foreach (var candidate in FindObjectsByType<global::StageAssets.World3RoomTwoTransition>())
+                    if ((Camera)typeof(global::StageAssets.World3RoomTwoTransition).GetField("sourceRoomCamera", flags).GetValue(candidate) == Camera.main)
+                    { transition = candidate; break; }
+                if (transition == null) break;
+                var type = typeof(global::StageAssets.World3RoomTwoTransition);
+                type.GetField("transitionStarted", flags).SetValue(transition, true);
+                type.GetField("transitionSourcePosition", flags).SetValue(transition, (Vector2)Camera.main.transform.position);
+                yield return (System.Collections.IEnumerator)type.GetMethod("TransitionRoutine", flags).Invoke(transition, null);
+                foreach (var peer in NetworkServer.connections.Values)
+                    if (peer.identity != null && peer.identity.TryGetComponent<NetworkPlayerInput>(out var input)) ServerReconcileFixturePlayer(input);
+                yield return new WaitForSecondsRealtime(1);
+            }
+            if (!HasPriorityEnemy()) throw new InvalidOperationException("R03 fixture never reached an active priority enemy");
+            var enemies = FindObjectsByType<EnemyMovementController>();
+            foreach (var enemy in enemies)
+            {
+                if (enemy == null) continue;
+                Debug.Log("[LoadTest] r03 native family=" + enemy.GetType().Name);
+                // SnowMan normally needs a bomb ahead. Ask its native eligibility/landing path;
+                // every selected destination still passes the real water/obstacle/body queries.
+                if (enemy is SnowManMovementController snow)
+                {
+                    bool began = (bool)typeof(SnowManMovementController).GetField("jumping", flags).GetValue(snow);
+                    var directionField = typeof(EnemyMovementController).GetField("direction", flags);
+                    var oldDirection = directionField.GetValue(snow);
+                    foreach (var direction in new[] { Vector2.up, Vector2.down, Vector2.left, Vector2.right })
+                    {
+                        if (began) break;
+                        directionField.SetValue(snow, direction);
+                        if ((bool)typeof(SnowManMovementController).GetMethod("TryBeginJump", flags).Invoke(snow, null))
+                        { began = true; break; }
+                    }
+                    if (!began) directionField.SetValue(snow, oldDirection);
+                    Debug.Log("[LoadTest] r03 snow native jump=" + began);
+                }
+            }
+            yield return new WaitForSecondsRealtime(.25f);
+            ToggleNativePause(true); Debug.Log("[LoadTest] r03 pause in native motion");
+            yield return new WaitForSecondsRealtime(1.2f);
+            ToggleNativePause(false); Debug.Log("[LoadTest] r03 resume native motion");
+            yield return new WaitForSecondsRealtime(4f);
+            foreach (var enemy in enemies)
+                if (enemy != null && enemy.TryGetComponent<StunReceiver>(out var stun)) stun.Stun(.5f);
+            Debug.Log("[LoadTest] r03 native stun");
+            yield return new WaitForSecondsRealtime(2f);
+            // Kill one instance, leave its siblings alive to measure normal walking/jump curves.
+            if (HasArg("-r03-enemy-interruptions"))
+            {
+                foreach (var enemy in enemies)
+                {
+                    if (enemy == null || enemy is not (FrogEnemyMovementController or HopRobotMovementController or SnowManMovementController or KorobokkuruMovementController)) continue;
+                    if (enemy is HopRobotMovementController hop)
+                    {
+                        bool crushed = hop.TryBarrelCrushStun(.5f);
+                        Debug.Log("[LoadTest] r03 native barrel family=" + enemy.GetType().Name + " applied=" + crushed);
+                        yield return new WaitForSecondsRealtime(.75f);
+                    }
+                    // Exercise real GameObject teardown before death, including separately parented shadows.
+                    enemy.gameObject.SetActive(false);
+                    yield return null;
+                    enemy.gameObject.SetActive(true);
+                    yield return new WaitForSecondsRealtime(.25f);
+                    Debug.Log("[LoadTest] r03 native disable and death family=" + enemy.GetType().Name);
+                    enemy.Kill();
+                }
+                yield return new WaitForSecondsRealtime(3f);
+            }
+            else if (enemies.Length > 0 && enemies[0] != null)
+            {
+                Debug.Log("[LoadTest] r03 native death family=" + enemies[0].GetType().Name);
+                enemies[0].Kill();
+            }
+            Debug.Log("[LoadTest] r03 transitions completed");
         }
 
         static void ToggleNativePause(bool paused)
@@ -1111,7 +1203,10 @@ namespace Assets.Scripts.Netcode
         uint ropeAckAfterTick;
         bool checkRopeInput, ropeSmokeHandler, checkPortalInput;
         bool checkLauncherInput, checkItemMotion, runRealInput, suspendPresenterInputs, revengeInput, quitAfterDisconnect, sawConnection;
-        bool remoteWalk, coopWorld;
+        bool remoteWalk, coopWorld, bombAbilitySmoke, bombAbilityHandler;
+        int bombAbilityHeld, bombAbilitySerial;
+        uint bombAbilityAckAfter;
+        float bombAbilityCaptureNext;
         // R02 reconnect: survive the first disconnect (the supported flow returns to the browser and joins the next room).
         bool awaitRejoin, leftRoom;
         int disconnects;
@@ -1146,6 +1241,7 @@ namespace Assets.Scripts.Netcode
             smoke.suspendPresenterInputs = Array.IndexOf(args, "-load-test-presenter-removal") >= 0;
             smoke.revengeInput = Array.IndexOf(args, "-load-test-revenge-input") >= 0;
             smoke.remoteWalk = Array.IndexOf(args, "-load-test-remote-walk") >= 0;
+            smoke.bombAbilitySmoke = Array.IndexOf(args, "-load-test-bomb-abilities") >= 0;
             smoke.coopWorld = Array.IndexOf(args, "-load-test-coop-world") >= 0;
             smoke.quitAfterDisconnect = Array.IndexOf(args, "-load-test-client") >= 0;
             smoke.awaitRejoin = Array.IndexOf(args, "-load-test-rejoin") >= 0;
@@ -1180,6 +1276,31 @@ namespace Assets.Scripts.Netcode
         void Update()
         {
             DriveRemoteWalk();
+            if (bombAbilitySmoke && NetworkClient.active)
+            {
+                if (!bombAbilityHandler)
+                {
+                    bombAbilityHandler = true;
+                    NetworkClient.RegisterHandler<BombAbilitySmokeStep>(step =>
+                    {
+                        bombAbilityHeld = step.held; bombAbilitySerial = step.serial;
+                        bombAbilityAckAfter = NetworkClient.localPlayer != null ? NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>().CurrentInputTick + 2 : 0;
+                        Debug.Log("[LoadTest] a14 input " + step.label + " serial=" + step.serial);
+                    });
+                }
+                if (NetworkClient.isConnected && NetworkClient.localPlayer != null && PlayerInputManager.Instance != null)
+                {
+                    var actions = new[] { PlayerAction.MoveUp, PlayerAction.MoveDown, PlayerAction.MoveLeft, PlayerAction.MoveRight,
+                        PlayerAction.ActionA, PlayerAction.ActionB, PlayerAction.ActionC };
+                    for (int i = 0; i < actions.Length; i++) PlayerInputManager.Instance.SetSyntheticHeld(1, actions[i], (bombAbilityHeld & (1 << i)) != 0);
+                    var tick = NetworkClient.localPlayer.GetComponent<NetworkPlayerInput>().CurrentInputTick;
+                    if (NetworkInputHistory.IsNewer(tick, bombAbilityAckAfter))
+                    {
+                        NetworkClient.Send(new BombAbilitySmokeAck { serial = bombAbilitySerial, tick = tick });
+                        bombAbilityAckAfter = unchecked(tick + 20);
+                    }
+                }
+            }
             if(mechanismKind!=null&&!mechanismHandler&&NetworkClient.active)
             {
                 mechanismHandler=true;NetworkClient.RegisterHandler<MechanismSmokeStep>(message=>
@@ -1363,6 +1484,11 @@ namespace Assets.Scripts.Netcode
                 // R02: rendered co-op world view; the UTC in the name matches each PNG to the motion logs.
                 coopWorldCaptureNext = Time.unscaledTime + (GamePauseController.IsPaused ? .25f : 1f);
                 CaptureMountFrame(camera, $"world-{++coopWorldCaptureSerial:D3}-{(GamePauseController.IsPaused ? "paused" : "live")}-{DateTime.UtcNow:HHmmss.fff}.png");
+            }
+            if (bombAbilitySmoke && captureWarmed && Time.unscaledTime >= bombAbilityCaptureNext)
+            {
+                bombAbilityCaptureNext = Time.unscaledTime + .25f;
+                CaptureMountFrame(camera, $"a14-{bombAbilitySerial:D3}-{Time.frameCount}.png");
             }
             if (checkMountVisuals) CaptureMountChangeFrames(camera);
             if (checkMountVisuals && visualCaptureSerial < 80 && (Time.unscaledTime >= visualCaptureAt || Time.unscaledTime >= visualAfkCaptureAt))
@@ -1605,10 +1731,15 @@ namespace Assets.Scripts.Netcode
         float started, duration, nextReport;
         bool configureWhenReady, configurationSent;
 
+        internal static bool UseSyntheticLoadClients(string[] args) =>
+            Array.IndexOf(args, "-load-test-client") >= 0 && Array.IndexOf(args, "-online-join") < 0;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
         {
-            if (!Debug.isDebugBuild || Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-client") < 0) return;
+            // Real rendered clients also use -load-test-client for capture/quit, but join through Mirror.
+            // Starting raw KCP load peers there races the scene bootstrap and targets an unrelated default port.
+            if (!Debug.isDebugBuild || !UseSyntheticLoadClients(Environment.GetCommandLineArgs())) return;
             SceneManager.LoadScene(NetworkLobby.SceneName);
             var root = new GameObject("LocalServerLoadTest");
             DontDestroyOnLoad(root);

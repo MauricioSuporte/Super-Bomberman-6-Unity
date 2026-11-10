@@ -5,6 +5,16 @@ using UnityEngine;
 
 namespace Assets.Scripts.Netcode
 {
+    // Approved waterline parameters, never a client terrain/gameplay query.
+    public sealed class CoopWaterSurface : IEquatable<CoopWaterSurface>
+    {
+        public Vector4 parameters;
+        public bool Equals(CoopWaterSurface other) => other != null && parameters == other.parameters;
+        public bool IsValid() => float.IsFinite(parameters.x) && float.IsFinite(parameters.y) &&
+            parameters.y >= 0 && parameters.y <= 1 && (parameters.z == 0 || parameters.z == 1) &&
+            (parameters.w == 0 || parameters.w == 1);
+    }
+
     // Optional approved material recipe; ordinary sprite frames carry only null.
     public sealed class CoopBlackoutMask : IEquatable<CoopBlackoutMask>
     {
@@ -44,6 +54,59 @@ namespace Assets.Scripts.Netcode
 
     public partial class BombermanNetworkManager
     {
+        MaterialPropertyBlock coopWaterProperties;
+        Material coopWaterTemplate;
+        readonly Dictionary<SpriteRenderer, Vector4> coopWaterViewStates = new();
+        readonly Dictionary<int, int> coopViewMaterialIds = new();
+        static Shader coopWaterShader;
+        static bool UsesCoopWater(SpriteRenderer renderer)
+        {
+            var material = renderer.sharedMaterial;
+            if (material == null) return false;
+            coopWaterShader = coopWaterShader != null ? coopWaterShader : Shader.Find("SuperBomberman/PlayerWaterSubmersion");
+            return coopWaterShader != null && material.shader == coopWaterShader;
+        }
+        internal CoopWaterSurface CaptureCoopWater(SpriteRenderer renderer)
+        {
+            if (!UsesCoopWater(renderer)) return null;
+            coopWaterProperties ??= new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(coopWaterProperties);
+            return new CoopWaterSurface { parameters = new Vector4(coopWaterProperties.GetFloat("_WaterSurfaceY"),
+                coopWaterProperties.GetFloat("_SurfaceLineHeight"), coopWaterProperties.GetFloat("_UseSurfaceLine"),
+                coopWaterProperties.GetFloat("_PremultiplyUnderwaterOpacity")) };
+        }
+
+        internal bool ApplyCoopWater(SpriteRenderer view, CoopWaterSurface water)
+        {
+            if (!water.IsValid()) return false;
+            coopWaterTemplate = coopWaterTemplate != null ? coopWaterTemplate : Resources.Load<Material>("Materials/PlayerWaterSubmersion");
+            if (coopWaterTemplate == null) return false;
+            if (coopWaterViewStates.TryGetValue(view, out var previous) && previous == water.parameters) return true;
+            view.sharedMaterial = coopWaterTemplate;
+            coopWaterProperties ??= new MaterialPropertyBlock(); coopWaterProperties.Clear();
+            coopWaterProperties.SetFloat("_WaterSurfaceY", water.parameters.x);
+            coopWaterProperties.SetFloat("_SurfaceLineHeight", water.parameters.y);
+            coopWaterProperties.SetFloat("_UseSurfaceLine", water.parameters.z);
+            coopWaterProperties.SetFloat("_PremultiplyUnderwaterOpacity", water.parameters.w);
+            view.SetPropertyBlock(coopWaterProperties);
+            coopWaterViewStates[view] = water.parameters;
+            return true;
+        }
+
+        void ReleaseCoopWater(SpriteRenderer view)
+        {
+            if (view != null && coopWaterViewStates.Remove(view)) view.SetPropertyBlock(null);
+        }
+
+        void ApplyCoopRegularMaterial(int id, SpriteRenderer view, int materialId)
+        {
+            ReleaseCoopWater(view);
+            if (coopViewMaterialIds.TryGetValue(id, out int previous) && previous == materialId) return;
+            var material = At(coopCatalog.materials, materialId);
+            view.sharedMaterial = material != null ? material : coopDefaultSpriteMaterial;
+            coopViewMaterialIds[id] = materialId;
+        }
+
         readonly Dictionary<int, (Material template, Material instance, Sprite barrel)> coopBlackoutMasks = new();
         readonly Dictionary<int, (int template, Material instance)> coopViewMaskMaterials = new();
         readonly Vector4[] coopMaskColorBuffer = new Vector4[8];
@@ -132,6 +195,8 @@ namespace Assets.Scripts.Netcode
         {
             foreach (var value in coopViewMaskMaterials.Values) DestroyCoopMaskMaterial(value.instance);
             coopViewMaskMaterials.Clear(); coopBlackoutMasks.Clear(); coopDefaultSpriteMaterial = null;
+            coopWaterTemplate = null; coopWaterProperties = null;
+            coopWaterViewStates.Clear(); coopViewMaterialIds.Clear();
         }
     }
 }

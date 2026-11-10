@@ -20,10 +20,12 @@ namespace Assets.Scripts.Netcode
         public byte mask;
         public float enemyStepLimit;
         public CoopBlackoutMask blackout;
+        public CoopWaterSurface water;
         public bool Matches(CoopSpriteFrame other) => animation == 0 && other.animation == 0 && id == other.id && sprite == other.sprite && material == other.material &&
             sortingLayer == other.sortingLayer && order == other.order && position == other.position && scale == other.scale &&
             rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible && mask == other.mask &&
-            enemyStepLimit == other.enemyStepLimit && pauseWithGameplay == other.pauseWithGameplay && (blackout == null ? other.blackout == null : blackout.Equals(other.blackout));
+            enemyStepLimit == other.enemyStepLimit && pauseWithGameplay == other.pauseWithGameplay && (blackout == null ? other.blackout == null : blackout.Equals(other.blackout)) &&
+            (water == null ? other.water == null : water.Equals(other.water));
     }
     public struct CoopSprites : NetworkMessage { public double time; public string scene; public CoopSpriteFrame[] frames; public int[] removed; }
 
@@ -385,6 +387,7 @@ namespace Assets.Scripts.Netcode
             if (!NetworkServer.active || !CoopLateCapture) return;
             if (CoopShapeDiagnostics) ProbeCoopPhaseLate();
             CaptureCoopWorld();
+            RecordR03Authority();
         }
 
         void CaptureCoopWorld()
@@ -393,7 +396,7 @@ namespace Assets.Scripts.Netcode
             bool shapeDiagnostics = CoopShapeDiagnostics;
             if (shapeDiagnostics) SampleCoopTruth();
             TrackCoopOverlays(shapeDiagnostics);
-            if (Time.unscaledTime < coopNextFrame) { PublishCoopMotion(shapeDiagnostics); return; }
+            if (Time.unscaledTime < coopNextFrame) { PublishCoopEnemyTransitions(shapeDiagnostics); PublishCoopMotion(shapeDiagnostics); return; }
             using var scope = CoopPresentationMarker.Auto();
             coopNextFrame = Time.unscaledTime + 0.05f;
             CaptureCoopCollisionState();
@@ -452,28 +455,7 @@ namespace Assets.Scripts.Netcode
                     continue;
                 }
                 long metricStarted = GameplayLatencyDiagnostics.Enabled ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-                var frame = new CoopSpriteFrame
-                {
-                    id = id, sprite = CoopSpriteId(renderer.sprite), time = NetworkTime.localTime,
-                    material = CatalogId(renderer.sharedMaterial, coopMaterialIds), blackout = CaptureCoopBlackoutMask(id),
-                    enemyStepLimit = CoopEnemyVisualLimit(renderer), pauseWithGameplay = CoopPauseWithGameplay(renderer),
-                    position = renderer.transform.position, rotation = renderer.transform.rotation,
-                    scale = renderer.transform.lossyScale, color = renderer.color,
-                    sortingLayer = renderer.sortingLayerID, order = renderer.sortingOrder,
-                    visible = renderer.enabled && active && !renderer.forceRenderingOff,
-                    flipX = renderer.flipX, flipY = renderer.flipY, mask = (byte)renderer.maskInteraction
-                };
-                if (renderer.TryGetComponent<AnimatedSpriteRenderer>(out var animation) && animation.isActiveAndEnabled)
-                {
-                    frame.pauseWithGameplay |= animation.RespectGamePause;
-                    frame.animation = CaptureCoopAnimation(animation);
-                    frame.playback = animation.CapturePlayback();
-                    // Remove the sampled jump offset; the client reapplies the offset for its rendered animation frame.
-                    frame.offsetRight = animation.FrameOffsetToWorld(Vector2.right);
-                    frame.offsetUp = animation.FrameOffsetToWorld(Vector2.up);
-                    Vector2 offset = animation.CurrentSpriteOffset;
-                    frame.position -= frame.offsetRight * offset.x + frame.offsetUp * offset.y;
-                }
+                var frame = CaptureCoopFrame(renderer);
                 bool hadPrevious = coopLastSprites.TryGetValue(id, out var previous);
                 bool frameChanged = !hadPrevious || !frame.Matches(previous);
                 if (shapeDiagnostics) TakeCoopShapePending(id, coopShapeSent);
@@ -513,6 +495,33 @@ namespace Assets.Scripts.Netcode
             CaptureCoopTileAnimations(peers);
             coopDirtyMaps.Clear();
             PublishCoopMotion(shapeDiagnostics);
+        }
+
+        CoopSpriteFrame CaptureCoopFrame(SpriteRenderer renderer)
+        {
+            var frame = new CoopSpriteFrame
+            {
+                id = renderer.GetEntityId().GetHashCode(), sprite = CoopSpriteId(renderer.sprite), time = NetworkTime.localTime,
+                material = CatalogId(renderer.sharedMaterial, coopMaterialIds), blackout = CaptureCoopBlackoutMask(renderer.GetEntityId().GetHashCode()), water = CaptureCoopWater(renderer),
+                enemyStepLimit = CoopEnemyVisualLimit(renderer), pauseWithGameplay = CoopPauseWithGameplay(renderer),
+                position = renderer.transform.position, rotation = renderer.transform.rotation,
+                scale = renderer.transform.lossyScale, color = renderer.color,
+                sortingLayer = renderer.sortingLayerID, order = renderer.sortingOrder,
+                visible = renderer.enabled && renderer.gameObject.activeInHierarchy && !renderer.forceRenderingOff,
+                flipX = renderer.flipX, flipY = renderer.flipY, mask = (byte)renderer.maskInteraction
+            };
+            if (renderer.TryGetComponent<AnimatedSpriteRenderer>(out var animation) && animation.isActiveAndEnabled)
+            {
+                frame.pauseWithGameplay |= animation.RespectGamePause;
+                frame.animation = CaptureCoopAnimation(animation);
+                frame.playback = CaptureCoopPlayback(animation);
+                // Remove the sampled jump offset; the client reapplies the offset for its rendered animation frame.
+                frame.offsetRight = animation.FrameOffsetToWorld(Vector2.right);
+                frame.offsetUp = animation.FrameOffsetToWorld(Vector2.up);
+                Vector2 offset = animation.CurrentSpriteOffset;
+                frame.position -= frame.offsetRight * offset.x + frame.offsetUp * offset.y;
+            }
+            return frame;
         }
 
         int CatalogId<T>(T value, Dictionary<T, int> index) where T : UnityEngine.Object
@@ -655,8 +664,10 @@ namespace Assets.Scripts.Netcode
             if (!CanApplyCoop(message.scene)) return;
             foreach (var frame in message.frames ?? Array.Empty<CoopSpriteFrame>())
             {
+                if (coopVisualRemovals.TryGetValue(frame.id, out double removal) && frame.time <= removal) continue;
                 if (!coopVisualSamples.TryGetValue(frame.id, out var samples))
                     coopVisualSamples[frame.id] = samples = new List<CoopVisualSample>();
+                if (samples.Count > 0 && frame.time <= samples[^1].frame.time) continue;
                 var received = CoopVisualSample.Full(frame);
                 if (CoopShapeDiagnostics) RecordCoopArrival(frame.id, samples, received);
                 samples.Add(received);
@@ -670,6 +681,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!coopViews.TryGetValue(frame.id, out var view) || view == null)
             {
+                coopViewMaterialIds.Remove(frame.id);
                 var go = new GameObject("ServerActor " + frame.id, typeof(SpriteRenderer));
                 go.transform.SetParent(coopViewRoot.transform, false);
                 view = go.GetComponent<SpriteRenderer>(); coopViews[frame.id] = view;
@@ -681,18 +693,28 @@ namespace Assets.Scripts.Netcode
             view.sprite = CoopSpriteAt(frame.sprite);
             PresentCoopAnimation(view, frame, playbackOrigin);
             bool materialReady = true;
-            if (frame.blackout != null) materialReady = ApplyCoopBlackoutMask(frame.id, view, frame.blackout);
+            if (frame.blackout != null)
+            {
+                coopViewMaterialIds.Remove(frame.id);
+                ReleaseCoopWater(view);
+                materialReady = ApplyCoopBlackoutMask(frame.id, view, frame.blackout);
+            }
             else
             {
                 ReleaseCoopMaskMaterial(frame.id, view);
-                var material = At(coopCatalog.materials, frame.material);
-                if (material != null) view.sharedMaterial = material;
+                if (frame.water != null)
+                {
+                    coopViewMaterialIds.Remove(frame.id);
+                    materialReady = ApplyCoopWater(view, frame.water);
+                }
+                else ApplyCoopRegularMaterial(frame.id, view, frame.material);
             }
             bool ownerBoatHidden = coopOwnerBoatSprites.ContainsKey(frame.id);
             if (ownerBoatHidden) coopOwnerBoatVisibility[frame.id] = frame.visible;
             view.enabled = frame.visible && !ownerBoatHidden && materialReady; view.color = frame.color;
             view.flipX = frame.flipX; view.flipY = frame.flipY; view.maskInteraction = (SpriteMaskInteraction)frame.mask;
             view.sortingLayerID = frame.sortingLayer; view.sortingOrder = frame.order;
+            RecordR03View(frame, CoopCarrierClock(frame.id, CoopVisualClock), view);
         }
 
         void ApplyCoopTiles(CoopTiles message)

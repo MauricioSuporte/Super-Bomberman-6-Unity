@@ -202,9 +202,9 @@ namespace Assets.Scripts.Netcode
                 Vector2.Distance(rejected.origin, motion.start) < 0.1f) return false;
             if (!target.ClaimClientPresentation(this, target.ClientMotionRevision)) return false;
             motion.bombId = identity.netId; motion.serverTime = KickServerNow;
-            var playback = new KickPlayback { motion = motion, unconfirmed = true, predictedAt = Time.realtimeSinceStartupAsDouble,
+            var playback = new KickPlayback { motion = motion, unconfirmed = true, predictedAt = Time.realtimeSinceStartupAsDouble, predictedFrame = Time.frameCount,
                 replicaPosition = target.transform.position, history = new KickInputHistory(motion.inputTick, target.transform.position),
-                startInputTick = motion.inputTick, elapsed = motion.kind == BombMotionKind.Punch || motion.kind == BombMotionKind.Throw ? Time.fixedDeltaTime : Time.deltaTime,
+                startInputTick = motion.inputTick, elapsed = motion.kind == BombMotionKind.Punch || motion.kind == BombMotionKind.Throw ? Time.fixedDeltaTime : Mathf.Min(Time.deltaTime, Time.fixedDeltaTime),
                 colliderCaptured = previous != null && previous.colliderCaptured, colliderWasEnabled = previous != null && previous.colliderWasEnabled,
                 sortingCaptured = previous != null && previous.sortingCaptured, originalSorting = previous != null ? previous.originalSorting : 0 };
             playback.presented = SamplePlayback(target, playback);
