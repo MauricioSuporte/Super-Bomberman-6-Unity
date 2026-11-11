@@ -53,6 +53,7 @@ namespace StageAssets
 
         private void Start()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             UsesCollectedChipExit = StageUnlockProgress.IsCleared(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
             if (!UsesCollectedChipExit)
                 return;
@@ -101,6 +102,7 @@ namespace StageAssets
 
         private void Update()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (!tileSwapsApplied || indestructibleTilemap == null)
                 return;
 
@@ -117,6 +119,7 @@ namespace StageAssets
 
         private void HandleAllCoreMechanismsDestroyed()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (sequenceStarted)
                 return;
 
@@ -149,6 +152,7 @@ namespace StageAssets
             source.playOnAwake = false;
             source.loop = false;
             source.spatialBlend = 0f;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(bubbleCrashSfx, bubbleCrashSfxVolume);
             source.PlayOneShot(bubbleCrashSfx, GetBoostedSfxVolume(bubbleCrashSfxVolume));
             Destroy(temp, Mathf.Max(0.1f, bubbleCrashSfx.length + 0.1f));
         }
@@ -192,6 +196,7 @@ namespace StageAssets
                 renderer.sortingLayerID = sortingLayerId;
                 renderer.sortingOrder = behindChip ? backSortingOrder : frontSortingOrder;
                 renderer.flipX = offset.x < -0.001f;
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
                 bubbleCrashPhase1Pieces.Add(piece);
             }
 
@@ -272,6 +277,7 @@ namespace StageAssets
             renderer.sortingLayerID = sortingLayerId;
             renderer.sortingOrder = sortingOrder;
             renderer.flipX = flipX;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
             return piece;
         }
 
@@ -465,6 +471,7 @@ namespace StageAssets
 
         public void BeginChipBlinkOut()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (chipBlinkOutStarted)
                 return;
 

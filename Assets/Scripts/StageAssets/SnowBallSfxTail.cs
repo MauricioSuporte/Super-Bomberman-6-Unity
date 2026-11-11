@@ -29,12 +29,16 @@ namespace StageAssets
             if (paused && !audioPaused) source.Pause();
             if (!paused && audioPaused) source.UnPause();
             audioPaused = paused;
-            if (!paused && !source.isPlaying) Destroy(gameObject);
+            if (!paused && !Assets.Scripts.Netcode.BombermanNetworkManager.CoopEnvironmentLoopPending(source) && !source.isPlaying) Destroy(gameObject);
         }
 
         private void OnDestroy()
         {
-            if (source != null) source.Stop();
+            if (source != null)
+            {
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopEndEnvironmentLoop(source, false);
+                source.Stop();
+            }
             if (ownedClip != null) Destroy(ownedClip);
         }
     }

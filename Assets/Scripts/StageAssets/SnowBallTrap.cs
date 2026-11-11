@@ -79,7 +79,12 @@ namespace StageAssets
                     rollingVisual.loop = true;
                     rollingVisual.RestartAnimation();
                 }
-                GameAudioSettings.PlaySfxClip(audioSource, GetRollingClip());
+                AudioClip clip = GetRollingClip();
+                if (Assets.Scripts.Netcode.BombermanNetworkManager.CoopStartEnvironmentLoop(audioSource, rollingSfx, rollingSfxGain))
+                {
+                    audioSource.clip = clip; audioSource.volume = GameAudioSettings.ApplySfxVolume(1f); audioSource.Play();
+                }
+                else GameAudioSettings.PlaySfxClip(audioSource, clip);
             }
 
             Vector3 previous = transform.position;
@@ -146,6 +151,7 @@ namespace StageAssets
             // the current iteration finish naturally after the snowball is gone.
             if (audioSource != null)
             {
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopEndEnvironmentLoop(audioSource, true);
                 audioSource.transform.SetParent(null, true);
                 audioSource.loop = false;
                 SnowBallSfxTail tail = audioSource.gameObject.AddComponent<SnowBallSfxTail>();
@@ -188,7 +194,11 @@ namespace StageAssets
 
         private void OnDisable()
         {
-            if (audioSource != null) audioSource.Stop();
+            if (audioSource != null)
+            {
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopEndEnvironmentLoop(audioSource, false);
+                audioSource.Stop();
+            }
         }
     }
 }

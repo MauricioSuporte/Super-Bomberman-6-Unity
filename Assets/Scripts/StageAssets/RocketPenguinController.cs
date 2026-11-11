@@ -266,7 +266,10 @@ namespace StageAssets
                 flightPhase = 4;
                 audioSource.Stop();
                 if (explosionSfx != null)
+                {
+                    Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(explosionSfx, 2f);
                     audioSource.PlayOneShot(explosionSfx, 2f * GameAudioSettings.ApplySfxVolume(1f));
+                }
                 Show(descend, false);
                 Show(target, false);
                 Show(explosion, true);

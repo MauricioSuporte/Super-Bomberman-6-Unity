@@ -62,6 +62,7 @@ namespace StageAssets
 
         private void Update()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (activeBubbles.Count == 0)
                 return;
 
@@ -90,6 +91,7 @@ namespace StageAssets
 
         private void SpawnBurst(Vector3Int cell)
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (!HasAvailableAnimation() || gameManager == null ||
                 gameManager.destructibleTilemap == null)
                 return;
@@ -120,6 +122,7 @@ namespace StageAssets
                 renderer.sprite = sprites[0];
                 renderer.sortingLayerName = sortingLayerName;
                 renderer.sortingOrder = sortingOrder;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
 
                 activeBubbles.Add(new Bubble
                 {

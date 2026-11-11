@@ -98,7 +98,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopSprites()
         {
-            ClearCoopAbsorption(); ClearCoopBlackoutMasks(); ClearCoopPresentationMetrics(); ClearR03Diagnostics();
+            ClearCoopEnvironment(); ClearCoopAbsorption(); ClearCoopBlackoutMasks(); ClearCoopPresentationMetrics(); ClearR03Diagnostics();
             coopProjectiles.Clear(); coopProjectileEdges.Clear(); coopDeadProjectiles.Clear(); coopEarlyEnemyRenderers.Clear();
 #if UNITY_EDITOR || DEBUG
             LocalProjectileSmoke.ClearViews();
@@ -392,14 +392,16 @@ namespace Assets.Scripts.Netcode
             bool visible = renderer.gameObject.activeInHierarchy && renderer.enabled && !renderer.forceRenderingOff;
             if (visible != previous.visible) return true;
             if (!visible) return false;
-            if ((byte)renderer.maskInteraction != previous.mask) return true;
-            if (IsCoopBossRenderer(renderer) && (renderer.color != previous.color ||
-                renderer.sortingLayerID != previous.sortingLayer || renderer.sortingOrder != previous.order ||
-                !(CaptureCoopAbsorption(renderer)?.Equals(previous.absorption) ?? previous.absorption == null))) return true;
+            if ((byte)renderer.maskInteraction != previous.mask ||
+                renderer.flipX != previous.flipX || renderer.flipY != previous.flipY) return true;
+            if ((IsCoopBossRenderer(renderer) || EnvironmentFamily(renderer).Length != 0) && (renderer.color != previous.color ||
+                renderer.sortingLayerID != previous.sortingLayer || renderer.sortingOrder != previous.order)) return true;
+            if (IsCoopBossRenderer(renderer) &&
+                !(CaptureCoopAbsorption(renderer)?.Equals(previous.absorption) ?? previous.absorption == null)) return true;
             bool water = UsesCoopWater(renderer);
             if (water != (previous.water != null)) return true;
             if (!renderer.TryGetComponent<AnimatedSpriteRenderer>(out var animation) || !animation.isActiveAndEnabled) return false;
-            bool boss = IsCoopBossRenderer(renderer);
+            bool boss = IsCoopBossRenderer(renderer) || EnvironmentFamily(renderer).Length != 0;
             var playback = boss ? CaptureCoopBossPlayback(animation) : CaptureCoopPlayback(animation);
             return playback.speed != previous.playback.speed ||
                 ((boss || animation.ManualAnimationUpdate || animation.idle) && renderer.sprite != null &&
@@ -734,7 +736,8 @@ namespace Assets.Scripts.Netcode
             int id = renderer.GetEntityId().GetHashCode();
             if (!coopPhysicsPause.TryGetValue(id, out bool paused))
                 coopPhysicsPause[id] = paused = renderer.GetComponentInParent<Rigidbody2D>(true) != null || renderer.GetComponentInParent<BattleMode9MinecartController>(true) != null ||
-                    renderer.GetComponentInParent<global::StageAssets.DestructibleRocketController>(true) != null;
+                    renderer.GetComponentInParent<global::StageAssets.DestructibleRocketController>(true) != null ||
+                    (IsCoopEnvironmentRenderer(renderer) && EnvironmentFamily(renderer) != "AmbientBubble" && EnvironmentFamily(renderer) != "Vulcan");
             return paused;
         }
 
@@ -742,7 +745,7 @@ namespace Assets.Scripts.Netcode
             actor != null ? Mathf.Max(.01f, actor.tileSize) * 1.5f : 0;
 
         float CoopEnemyVisualLimit(SpriteRenderer renderer) => coopEnemyVisualLimits.TryGetValue(renderer.GetEntityId().GetHashCode(), out float limit)
-            ? limit : IsCoopBossRenderer(renderer) ? 1.5f : EnemyVisualLimit(renderer.GetComponentInParent<EnemyMovementController>(true));
+            ? limit : IsCoopBossRenderer(renderer) || IsCoopEnvironmentRenderer(renderer) ? 1.5f : EnemyVisualLimit(renderer.GetComponentInParent<EnemyMovementController>(true));
 
         public static void CoopTrackAnimation(AnimatedSpriteRenderer animation)
         {

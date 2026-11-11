@@ -19,6 +19,8 @@ namespace Assets.Scripts.Netcode
         readonly HashSet<SpriteRenderer> coopAbsorptionViews = new();
         readonly Dictionary<int, float> coopAbsorptionSources = new();
         static readonly int CoopLightAmount = Shader.PropertyToID("_LightAmount");
+        static Shader coopAbsorptionShader;
+        static bool coopAbsorptionShaderResolved;
 
         internal static CoopAbsorptionLight CaptureCoopAbsorption(SpriteRenderer renderer)
         {
@@ -26,8 +28,13 @@ namespace Assets.Scripts.Netcode
                 manager.coopAbsorptionSources.TryGetValue(renderer.GetEntityId().GetHashCode(), out float amount))
                 return new CoopAbsorptionLight { amount = amount };
             var material = renderer.sharedMaterial;
-            if (material == null || material.shader == null ||
-                material.shader.name != "SuperBomberman/Freezer Venus Absorption") return null;
+            if (material == null) return null;
+            if (!coopAbsorptionShaderResolved)
+            {
+                coopAbsorptionShader = Resources.Load<Shader>("StageAssets/FreezerVenusAbsorption");
+                coopAbsorptionShaderResolved = true;
+            }
+            if (coopAbsorptionShader == null || material.shader != coopAbsorptionShader) return null;
             return new CoopAbsorptionLight { amount = material.GetFloat(CoopLightAmount) };
         }
 
@@ -80,32 +87,41 @@ namespace Assets.Scripts.Netcode
         void RecordR06Boss(string kind, SpriteRenderer renderer, CoopSpriteFrame frame, double clock, double stateTime, double newest)
         {
 #if UNITY_EDITOR || DEBUG
-            if (!R06Probe || !GameplayLatencyDiagnostics.Enabled || frame.enemyStepLimit <= 0) return;
+            if ((!R06Probe && !R08Probe) || !GameplayLatencyDiagnostics.Enabled || frame.enemyStepLimit <= 0) return;
+            if (R08Probe) kind = kind.Replace("r06_", "r08_");
             if (kind == "r06_view" && frame.mask == (byte)SpriteMaskInteraction.VisibleInsideMask)
                 LocalBossSmoke.ObserveFloorReveal();
             bool visible = renderer.enabled && renderer.gameObject.activeInHierarchy && !renderer.forceRenderingOff;
             double now = Time.realtimeSinceStartupAsDouble;
             int sprite = R03SpriteKey(renderer.sprite);
             float light = frame.absorption?.amount ?? -1;
+            bool flipX = renderer.flipX, flipY = renderer.flipY;
+            int order = renderer.sortingOrder, layer = renderer.sortingLayerID;
+            Color color = renderer.color;
             if (r06SampleTimes.TryGetValue(frame.id, out var previous) && previous.visible == visible &&
-                (!visible || (previous.sprite == sprite && previous.mask == frame.mask && previous.light == light && now < previous.next))) return;
-            r06SampleTimes[frame.id] = (now + .05, visible, sprite, frame.mask, light);
+                (!visible || (previous.sprite == sprite && previous.mask == frame.mask && previous.light == light && previous.flipX == flipX && previous.flipY == flipY &&
+                 previous.order == order && previous.layer == layer && previous.color == color && now < previous.next))) return;
+            r06SampleTimes[frame.id] = (now + .05, visible, sprite, frame.mask, light, flipX, flipY, order, layer, color);
             var row = GameplayLatencyDiagnostics.For(kind, detail: "id=" + frame.id +
                 ";ptime=" + clock.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
                 ";state=" + stateTime.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
                 ";newest=" + newest.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
                 ";stateMeasured=1;animating=" + (frame.animation != 0 && frame.playback.speed > 0 && !frame.playback.idle && !frame.playback.frozen ? 1 : 0) +
                 ";branch=" + renderer.name + ";spriteName=" + (renderer.sprite != null ? renderer.sprite.name : "none") +
-                ";sprite=" + R03SpriteKey(renderer.sprite) + ";mask=" + (byte)renderer.maskInteraction +
+                ";sprite=" + R03SpriteKey(renderer.sprite) + ";flipX=" + (renderer.flipX ? 1 : 0) + ";flipY=" + (renderer.flipY ? 1 : 0) +
+                ";order=" + renderer.sortingOrder + ";layer=" + renderer.sortingLayerID +
+                ";alpha=" + renderer.color.a.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ";mask=" + (byte)renderer.maskInteraction +
                 ";visible=" + (renderer.enabled && renderer.gameObject.activeInHierarchy && !renderer.forceRenderingOff ? 1 : 0) +
                 ";light=" + (frame.absorption?.amount ?? -1).ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
-                ";paused=" + (GamePauseController.IsPaused ? 1 : 0));
+                ";paused=" + (GamePauseController.IsPaused && (!R08Probe || frame.pauseWithGameplay) ? 1 : 0) +
+                ";globalPaused=" + (GamePauseController.IsPaused ? 1 : 0));
             row.position = renderer.transform.position;
             GameplayLatencyDiagnostics.Write(row);
 #endif
         }
 #if UNITY_EDITOR || DEBUG
-        readonly Dictionary<int, (double next, bool visible, int sprite, byte mask, float light)> r06SampleTimes = new();
+        readonly Dictionary<int, (double next, bool visible, int sprite, byte mask, float light, bool flipX, bool flipY, int order, int layer, Color color)> r06SampleTimes = new();
+        static readonly bool R08Probe = Array.IndexOf(Environment.GetCommandLineArgs(), "-r08-environment") >= 0;
         static readonly bool R06Probe = Array.IndexOf(Environment.GetCommandLineArgs(), "-r06-bosses") >= 0;
 #endif
 

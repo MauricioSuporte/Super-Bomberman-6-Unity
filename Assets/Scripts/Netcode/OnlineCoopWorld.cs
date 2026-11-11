@@ -163,6 +163,7 @@ namespace Assets.Scripts.Netcode
             NetworkClient.RegisterHandler<CoopTiles>(ApplyCoopTiles);
             NetworkClient.RegisterHandler<CoopTileAnimation>(ApplyCoopTileAnimation);
             NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
+            NetworkClient.RegisterHandler<CoopEnvironmentLoops>(ApplyCoopEnvironmentLoops);
             NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
             NetworkClient.RegisterHandler<SuddenDeathState>(message =>
             {
@@ -359,6 +360,7 @@ namespace Assets.Scripts.Netcode
         void TickCoopWorld()
         {
             TickWorldBombMotions();
+            TickCoopEnvironmentAudio();
             PublishPortalMasks();
             PresentPortalMaskViews();
             foreach (var blackout in coopBlackoutSources)
@@ -491,7 +493,7 @@ namespace Assets.Scripts.Netcode
             var removed = coopRemovedSprites;
             removed.Clear();
             foreach (int id in coopLastSprites.Keys) if (!current.Contains(id)) removed.Add(id);
-            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); coopEnemyVisualLimits.Remove(id); coopPhysicsPause.Remove(id); coopMetricFamilies.Remove(id); ForgetCoopShape(id); ForgetCoopMotion(id); }
+            foreach (int id in removed) { coopLastSprites.Remove(id); coopBlackoutMasks.Remove(id); coopEnemyVisualLimits.Remove(id); coopPhysicsPause.Remove(id); coopEnvironmentFamilies.Remove(id); coopMetricFamilies.Remove(id); ForgetCoopShape(id); ForgetCoopMotion(id); }
             SendCoopSpriteDeltas(peers, changed, removed.Count == 0 ? Array.Empty<int>() : removed.ToArray());
             if (coopChangedCollisions.Count > 0 || coopRemovedCollisions.Count > 0)
                 foreach (var peer in peers) SendCoopCollisionFrames(peer, coopChangedCollisions, coopRemovedCollisions.ToArray(), false);
@@ -525,7 +527,7 @@ namespace Assets.Scripts.Netcode
                 frame.pauseWithGameplay |= animation.RespectGamePause;
                 frame.animation = CaptureCoopAnimation(animation);
                 frame.playback = coopProjectiles.ContainsKey(frame.id) ? CaptureCoopProjectilePlayback(animation) :
-                    IsCoopBossRenderer(renderer) ? CaptureCoopBossPlayback(animation) : CaptureCoopPlayback(animation);
+                    (IsCoopBossRenderer(renderer) || IsCoopEnvironmentRenderer(renderer)) ? CaptureCoopBossPlayback(animation) : CaptureCoopPlayback(animation);
                 // Remove the sampled jump offset; the client reapplies the offset for its rendered animation frame.
                 frame.offsetRight = animation.FrameOffsetToWorld(Vector2.right);
                 frame.offsetUp = animation.FrameOffsetToWorld(Vector2.up);

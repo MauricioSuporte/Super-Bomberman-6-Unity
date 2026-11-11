@@ -60,7 +60,8 @@ namespace Assets.Scripts.Netcode
             PlayerPersistentStats.ResetToDefaultsAll(); GameSession.Instance?.SetActivePlayerIds(new[] { 1, 2 });
             offline = true; SceneManager.LoadScene(scene);
             yield return new WaitForSecondsRealtime(14);
-            yield return Run();
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-r08-environment") >= 0) yield return LocalEnvironmentSmoke.Run();
+            else yield return Run();
             yield return new WaitForSecondsRealtime(45);
             Debug.Log("[R06Offline] completed scene=" + scene); Application.Quit();
         }
@@ -75,9 +76,10 @@ namespace Assets.Scripts.Netcode
             nextOfflineSample = Time.unscaledTime + .05f;
             foreach (var renderer in FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include))
             {
-                if (!BombermanNetworkManager.IsCoopBossRenderer(renderer)) continue;
+                bool environment = Array.IndexOf(Environment.GetCommandLineArgs(), "-r08-environment") >= 0;
+                if (environment ? BombermanNetworkManager.EnvironmentFamily(renderer).Length == 0 : !BombermanNetworkManager.IsCoopBossRenderer(renderer)) continue;
                 var light = BombermanNetworkManager.CaptureCoopAbsorption(renderer);
-                var row = GameplayLatencyDiagnostics.For("r06_offline", detail:
+                var row = GameplayLatencyDiagnostics.For(environment ? "r08_offline" : "r06_offline", detail:
                     "branch=" + renderer.name + ";sprite=" + (renderer.sprite != null ? renderer.sprite.name : "none") +
                     ";mask=" + (byte)renderer.maskInteraction + ";visible=" +
                     (renderer.enabled && renderer.gameObject.activeInHierarchy && !renderer.forceRenderingOff ? 1 : 0) +

@@ -44,6 +44,7 @@ namespace StageAssets
 
         private void Update()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             UpdateBubbles();
 
             int targetCount = Mathf.Max(1, maximumActiveBubbles);
@@ -104,6 +105,7 @@ namespace StageAssets
             renderer.sprite = sprites[0];
             renderer.sortingLayerName = sortingLayerName;
             renderer.sortingOrder = sortingOrder;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
 
             activeBubbles.Add(new Bubble
             {

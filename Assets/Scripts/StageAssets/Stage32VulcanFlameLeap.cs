@@ -68,6 +68,7 @@ namespace StageAssets
 
         private void Update()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (!HasValidSprites())
                 return;
 
@@ -87,6 +88,7 @@ namespace StageAssets
 
         private void StartBurst(float now)
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             burstActive = true;
             burstStartedAt = now;
             reverseDirection = Random.value < Mathf.Clamp01(reverseDirectionChance);
@@ -198,6 +200,7 @@ namespace StageAssets
                 renderer.sortingLayerName = sortingLayerName;
                 renderer.sortingOrder = sortingOrder;
                 trailRenderers[i] = renderer;
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
             }
         }
 

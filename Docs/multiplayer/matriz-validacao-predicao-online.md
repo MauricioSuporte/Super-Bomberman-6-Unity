@@ -787,3 +787,25 @@ R06 continua parcial até aceite visual; checklist30/32. Limitações e números
 Usuário confirmou: "R06 está aprovado." R06 CONCLUÍDO nos cenários testados, superando os registros anteriores de aceite pendente. Mantidas as evidências e limitações da final12/protocolo69; sem ampliar o aceite para WAN/GPU ou runtime Linux não medidos. Checklist31/32 concluídos; resta R08. Nenhum commit, push ou publicação e R08 não iniciado nesta atualização.
 
 Retenção recomendada para R08: preservar C:/Users/mauri/SB6-QA-R06 como baseline aprovada. C:/Users/mauri/SB6-R06 contém a cópia duplicada final12 e candidatas intermediárias, dispensáveis quando a DLL de QA-R06 estiver conferida. Pacotes antigos QA-A14/R01/R02/R03/R05 não são necessários ao desenvolvimento do R08; seus runs/saves são evidências/dados de teste opcionais. Não houve exclusão nesta atualização.
+
+
+## Correção da contagem global — P0 incluído (11/11/2026)
+
+A contagem anterior31/32 considerava apenas A01–A14, C01–C10 e R01–R08 e omitia P0. Contagem global correta: **31/33 concluídos; P0 e R08 abertos**. R06 permanece aprovado. Após R08, revisar P0: auditar as capturas/comparações já produzidas por família, mapear os critérios atendidos, executar apenas as medições comparáveis ainda faltantes e consolidar o relatório final. Instrumentação/contexto já existem; novas capturas comparáveis permanecem na linha de pendência do P0. Não marcar P0 concluído com base somente no aceite visual de outro ID. Esta correção é documental, sem novas medições ou publicação.
+
+
+## R08 — entrega técnica07 (11/11/2026), aceite humano pendente
+
+| Critério | Evidência | Estado |
+|---|---|---|
+| Compilação/testes |Core1106/1106em04;18R06/R08focados06;07alterou só probe e recompilou;202CI | Passou nos escopos registrados |
+| Trajetória/pose/flip/alpha/sorting/máscara |5cenas3-2a3-6,2peers reais;zero divergência estrita; famílias visíveis/móveis exigidas | Passou nas capturas |
+| Barril/Penguin/SnowBall/Volcano/bubbles/rocket |Fixtures nativas com pausa e reload; sem decisão/RNG/dano no client | Passou nos cenários executados |
+| Loop SnowBall |2clientes com loop,pause,tail,clip e snapshot final vazio | Estado AudioSource aprovado; audição humana pendente |
+| Offline×online |Logs/R08-comparacao.json,5fixtures completas; sem replay RNG/input idêntico | Medido com limitações |
+| CPU/bytes |8execuções comuns baselineQA-R06/final;2ativas absolutas semPNG/captura; cost-report/active-cost-report | Medido, aumentos3-3 registrados |
+| Retenções |3-2:11/13amostras,max261ms;3-6:4no client2,max221ms; demais0 | Limitação explícita; não equivale à duração perceptiva de travamento |
+| Visível/QA |Framebuffer3-5; pacote C:/Users/mauri/SB6-QA-R08, launcher3-5 executado | Aceite visual/auditivo humano pendente |
+| Linux/runner |Release compilou; runtimeLinuxnão testado;31caminhos restaurados/hashes conferidos | Escopos separados |
+
+Checklist31/33. R08 segue parcial até aceite, P0 continua aberto. Sem commit/push/publicação. Números completos, caminhos e ressalvas na seção final do checkpoint. Dados CPU/renderer e PNGs não provam WAN/GPU/input físico nem fluidez percebida. NativeFloatingPlatform/C08 preservado, sem nova cobertura de passageiro presumida. Não ignorar gaps/efeitos curtos nem retenções para produzir aprovação.

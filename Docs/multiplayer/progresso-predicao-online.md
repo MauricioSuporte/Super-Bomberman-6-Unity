@@ -237,7 +237,7 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 ## Checklist por ID
 
-Resumo: **23 de33 IDs concluídos em implementação/testes e10 parciais**.
+Resumo atual (11/11/2026): **31/33 IDs concluídos; R08 com entrega técnica pronta/aceite humano pendente e P0 aberto**.
 Esta contagem não representa percentual de esforço; validação manual com dois peers
 continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
 
@@ -273,7 +273,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] R05: concluído em 11/11/2026, aceite visual do usuário: "Está aprovado R05 pode marcar como concluido." Entrega candidate14/protocolo68: 17 famílias, core1088/1088, 9 cenários com 2 clientes, referências offline e 24 medições de custo qualificadas. Pacote SB6-QA-R05 aprovado; limitações preservadas. Sem publicação; próximos R06/R08.
 - [x] R06: CONCLUÍDO em 11/11/2026; usuário confirmou "R06 está aprovado", nos cenários testados com o pacote C:/Users/mauri/SB6-QA-R06. Mechas1-6 com3entradas corrigidas offline/online; Pretty/Venus com subida gradual, máscara, absorção e áudio aprovados.1097/1097 Unity,195 CI;2clientes reais,4cenas offline,2portais e BossRush passaram;8custos baseline/final e comparação online/offline registrados;servidor Linux Release compilou (runtime Linux não testado). Protocolo69. Sem publicação/R08.
 - [x] R07: itens/rolagem/push, ovos e poses de montaria alinhados; transporte independente de ator, migração de arco/fila aprovada após stop/disable/destroy e cleanup sem tomar pose/input de outro player. Suíte894 e probe2clients com8samples móveis por client após remoção,0erros/avisos. Manual gráfico/offline e casos ambientais continuam na matriz; publicação deste último lote ainda pendente.
-- [ ] R08: parcial50 validado: gates de Penguin/SnowBall/barril/pilares testados em19 focados R06/R08; stream visual existente conservado. Curvas completas/áudio/ambientação/capturas e demais famílias pendentes.
+- [ ] R08: entrega técnica final07/protocolo70 concluída em11/11; aceite visual/auditivo pendente em C:/Users/mauri/SB6-QA-R08.5cenas com2peers+5offline, poses/flip/alpha/sorting/pausa, loop/tail SnowBall e sons;core1106em04,18focados06,202CI;Windows/Linuxcompilados;custos/comparação qualificados. Retenções pontuais de amostra até261ms registradas; não declarar zero travamentos. Sem publicação; P0 permanece aberto.
 - [ ] Consolidar skill e notas (atualizadas até55: motion independente do ator, itens/montaria, custos, reconexão e teardown); matriz atualizada com integração automática2peers. Manual gráfico e consolidação dos IDs parciais pendentes.
 
 Um ID só deve ser marcado concluído com implementação/testes identificados;
@@ -6096,3 +6096,100 @@ Este registro supera os estados de execução anteriores. **R06 permanece parcia
 Usuário confirmou: "R06 está aprovado." R06 CONCLUÍDO nos cenários testados, superando os registros anteriores de aceite pendente. Mantidas as evidências e limitações da final12/protocolo69; sem ampliar o aceite para WAN/GPU ou runtime Linux não medidos. Checklist31/32 concluídos; resta R08. Nenhum commit, push ou publicação e R08 não iniciado nesta atualização.
 
 Retenção recomendada para R08: preservar C:/Users/mauri/SB6-QA-R06 como baseline aprovada. C:/Users/mauri/SB6-R06 contém a cópia duplicada final12 e candidatas intermediárias, dispensáveis quando a DLL de QA-R06 estiver conferida. Pacotes antigos QA-A14/R01/R02/R03/R05 não são necessários ao desenvolvimento do R08; seus runs/saves são evidências/dados de teste opcionais. Não houve exclusão nesta atualização.
+
+
+## Correção da contagem global — P0 incluído (11/11/2026)
+
+A contagem anterior31/32 considerava apenas A01–A14, C01–C10 e R01–R08 e omitia P0. Contagem global correta: **31/33 concluídos; P0 e R08 abertos**. R06 permanece aprovado. Após R08, revisar P0: auditar as capturas/comparações já produzidas por família, mapear os critérios atendidos, executar apenas as medições comparáveis ainda faltantes e consolidar o relatório final. Instrumentação/contexto já existem; novas capturas comparáveis permanecem na linha de pendência do P0. Não marcar P0 concluído com base somente no aceite visual de outro ID. Esta correção é documental, sem novas medições ou publicação.
+
+
+## R08 — início autorizado (11/11/2026)
+
+Usuário: "ok pode começar R08". Baseline HEAD375f44be3, R06 aprovado/protocolo69; manter C:/Users/mauri/SB6-QA-R06 como baseline imutável. Árvore inicial alterada apenas nos2docs de progresso/matriz (aceites/contagem); preservar. Escopo: barril/pilares, SnowBall, RocketPenguin/DestructibleRocket, Vulcan, bolhas ambientes/expulsas/flutuação e plataforma, sem escolha RNG/sweep/dano nos clientes. Auditar criação/remoção, pose/sombra, pausa, som contínuo e reentrada; testes Unity/C#,2peers, offline,custo e QA. Sem publicação/commit/push/P0 nesta autorização.
+
+
+### R08 — candidata02 em validação (11/11/2026 12:46)
+
+- HEAD375f44be3/R06 aprovado. Código R08 novo usa protocolo70: CoopEnvironmentLoops é novo snapshot confiável com scene/revision/phase/gain/pausa/loop-tail. Fonte CPU não depende de AudioSource.isPlaying no headless; SnowBallSfxTail mantém a última iteração aprovada e limpa por cena/remoção. Clip original do catálogo +ganho alvo; cliente aplica PCM com o mesmo teto de pico nativo. Não enviar clip gerado em runtime. Guardas Vulcan/ambient/burst evitam RNG/efeito client antes da desativação do co-op.
+- Novos OnlineCoopEnvironment.cs/.meta, LocalEnvironmentSmoke.cs/.meta, OnlineRoomEnvironmentPresentationTests.cs/.meta. Classificação de9famílias, publicação de criação/discrete edges no stream existente, poses retidas(speed0) só na cópia aprovada; movimento continua interpolado. Registro imediato de bolhas/trilhas. Penguin impacto passa também por CoopPlaySound, sem tocar RNG/target/sweep/dano. FloatingPlatform mantém gates/C08 existentes.
+- Candidate01:1102/1102 Unity core passou e Windows Development compilou; identidade em Logs/R08-candidate01/identity.json. Não contém o driver e os2testes posteriores; não usar como final.197/197 Python CI passou, incluindo2casos R08 e regressão8R06. Tools/Diagnostics/analyze_bosses.py agora aceita prefix/famílias com padrão R06 preservado; analyze_environment.py usa r08 +escopo explícito. Falhas/ausência de referência continuam falha/inconclusivo.
+- Cadeia viva: python Logs/R08-after01.py (session21843), estado Logs/R08-candidate02/chain-state.json; SERIAL e para em falha. Sync Update já passou, executa R08-unity.py candidate02 (core completo+build imutável). Depois4smokes170s Stage_3-2/3-3/3-4/3-5,2clientes reais, pausas/reload e análise individual via python -m Tools.Diagnostics.analyze_environment <pasta>. Não lançar outra Unity/SB6 em paralelo. Confirmar estado/processos antes de continuar.
+- Fixture Development -r08-environment prepara posições/câmera AUTORITATIVAS de sala (produção replica a câmera), invulnerabilidade de medição e gatilhos nativos: pilares, suporte SnowBall, Penguin em sala ocupada, RocketTileHandler e destruição de blocos gerando bubbles. Não é teste de travessia natural das salas, já coberta no C09. Para offline, python Logs/R08-offline.py candidate02 (usa bootstrap isolado -r06-offline-stage,kindr08_offline). Ainda NÃO rodado.
+- Pendências após cadeia: corrigir quaisquer falhas concretas sem relaxar métricas; instrumentar/validar loop de áudio nos2clientes e sua limpeza; conferir imagens reais/controle semPNG; offline4cenas+comparação; custo comparável qualificado; ReleaseLinux compile; pacote QA R08; docs/matriz/skill; restaurar runner overlay e hashes. Estado overlay Logs/R08-runner-sync/state.json, backup20261111-123606. Sem commit/push/deploy, sem P0, sem aceite manual presumido.
+
+
+### R08 — auditoria completa e candidata05 (11/11/2026 13:08)
+
+Supera os comandos/escopo incompletos da candidata02. **Não há integração aceita ainda.**
+
+- Mapeamento real de cenas/prefabs: Stage_3-2 Vulcan+VolcanoEyes/erupções;3-3 Ambient/Burst/GateBubble e flutuação;3-4 barril;3-5 Penguin+SnowBall;3-6 RocketTileHandler/DestructibleRocket. FloatingPlatform não possui referência direta nos Stage_3-* examinados; domínio C08 já existe, não presumir nova cobertura de passageiro por estas capturas. Base QA-R06 preservada.
+-02:1104Unity e build passaram, mas fixture falhou ao exigir igualdade entre Player Area e bounds da câmera (colliders diferentes). Corrigida seleção de câmera AUTORITATIVA existente pela proximidade dos bounds autorados; nenhuma câmera nova foi criada.
+-03:1105Unity e build passaram; fixture3-2 entrou na sala e observou Vulcan/Volcano, mas procurou RocketTileHandler na cena errada(3-2; real3-6). Novo fixture separado para3-6. Integração03 falhou e NÃO é aceite. Foram preservadas as primeiras capturas para diagnóstico: Logs/R08-peers-candidate03-Stage_3-2/partial-capture-manifest.json. Primeiros JSONL tinham40.8/38.7/38.7MB; a segunda captura de cada processo tinha0bytes. Analisador de poses/posição passou nesses dados parciais, mas não concluir cenário sem checkpoints.
+- Causa das capturas vazias: NOVO TraceEnvironmentLoop em ClearCoopEnvironment podia chamar Write após Application.quitting já ter fechado o writer, abrindo outro arquivo que não era mais fechado.05 REMOVE essa escrita de teardown. Não trocar o leitor para ignorar a última captura e chamar de aprovado. Estado final do loop será conferido pelo snapshot vazio enviado durante a execução, antes do encerramento.
+-04:1106/1106 Unity core e build passaram. Integração foi pulada deliberadamente em Logs/R08-smokes.py por estar superada pelo reparo de diagnóstico; exit1 desse passo não é falha de gameplay04. Código05 difere04 somente na retirada do log de cleanup e no campo paused do probe R08: usa frame.pauseWithGameplay, mantendo globalPaused separado. Efeitos nativos unscaled(Vulcan/AmbientBubble) continuam durante pausa como offline.
+-05 em execução: python Logs/R08-after04.py, sessão77417, estado Logs/R08-candidate05/chain-state.json. Sync Update passou13:08; R08-unity.py candidate05 --focused executa9casos R08 depois recompila Windows Development. Core1106 foi executado em04; não afirmar nova suíte completa05 sem rodar. Cadeia SERIAL segue5smokes170s e análise individual nas5cenas, parando em qualquer falha. Não lançar outra Unity/SB6 em paralelo.
+- Mudanças adicionais: VolcanoEyes tem guardas de Update/SpawnEruption, registro imediato de erupção/alvo e transporte dos sons nativos; GateOpenedSequence tem guardas Start/Update/Begin/ChipBlink, registro de fragmentos e som de rompimento. Classificação de11famílias no stream aprovado; frames/alpha/sorting/visibilidade imediatos. Native AI/RNG/target/dano não rodam no client. Absorção usa referência Shader em cache, evitando shader.name por frame; teste R06 permanece verde em04.
+- Analisador agora exige família esperada VISÍVEL E MÓVEL por cenário; não aprovar só por mover outro ator. Loop SnowBall exige loop, pause, tail e snapshot final vazio nos2clientes e comparação por revisão/id com fonte. Estado AudioSource, não prova de som percebido/GPU/dispositivo. Tools/Ci/test_environment_analysis.py tem6casos novos(2prefix,3audio,1coverage); total Python esperado201,197 foram rodados antes dos4últimos,14focados(R06+R08) passaram após os últimos ajustes. Rodar CI completo final.
+- Pendências após cadeia05: resolver falhas concretas; imagens reais sem conclusões baseadas só na prévia; controle semPNG já é a cadeia; offline5cenas via Logs/R08-offline.py candidate05 e comparação qualificada; custos baseQA-R06/final com setup comparável (não comparar cenários/salas diferentes como se fossem iguais), limitar alegações da janela comum; custo ativo final separado se necessário; Linux Release compilar; pacote QA5cenários; docs/matriz/lessons; restaurar overlay/hashes. Sem publicação/commit/push/P0/aceite humano presumido. Overlay Logs/R08-runner-sync/state.json, backup20261111-123606.
+
+
+### R08 — candidata07; diagnóstico de bordas visuais (11/11/2026 13:25)
+
+-05 passou9focados+build e smoke/análise3-2 com2clientes, sem segunda captura vazia.3-3falhou no fixture porque usa câmeras fixas, sem CameraFollowClamp2D. PlacePlayers agora também seleciona a câmera fixa AUTORADA mais próxima, mantendo a seleção no servidor e o transporte de câmera de produção; Snap só se há follow.
+-06 passou18testes R06/R08 e build (core completo1106 em04, antes das alterações posteriores). Inclui flipX/Y como borda imediata no stream: Volcano pode inverter no ápice sem mudar sprite. Analisador R08 confere também flip/order/layer/alpha/mask, não só sprite; teste Python exige falhar para flip futuro com sprite igual.15focados Python(R06+R08) passaram; suite completa201 passou antes desse último teste; total esperado202a executar.
+-06smoke3-2 passou o harness, mas análise ampliada FALHOU: diferenças de order/flipY. Causa comprovada no código: o debounce do probe comparava só sprite/mask/light, omitindo a borda de sorting/flip/color por até50ms. NÃO relaxar a comparação;07 inclui esses atributos no cache do probe, publicando a referência exata de cada borda. Sem alteração de gameplay06→07, somente diagnóstico. Não considerar06integrado aprovado.
+-07em execução: python Logs/R08-after06.py, sessão65383, estado Logs/R08-candidate07/chain-state.json. Sync passou13:25; R08-unity.py candidate07 --build-only compila a nova referência sem repetir core cujo único delta é log. Depois5smokes/análises SERIAL170s cada nas3-2/3-3/3-4/3-5/3-6. Cadeia para em falha. Não lançar outro Unity/SB6 junto. Protocolo70.
+- Script de extras6 (sessão67848) saiu ao detectar falha6; não esperar que faça qualquer trabalho. Scripts PRONTOS mas ainda apontam6 e precisam atualizar para candidata final aceita: R08-cost.py/common8runs(2reps×baseline/final×3-3/3-5), R08-cost-report.py <label>, R08-active-cost.py(3-2/3-5finalsemcaptura), R08-linux-build.py. R08-visible.py recebe label/cena e usa framebuffer real com -r06-backbuffer-captures; R08-offline.py recebe label e5cenas. Não rodados ainda.
+- Custos: baseline C:/Users/mauri/SB6-QA-R06/build versus final em MESMA janela comum room1, sem -r08-environment/PNG/motion capture. Isso NÃO mede sobrecusto do loop ativo/erupções em salas posteriores; medir absoluto ativo final separado, sem falsa comparação com sala diferente da base. Relatórios de família CPU/payload nas capturas diagnósticas são outro escopo e incluem custo de captura diferente do total de frame. Documentar poucas repetições e RNG nativo não idêntico.
+- Fonte Unity oficial consultada confirma Audio Subsystem desativado no Dedicated Server: https://docs.unity.com/en-us/engine/6000.6/manual/platform-specific/dedicated-server/get-started/optimizations . Relógio CPU do loop não lê isPlaying; PCM/ganho gerados no client. ReleaseLinux precisa compilar, runtimeLinux ainda não estabelecido. Não inferir audição por medir AudioSource.
+- Após cadeia final: revisar stats/holds/poseatributos/áudioSnowBall, offline5+comparação, custos comuns/ativo qualificados,1controle visível3-5comPNG, Linuxcompile, pacoteQA5atalhos e docs/matriz/lessons. Restaurar runner com Logs/R08-runner-sync.ps1 -Mode Restore e verificar hashes. Não tentar apagar builds intermediárias (remoção anteriormente bloqueada por política); preservar fontes/saves/Recovery. Nenhum commit/push/deploy/P0/manual presumido.31/33 IDs concluídos, R08/P0abertos.
+
+
+## R08 — entrega técnica final07; aceite humano pendente (11/11/2026)
+
+Este registro supera os estados de execução anteriores. Implementação e validação técnica desta entrega terminaram; **R08 permanece parcial pelo aceite visual/auditivo humano**, sem presumir aprovação. Checklist **31/33** concluídos; R08 e P0 abertos. Nenhum commit, push ou publicação; P0 não iniciado.
+
+### Implementação
+
+- Ambiente usa o stream existente de vértices aprovados: não escolhe alvo/RNG, faz sweep/dano, concede colisão nem cria foguete de gameplay no cliente. Registro imediato de objetos runtime e bordas de quadro, flipX/Y, alpha, sorting, máscara e visibilidade. Movimento continua interpolado; animação transmitida retém o quadro nativo aprovado.
+- Vulcan e erupções/targets do Volcano(3-2), bolhas ambient/burst/float e fragmentos do chip(3-3), barril/pilares(3-4), Penguin/SnowBall(3-5), foguete de bloco(3-6). O prefab FloatingPlatform não tinha referência direta nos Stage_3-* examinados; seu domínio C08 foi preservado e não ganha alegação de passageiro/cena testada por estas capturas.
+- SnowBall transmite clip original do catálogo e ganho/phase/loop/pausa/revisão. Relógio CPU independente de isPlaying; cliente cria PCM com teto de pico nativo. A última iteração sobrevive à remoção da bola, depois encerra; limpeza por cena e snapshots completos recuperam estado recebido tardiamente. Não enviar o AudioClip gerado pelo servidor. Novo transporte requer **protocolo70** nos dois lados.
+- Sons nativos do impacto do Penguin, erupções e rompimento da bolha passam pelo transporte existente. Guardas nativas cobrem entradas novas antes/fora do bootstrap co-op, mantendo offline/servidor. Shader de absorção consultado por referência em cache, sem shader.name por frame.
+- Políticas de pausa preservadas: AmbientBubble e Vulcan decorativos usam tempo não escalado offline e continuam; erupções, barril, SnowBall, foguetes e fragmentos congelam. Probe registra paused por ator e globalPaused separado.
+
+### Identidade e verificações
+
+Final Windows: C:/Users/mauri/SB6-R08/candidate07. Assembly-CSharp.dll **bb32ffb0903e21b4ee7880c3e68ce2c6005f903f447bcac0feb300179787524e**. Pacote imutável C:/Users/mauri/SB6-QA-R08, mesmo hash. Identidades/fontes em Logs/R08-candidate07/identity.json e qa-package.json.18C# passaram UTF-8 estrito; fontes runtime/testes e Packages idênticos ao runner antes da restauração, normalizando só CRLF. diffcheck passou.
+
+- Core completo **1106/1106 na candidata04**. Após a borda flip/câmera fixa, **18/18 focados R06/R08 na06**.07 recompilou após alterar somente o debounce do diagnóstico; **não foi alegada nova suíte completa1106 em07**. Windows Development e Linux Dedicated Server Release07 compilaram, sem warning/error CS nos logs finais. Linux DLL **340b8868e2438f51eb1325990e5b10b90b96a57e2bf78fa5d90d751ac3068a5d**; hash do executável-launcher sozinho não identifica o código. Runtime Linux não executado.
+- Python CI final **202/202 passou**; novos testes de prefixo, cobertura obrigatória, áudio e rejeição de flip futuro com sprite igual. Ferramentas Tools/Diagnostics/analyze_environment.py e analyze_bosses.py compartilham comparação estrita; o padrão R06 permanece.
+- Cadeia completa Logs/R08-candidate07/chain-state.json:5cenários170s com **2clientes Mirror reais renderizados**, pausa/retomada/reload. Todos harness/análises passaram; famílias esperadas visíveis e móveis exigidas explicitamente. Sprite/flip/order/layer/alpha/mask: **zero divergência estrita**. Relatório agregado integration-summary.json. Não converter ausência de movimento/referência em aprovação.
+- Extra-state.json:5offline nativos;8custos comuns;2custos ativos finais; controle3-5com framebuffer real; análise visível; compilação Linux: todos exit0. Snapshot de áudio3-5 aprovado nos2clientes(19amostras cada no controle semPNG): loop, pause, tail, clip e encerramento vazio. Estado AudioSource, não prova de audição/dispositivo ou sincronismo de fase perfeito.
+- PNGs reais3-5 e controles semPNG separados. Inspeção individual de world-028(1cliente,Penguin) e world-041(2clientes,SnowBall) mostrou arena/HUD/efeitos preservados; isso não aceita fluidez humana nem todos os frames. Evidências em Logs/R08-backbuffer-candidate07-Stage_3-5. Não inferir tela preta pela prévia sequencial; usar pixels originais.
+- O **launcher do próprio pacote** foi executado em3-5 com servidor+2janelas e concluiu160s,0erros/avisos de rede: C:/Users/mauri/SB6-QA-R08/runs/Stage_3-5-20261111-165033-556482. Seus demais atalhos têm sintaxe/hash conferidos e usam as fixtures/binário que passaram na cadeia.
+
+### Custos e comparação
+
+Baseline QA-R06 versus07, mesma fixture comum do cenário sem -r08-environment, semPNG/motion capture,2repetições/configuração/cena. Não comparar esta janela com salas preparadas pelo roteiro R08 como se fossem o mesmo setup. Dados cost-report.json:
+
+| Cena | Delta trabalho médio servidor | Delta clientes1/2 | Delta saída servidor | Delta alocação servidor/clientes |
+|---|---|---|---|---|
+|3-3|+.113ms|+.031/+.059ms|+27.38KiB/s(+7.33%)|+22.63/+19.91/+20.53KiB/s|
+|3-5|+.059ms|+.088/+.113ms|-14.38KiB/s(-1.16%),faixas sobrepostas|-318.78/-6.13/-6.44KiB/s|
+
+Faixas do trabalho por frame se sobrepõem; poucas repetições/RNG nativo não idêntico não provam causalidade/ganho universal. Tráfego/alocação adicionais3-3 ficam registrados, não ocultados. Trabalho médio absoluto final nas janelas comuns<3ms nos3processos.
+
+Active-cost-report.json mede **somente absoluto final** durante setup/ações/pausa: servidor2.23ms(3-2)/2.54ms(3-5), clientes1.03–1.87ms; saída agregada2peers261.0/1385.4KiB/s,2janelas de rede por cena. Uma execução, fronteira por relatório de1s e pausa intencional incluída. Não é A/B do mecanismo ativo. Capturas diagnósticas guardam métricas CPU/payload por família, com escopo distinto do frame total sem captura.
+
+Logs/R08-comparacao.json:5cenas offline×online,18/53/5/17/18sprites comuns respectivamente. As fixtures nativas completaram nos dois modos. Sem replay idêntico de RNG/input e sem identidade cruzada de atores offline; conjuntos de sprites descrevem cobertura, não equivalência integral ou latência. Não mede WAN/GPU/input físico.
+
+### Ressalvas preservadas
+
+- Retenções de entrega:3-2 teve11/13amostras nos clientes1/2, idade máxima235.7/261.3ms;3-6 teve4no cliente2, máxima220.8ms. Demais cenários primários0. São idades da última aprovação nos eventos, **não duração perceptiva de travada**. Na3-2 os24eventos coincidiram com frames do cliente de129.8–313.9ms;3-6 contém frames de16.7–184.3ms. Correlação, não causa comprovada. delivery-hold-correlation.json usa a mesma elegibilidade do comparador. Não declarar zero travamentos/latência; revisar no QA e auditoria P0.
+- Gaps de referência>150ms, efeitos<80ms, pausas e falta de referência ficam explícitos. Verificar estado aprovado correto não garante entrega sem retenção. Medição headless não prova GPU; AudioSource não prova saída audível. Compilação Linux não prova execução Linux.
+- Seleção/posições de salas são setup Development AUTORITATIVO do fixture; não alegar nova cobertura da travessia natural(C09) nem de progressão de saves.
+- Runner restaurado e31caminhos copiados conferidos aos hashes originais em runner-restore-check.json. Library/importações/cache não revertidos. Builds intermediárias preservadas; nenhuma nova tentativa de exclusão após a rejeição de política anterior.
+
+### Próxima ação humana
+
+Em C:/Users/mauri/SB6-QA-R08, abrir UM atalho por vez:1-Vulcan-e-Vulcao,2-Bolhas-e-Chip,3-Barril,4-Penguin-e-Bola-de-Neve,5-Foguete-de-Bloco. Observar os dois clientes: continuidade, pose/inversão, alvo/sombra, fragmentos/fade, sons sem duplicação e loop SnowBall terminando, pausa e reentrada sem resíduos. LEIA-ME.md detalha o roteiro. Saves isolados; cada rodada preserva seus logs em runs/. R08 só será marcado concluído após aceite do usuário; P0 segue depois.

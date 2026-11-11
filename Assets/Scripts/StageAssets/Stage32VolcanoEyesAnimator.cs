@@ -99,6 +99,7 @@ namespace StageAssets
 
         private void Update()
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             if (!HasValidConfiguration())
                 return;
 
@@ -181,6 +182,7 @@ namespace StageAssets
 
         private void SpawnEruption(Vector2 target, float now)
         {
+            if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
             GameObject eruptionObject = new("Volcano Eruption");
             eruptionObject.transform.SetParent(transform, false);
             SpriteRenderer eruptionRenderer = eruptionObject.AddComponent<SpriteRenderer>();
@@ -197,6 +199,8 @@ namespace StageAssets
             targetRenderer.sortingOrder = sortingOrder - 1;
             targetRenderer.sprite = eruptionTargetSprites[0];
             targetRenderer.enabled = false;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(eruptionRenderer);
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(targetRenderer);
 
             activeEruptions.Add(new ActiveEruption
             {
@@ -363,7 +367,10 @@ namespace StageAssets
         private void PlaySfx(AudioClip clip)
         {
             if (clip != null && audioSource != null)
+                {
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip);
                 audioSource.PlayOneShot(clip);
+            }
         }
 
         private float GetRepeatDelay() => Random.Range(

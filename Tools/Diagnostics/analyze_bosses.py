@@ -8,10 +8,15 @@ from pathlib import Path
 from Tools.Diagnostics.analyze_projectiles import compare, detail, rows
 
 
-def pose_steps(native, observed):
+def changed_pose_fields(approved, actual, fields):
+    return [field for field in fields if field in approved and field in actual and
+            (abs(float(approved[field]) - float(actual[field])) > .0001 if field == "alpha" else approved[field] != actual[field])]
+
+
+def pose_steps(native, observed, prefix="r06", fields=("sprite",)):
     tracks = defaultdict(list)
     for row in native:
-        if row.get('kind') == 'r06_native':
+        if row.get('kind') == prefix + '_native':
             state = detail(row)
             tracks[state['id']].append((float(state['ptime']), state))
     for track in tracks.values():
@@ -21,7 +26,7 @@ def pose_steps(native, observed):
                                       referenceGaps=0, pauseOrHidden=0, examples=[],
                                       deliveryPoseHolds=0, deliveryHoldMaxMs=0))
     for row in observed:
-        if row.get('kind') != 'r06_view':
+        if row.get('kind') != prefix + '_view':
             continue
         state = detail(row)
         key = state['id']
@@ -49,18 +54,19 @@ def pose_steps(native, observed):
         newest = float(state.get('newest', clock))
         if (newest < clock and 0 <= live_index < len(track) - 1 and
                 track[live_index][1].get('visible') == '1' and
-                track[live_index][1].get('sprite') != state['sprite']):
+                changed_pose_fields(track[live_index][1], state, fields)):
             bucket['deliveryPoseHolds'] += 1
             bucket['deliveryHoldMaxMs'] = max(bucket['deliveryHoldMaxMs'], (clock - newest) * 1000)
-        if state['sprite'] != before[1]['sprite']:
+        differences = changed_pose_fields(before[1], state, fields)
+        if differences:
             bucket['mismatches'] += 1
             if len(bucket['examples']) < 10:
                 bucket['examples'].append(dict(clock=clock, state=reference, sourceTime=before[0],
-                                                expected=before[1]['sprite'], actual=state['sprite']))
+                                                expected=before[1]['sprite'], actual=state['sprite'], fields=differences))
     return dict(result)
 
 
-def analyze(folder):
+def analyze(folder, prefix="r06", families=None):
     native = rows(folder / 'server-motion.jsonl')
     mapping = {}
     for row in native:
@@ -73,11 +79,13 @@ def analyze(folder):
     def normalize(source):
         result = []
         for row in source:
-            if row.get('kind') not in ('r06_native', 'r06_view'):
+            if row.get('kind') not in (prefix + '_native', prefix + '_view'):
                 continue
             state = detail(row)
+            if families is not None and mapping.get(state['id']) not in families:
+                continue
             state['family'] = mapping.get(state['id'], 'UnclassifiedBoss')
-            result.append(dict(row, kind='r05_native' if row['kind'] == 'r06_native' else 'r05_view',
+            result.append(dict(row, kind='r05_native' if row['kind'] == prefix + '_native' else 'r05_view',
                                detail=';'.join(key + '=' + value for key, value in state.items())))
         return result
 
@@ -89,7 +97,10 @@ def analyze(folder):
         # held pose 60ms old and include only the FUTURE edge. Keep its diagnostic
         # count, but score bosses against the preceding authority state instead.
         report['problems'] = [p for p in report['problems'] if not p.endswith(': unexpected sprite sequence')]
-        steps = pose_steps(native, observed)
+        scoped_native = native if families is None else [r for r in native if detail(r).get("id") in mapping and mapping[detail(r)["id"]] in families]
+        scoped_observed = observed if families is None else [r for r in observed if detail(r).get("id") in mapping and mapping[detail(r)["id"]] in families]
+        fields = ("sprite", "flipX", "flipY", "order", "layer", "alpha", "mask") if prefix == "r08" else ("sprite",)
+        steps = pose_steps(scoped_native, scoped_observed, prefix, fields)
         for family, bucket in report['families'].items():
             bucket['neighborhoodSpriteMismatch'] = bucket.pop('spriteMismatch')
             family_steps = [value for key, value in steps.items() if mapping.get(key, 'UnclassifiedBoss') == family]
