@@ -22,6 +22,8 @@ public sealed class JellyFishShot : MonoBehaviour
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         direction = travelDirection == Vector2.zero ? Vector2.down : travelDirection.normalized;
         owner = shotOwner;
+        foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(JellyFishShot));
     }
 
     private void Awake()

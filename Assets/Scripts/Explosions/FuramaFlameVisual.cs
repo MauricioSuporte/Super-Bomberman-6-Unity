@@ -14,6 +14,7 @@ public sealed class FuramaFlameVisual : MonoBehaviour
         float tileSize,
         float durationSeconds)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         direction = ToCardinal(direction);
         float safeTileSize = Mathf.Max(0.01f, tileSize);
         Vector2 start = origin + direction * (Mathf.Max(0.01f, startTileDistance) * safeTileSize);
@@ -24,6 +25,8 @@ public sealed class FuramaFlameVisual : MonoBehaviour
             flameBody.position = start;
 
         transform.rotation = Quaternion.FromToRotation(Vector3.up, direction);
+        foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(FuramaFlameVisual));
         StartCoroutine(PlayRoutine(start, end, Mathf.Max(0.01f, durationSeconds)));
     }
 

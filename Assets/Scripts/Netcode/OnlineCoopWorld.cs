@@ -214,6 +214,9 @@ namespace Assets.Scripts.Netcode
             });
             NetworkClient.RegisterHandler<CoopSpriteDefinition>(ApplyCoopSpriteDefinition);
             NetworkClient.RegisterHandler<CoopAnimationDefinition>(ApplyCoopAnimationDefinition);
+#if UNITY_EDITOR || DEBUG
+            LocalProjectileSmoke.RegisterMessages();
+#endif
             NetworkClient.RegisterHandler<CoopMusic>(ApplyCoopMusic);
             NetworkClient.RegisterHandler<CoopStageStatus>(ApplyCoopStageStatus);
             NetworkClient.RegisterHandler<CoopCollisions>(ApplyCoopCollisions);
@@ -394,6 +397,8 @@ namespace Assets.Scripts.Netcode
         {
             if (!NetworkServer.active || !IsCoopStage || coopCatalog == null || NetworkServer.isLoadingScene) return;
             bool shapeDiagnostics = CoopShapeDiagnostics;
+            MergeCoopPendingRenderers();
+            PublishCoopProjectileEdges();
             if (shapeDiagnostics) SampleCoopTruth();
             TrackCoopOverlays(shapeDiagnostics);
             if (Time.unscaledTime < coopNextFrame) { PublishCoopEnemyTransitions(shapeDiagnostics); PublishCoopMotion(shapeDiagnostics); return; }
@@ -408,6 +413,9 @@ namespace Assets.Scripts.Netcode
                 peers.Add(peer);
                 if (!coopInitializedPeers.Add(peer.connectionId)) continue;
                 peer.Send(new CoopWorldBegin { scene = coopScene, hash = coopCatalog.contentHash });
+#if UNITY_EDITOR || DEBUG
+                LocalProjectileSmoke.SendDefinitions(peer);
+#endif
                 if (coopHasMusic) peer.Send(coopMusic);
                 foreach (var definition in coopDefinitions.Values) peer.Send(definition);
                 foreach (var definition in coopAnimationDefinitions.Values) peer.Send(definition);
@@ -514,7 +522,7 @@ namespace Assets.Scripts.Netcode
             {
                 frame.pauseWithGameplay |= animation.RespectGamePause;
                 frame.animation = CaptureCoopAnimation(animation);
-                frame.playback = CaptureCoopPlayback(animation);
+                frame.playback = coopProjectiles.ContainsKey(frame.id) ? CaptureCoopProjectilePlayback(animation) : CaptureCoopPlayback(animation);
                 // Remove the sampled jump offset; the client reapplies the offset for its rendered animation frame.
                 frame.offsetRight = animation.FrameOffsetToWorld(Vector2.right);
                 frame.offsetUp = animation.FrameOffsetToWorld(Vector2.up);
@@ -662,19 +670,28 @@ namespace Assets.Scripts.Netcode
         void ApplyCoopSprites(CoopSprites message)
         {
             if (!CanApplyCoop(message.scene)) return;
-            foreach (var frame in message.frames ?? Array.Empty<CoopSpriteFrame>())
-            {
-                if (coopVisualRemovals.TryGetValue(frame.id, out double removal) && frame.time <= removal) continue;
-                if (!coopVisualSamples.TryGetValue(frame.id, out var samples))
-                    coopVisualSamples[frame.id] = samples = new List<CoopVisualSample>();
-                if (samples.Count > 0 && frame.time <= samples[^1].frame.time) continue;
-                var received = CoopVisualSample.Full(frame);
-                if (CoopShapeDiagnostics) RecordCoopArrival(frame.id, samples, received);
-                samples.Add(received);
-                if (samples.Count > 64) samples.RemoveAt(0);
-            }
+            foreach (var frame in message.frames ?? Array.Empty<CoopSpriteFrame>()) AppendCoopSpriteFrame(frame);
             foreach (int id in message.removed ?? Array.Empty<int>())
                 coopVisualRemovals[id] = message.time;
+        }
+
+        void AppendCoopSpriteFrame(CoopSpriteFrame frame)
+        {
+            if (coopVisualRemovals.TryGetValue(frame.id, out double removal) && frame.time <= removal) return;
+            if (!coopVisualSamples.TryGetValue(frame.id, out var samples))
+                coopVisualSamples[frame.id] = samples = new List<CoopVisualSample>();
+            if (samples.Count > 0 && frame.time < samples[^1].frame.time) return;
+            if (samples.Count > 0 && frame.time == samples[^1].frame.time)
+            {
+                // Reliable sender order resolves changes within one authority frame
+                // (creation followed by the initialized sprite/visibility).
+                samples[^1] = CoopVisualSample.Full(frame);
+                return;
+            }
+            var received = CoopVisualSample.Full(frame);
+            if (CoopShapeDiagnostics) RecordCoopArrival(frame.id, samples, received);
+            samples.Add(received);
+            if (samples.Count > 64) samples.RemoveAt(0);
         }
 
         void PresentCoopSprite(CoopSpriteFrame frame, double playbackOrigin)

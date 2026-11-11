@@ -817,7 +817,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
     private void SpawnProjectile(Vector2 dir)
     {
-        if (projectilePrefab == null)
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || projectilePrefab == null)
             return;
 
         Vector2 spawn = rb.position + dir * tileSize + projectileLocalOffset;
@@ -828,6 +828,8 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             proj = go.AddComponent<TankShot>();
 
         proj.Init(dir, projectileSpeed, projectileHitMask, gameObject);
+        if (!Assets.Scripts.Netcode.BombermanNetworkManager.CoopR05Legacy)
+            Assets.Scripts.Netcode.NetSpawn.Server(go);
     }
 
     private bool TryGetPlayerDirection(out Vector2 dirToPlayer)

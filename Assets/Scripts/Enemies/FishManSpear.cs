@@ -26,7 +26,7 @@ public sealed class FishManSpear : MonoBehaviour
         direction = travelDirection == Vector2.zero ? Vector2.down : travelDirection.normalized;
         owner = spearOwner;
         ApplyDirectionSprite();
-        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(spriteRenderer);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(spriteRenderer, nameof(FishManSpear));
     }
 
     private void Awake()

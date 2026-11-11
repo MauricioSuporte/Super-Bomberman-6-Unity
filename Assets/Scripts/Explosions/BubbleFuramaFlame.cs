@@ -17,6 +17,7 @@ public sealed class BubbleFuramaFlame : MonoBehaviour
     public void Launch(AnimatedSpriteRenderer source, Vector2 direction, float tileSize,
         float lengthTiles, SpriteRenderer ownerRenderer, Collider2D[] ownerColliders)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         flameAnimation = source;
         direction.Normalize();
         Vector2 origin = transform.position;
@@ -61,11 +62,13 @@ public sealed class BubbleFuramaFlame : MonoBehaviour
         foreach (Collider2D ownerCollider in ownerColliders)
             if (ownerCollider != null)
                 Physics2D.IgnoreCollision(hitbox, ownerCollider);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(GetComponent<SpriteRenderer>(), nameof(BubbleFuramaFlame));
         launched = true;
     }
 
     void Update()
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         if (!launched || GamePauseController.IsPaused || Time.deltaTime <= 0f)
             return;
 

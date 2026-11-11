@@ -75,7 +75,7 @@ public sealed class QueenOyobeeProjectile : MonoBehaviour
         p.hitbox.enabled = crown;
         p.rb.position = FreezerVenusArena.Snap(p.position);
         go.transform.position = p.rb.position;
-        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(p.visual);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(p.visual, nameof(QueenOyobeeProjectile));
         return p;
     }
 
@@ -263,6 +263,7 @@ public sealed class QueenOyobeeProjectile : MonoBehaviour
 
     public static GameObject CreateRitual(QueenOyobeeController owner)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return null;
         var ring = new Vector2[65];
         Vector2 center = owner.Boss.GroundPosition;
         for (int i = 0; i < ring.Length; i++)
@@ -275,6 +276,7 @@ public sealed class QueenOyobeeProjectile : MonoBehaviour
 
     public static GameObject CreateTelegraph(QueenOyobeeController owner, Vector2[] path)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return null;
         var go = new GameObject("Queen pixel trajectory");
         var marker = go.AddComponent<QueenOyobeePixelTrail>();
         marker.Initialize(owner, path);
@@ -342,6 +344,7 @@ public sealed class QueenOyobeePixelTrail : MonoBehaviour
 
     public void Initialize(QueenOyobeeController owner, Vector2[] path)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         Vector2 min = path[0], max = path[0];
         foreach (var point in path) { min = Vector2.Min(min, point); max = Vector2.Max(max, point); }
         min = new Vector2(Mathf.Floor(min.x * 16f), Mathf.Floor(min.y * 16f)) / 16f - Vector2.one * 0.125f;
@@ -374,7 +377,7 @@ public sealed class QueenOyobeePixelTrail : MonoBehaviour
         visual.sortingLayerID = owner.Boss.body.sortingLayerID;
         visual.sortingOrder = owner.Boss.body.sortingOrder - 1;
         transform.position = min;
-        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(visual);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(visual, nameof(QueenOyobeePixelTrail));
     }
 
     private void Update()

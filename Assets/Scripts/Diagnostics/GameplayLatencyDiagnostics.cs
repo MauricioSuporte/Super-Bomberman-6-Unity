@@ -12,7 +12,8 @@ public static class GameplayLatencyDiagnostics
     public const string BuildSettingsPath = "GameplayLatencyDiagnostics";
     // R01: 8 MiB ended 90 s Development smokes at ~57 s (capture_limit). The larger cap is Development-only so a release
     // build with the capture enabled keeps its previous disk footprint (R01 cost measurement, 07/11/2026).
-    static long MaxBytes => Debug.isDebugBuild ? 64L * 1024 * 1024 : 8L * 1024 * 1024;
+    static long maxCaptureBytes = 64L * 1024 * 1024;
+    static long MaxBytes => Debug.isDebugBuild ? maxCaptureBytes : 8L * 1024 * 1024;
     const double MaxSeconds = 600;
     const int DefaultEventsPerSecond = 180;
     static int maxEventsPerSecond = DefaultEventsPerSecond; // R01: -online-motion-log-budget N changes capture density only; default unchanged
@@ -54,6 +55,7 @@ public static class GameplayLatencyDiagnostics
         bytes = budgetCount = dropped = 0;
         FormatTicks = IoTicks = RowsWritten = 0;
         maxEventsPerSecond = DefaultEventsPerSecond;
+        maxCaptureBytes = 64L * 1024 * 1024;
         started = flushAt = budgetWindow = 0;
         Application.quitting -= Close;
         Application.quitting += Close;
@@ -72,6 +74,10 @@ public static class GameplayLatencyDiagnostics
         int budgetArg = Array.IndexOf(args, "-online-motion-log-budget");
         if (budgetArg >= 0 && budgetArg + 1 < args.Length && int.TryParse(args[budgetArg + 1], out int budget) && budget >= DefaultEventsPerSecond && budget <= 5000)
             maxEventsPerSecond = budget;
+        int limitArg = Array.IndexOf(args, "-online-motion-log-limit-mib");
+        if (Debug.isDebugBuild && limitArg >= 0 && limitArg + 1 < args.Length &&
+            int.TryParse(args[limitArg + 1], out int limit) && limit >= 64 && limit <= 256)
+            maxCaptureBytes = (long)limit * 1024 * 1024;
     }
 
     public static void SetEnabled(bool value)
@@ -122,7 +128,7 @@ public static class GameplayLatencyDiagnostics
                 bytes = 0; started = now; flushAt = now + 1;
                 writer.WriteLine(JsonUtility.ToJson(new Entry { kind = "capture_start", utc = DateTime.UtcNow.ToString("O"),
                     version = Application.version, build = OnlineVersionAuthenticator.BuildIdentity, protocol = OnlineVersionAuthenticator.ProtocolVersion,
-                    detail = "Local elapsed durations are exact to the rendered frame; timeline is interpolated, not a shared wall clock. Input bits: Up=1 Down=2 Left=4 Right=8 A=16 B=32 C=64 Select=128 L=256 R=512. Contact-to-feedback durations use one local clock; authoritativeTick correlates kick feedback with the server input tick.",
+                    detail = "Local elapsed durations are exact to the rendered frame; timeline is interpolated, not a shared wall clock. Input bits: Up=1 Down=2 Left=4 Right=8 A=16 B=32 C=64 Select=128 L=256 R=512. Contact-to-feedback durations use one local clock; authoritativeTick correlates kick feedback with the server input tick. Budget=" + maxEventsPerSecond + ";limitMiB=" + (MaxBytes / (1024 * 1024)),
                     device = Application.platform.ToString() }));
                 Debug.Log("[GameplayLatency] Capture: " + CurrentFile);
             }
@@ -130,7 +136,7 @@ public static class GameplayLatencyDiagnostics
             {
                 writer.WriteLine("{\"kind\":\"capture_limit\"}");
                 Close(); enabled = false;
-                Debug.Log("[GameplayLatency] Capture stopped at 8 MiB or 10 minutes. Enable again for another capture.");
+                Debug.Log("[GameplayLatency] Capture stopped at " + (MaxBytes / (1024 * 1024)) + " MiB or 10 minutes. Enable again for another capture.");
                 return;
             }
             entry.utc = DateTime.UtcNow.ToString("O");

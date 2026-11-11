@@ -30,6 +30,7 @@ namespace Assets.Scripts.Netcode
 
         static string ClassifyCoopPresentationFamily(SpriteRenderer renderer)
         {
+            if (renderer.TryGetComponent<CoopProjectileVisual>(out var projectile)) return projectile.Family;
             var enemy = renderer.GetComponentInParent<EnemyMovementController>(true);
             if (enemy != null) return enemy.GetType().Name;
             for (var current = renderer.transform; current != null; current = current.parent)

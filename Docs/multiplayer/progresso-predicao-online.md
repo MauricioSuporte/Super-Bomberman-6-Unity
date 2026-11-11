@@ -270,7 +270,7 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] R02: aprovado pelo usuário em 09/11/2026, publicado em homologação (08/11; protocolo 67; runtime `b2d90fb7b`, Actions 42473009178; validado no binário r02c `020208c8…`). Parte 1: amostras de posição por frame + âncoras de repouso; forma das famílias de gameplay corrigida (p95 0,1 px). Parte 2: reposicionamento explícito no wrap; reconexão 3/3; teto de 60 Hz (`frame`); fome real separada. Parte 3: resíduo das sobreposições isolado (captura do servidor antes do LateUpdate da areia/câmera) e corrigido com captura após todos os LateUpdate; reprodução controlada com travadas de 120 ms: fase antiga 10,5 px, r02c 1,06–1,16 px (p95 0,8) em 6/6 execuções. Campo removido sem redução de alocação demonstrada (alocador em blocos de 4 KiB: ≈ 0 no servidor); custo total r02c − baseline +25/+23/+22 KiB/s, sem regressão contra r02b. Picos de localhost: 41/48 janelas são travadas do servidor; o restante é atraso observado pelo Mirror ou travada de cliente. EditMode 1055/1055. Aceite perceptual aprovado pelo usuário em 09/11/2026 nos cenários testados; custos e limitações anteriores preservados.
 - [x] R03: concluído e aprovado visualmente pelo usuário em 10/11/2026 nos cenários do pacote SB6-QA-R03. Protocolo68 local; Unity1068/1068, dois clientes reais, comparação offline, interrupções e três pares CPU/bytes concluídos. Evidências e limitações preservadas no checkpoint. Publicação pendente.
 - [x] R04: Hurricane/Magnet/bolhas Submarine46 com receita aprovada, caminhada/replay, fase/prazo/clear e gates (423 combinados); manual pendente.
-- [ ] R05: parcial47 publicado: registro de renderers plain e gates de Heli/Icicle/FishMan/Matango/FreezerVenus/Queen; focados8/8 passaram; suíte conjunta439/439 passou; demais famílias/curvas/capturas pendentes.
+- [ ] R05: entrega técnica concluída (11/11/2026), candidate14/protocolo68:17famílias, core1088/1088,9smokes2peers,9referências offline/96casos qualificados,24custos dentro do orçamento e controle Hall sem PNG aprovados; pacote C:/Users/mauri/SB6-QA-R05 conferido. Falta apenas aceite visual do usuário; sem publicação. Evidências e limitações na seção final R05.
 - [ ] R06: parcial50 validado: gates de SunMask/ClownMask/FreezerVenus/Mecha, Heart/Star e colisão global testados;19 focados R06/R08 passaram. Intro/telegraph/curvas/áudio/demais bosses e manual pendentes.
 - [x] R07: itens/rolagem/push, ovos e poses de montaria alinhados; transporte independente de ator, migração de arco/fila aprovada após stop/disable/destroy e cleanup sem tomar pose/input de outro player. Suíte894 e probe2clients com8samples móveis por client após remoção,0erros/avisos. Manual gráfico/offline e casos ambientais continuam na matriz; publicação deste último lote ainda pendente.
 - [ ] R08: parcial50 validado: gates de Penguin/SnowBall/barril/pilares testados em19 focados R06/R08; stream visual existente conservado. Curvas completas/áudio/ambientação/capturas e demais famílias pendentes.
@@ -5804,3 +5804,135 @@ A14 fica aberto só pelo aceite visual/comparação perceptual offline: 1-normal
 Usuário confirmou explicitamente: "Está aprovado A14." Após o roteiro fornecido e a entrega do pacote SB6-QA-A14, aceite humano registrado nos cenários testados. A14 passa a CONCLUÍDO no checklist; os registros anteriores de aceite pendente são históricos, superados por este aceite. Permanecem as evidências e limitações da entrega abilities6/protocolo68 (assembly30bbbefd…), sem ampliar o aceite para cenários não testados ou afirmar medição independente offline/GPU/WAN inexistente.
 
 Estado dos checkboxes:29/32 marcados (90,625%). A01–A14 e C01–C10 marcados; R01–R04 e R07 marcados; R05, R06 e R08 parciais. Algumas linhas marcadas mantêm ressalvas de QA global, que não foram apagadas. Próximo item aberto na sequência: R05. Publicação de R03/A14 permanece pendente; este registro não fez commit, push, deploy nem iniciou outro ID.
+
+
+## R05 — implementação iniciada (10/11/2026)
+
+Autorização: "pode iniciar o R05 e trabalhe nele até terminar". Base limpa v0.5.0/f9c085042, Unity6000.6.0f1. R03/A14 já aprovados; R05 ainda em validação, sem publicação. Registro nativo das famílias Heli, Icicle/partículas, FishMan, Matango, BirdRobot/Gurun/impactos, Despider, Faroh, Star (reta/curva/órbita), Heart, FreezerVenus (Tornado/Ice/Doll) e Queen/coroa/neve/trilha. Reutiliza CoopSprites/CoopMotion, protocolo68 sem alteração; cliente não simula dano, homing, RNG nem colisão.
+
+Primeiro lote: observação do ciclo de vida do renderer, captura de edges de sprite/visibilidade/rotação/escala e último ponto antes de ocultar; merge de registros antes do tick visual; guards adicionais nas fábricas Despider/Faroh; driver Development opt-in -r05-projectiles para comparar as fábricas nativas offline e servidor. Nenhum resultado aceito ainda. candidate1 falhou compilação no nome SaveSystem (namespace), corrigido global::SaveSystem em candidate2. Runner sincronizado reversivelmente em Logs/R05-runner-sync/backup-20261110-163701; restaurar ao final com R05-runner-sync.ps1 -Mode Restore. Packages conferidos idênticos após normalização de finais de linha. Próximos: coreUnity, build, dois peers renderizados em sete cenas, referências offline, análise estrita de trajeto/vida/pausa e custo comparável.
+
+
+### R05 — critérios e rodada intermediária (10/11/2026)
+
+candidate4: core1083/1083 e build passaram, smoke Stage_3-6 executou servidor e dois clientes/render; não aceito: orçamento diagnóstico8000 excedia o máximo permitido5000 e voltava ao padrão180, com drops. Captura preservada, não usada para aprovar. Detectou visibilidade inicial incompleta no impacto BirdRobot. candidate5: core1085/1085 e build passaram; smoke Stage_3-6 sem drops/erros, visibilidade corrigida por publicar após RestartAnimation e completar full frames do mesmo timestamp em ordem confiável. Uma aparente ausência foi falsa classificação: a única amostra visível do observador estava0,4ms depois da última referência nativa, ainda antes da remoção. Agora presença e erro temporal são separados; não se inventa posição após a última referência. O driver original também atirava na parede adjacente; não comprovava voo de foguete. candidate6 mede corredor de três tiles de chão nativo (remove apenas destructíveis como setup Development, igual em offline e online), fonte inativa lida pelos filhos authored sem ativar IA, impacto único Gurun registrado e morte nativa de donos BirdRobot durante voo. core/build/smokes ainda em andamento. Nenhum candidato publicado.
+
+Critérios prévios para os próximos resultados: sem erros/avisos novos ou perdas de captura; fábricas/contatos client sem gameplay/RNG; cada família obrigatória presente em ambos os observadores, e famílias de voo com movimento nativo>0,2u. Erro posicional p95<=2px (0,125u a16PPU), sprite/visibilidade comparados com referência do servidor, pausa separada da linha do tempo que continua avançando. Efeitos visíveis nativamente por>=80ms exigem presença; mais curtos e fronteiras sem referência seguinte ficam explícitos, sem alegação de comparação interpolada. Comparação offline por lançamentos identificados: alvo/colisão/IA autônomos podem diferir, portanto distribuições não são uma aprovação automática de trajetória idêntica.
+
+Custo a medir sem motion capture/PNG: mesma build/mesmas fontes, A/B apenas -coop-r05-legacy contra padrão, três pares por cenário selecionado, janela idêntica de fixture (inclui os mesmos lançamentos/pausa), CPU/frame/GC e wire totais do servidor com dois peers. Orçamento inicial: incremento de wire total<=20KiB/s e nenhuma regressão sustentada>10% em trabalho de frame/GC quando as faixas das repetições não se sobrepõem; se exceder, otimizar ou registrar bloqueio, não declarar ganho sem medir. Não mede GPU, WAN ou input físico. O protocolo68 e a autoridade de dano/alvo permanecem inalterados.
+
+
+### R05 — retomada em 10/11/2026, candidate11 em validação
+
+R05 permanece parcial; sem commit, push ou publicação. Runner com backup reversível ativo em `Logs/R05-runner-sync/backup-20261110-163701`.
+
+- Candidate10: EditMode 1086/1086, build Development e smokes de Stage_2-3, Stage_World3Hall, Stage_3-6, Stage_3-4 e Stage_3-5 passaram. Stage_3-3 detectou JellyFish antecipando um frame não apresentado pelo servidor durante um quadro longo; lote interrompido. As outras três fases passaram na candidate7, mas precisam da repetição final.
+- Diagnóstico adicional: TankShot deslocava 0,48 unidade durante pausa por interpolação do root recebido. A candidate11 acrescenta apresentação apenas no filho visual, congelada durante pausa e retomada após amostra nova. O preview segue spawn/direção autorizados, limitado a 150 ms / 1 unidade, sem dano/contato local. Timestamps do NetworkTransform são corrigidos pelo offset de buffer já calculado pelo projeto.
+- Animações dos projéteis genéricos passam a apresentar os frames confirmados, sem inventar frames intermediários que o servidor saltou; animator nativo permanece intacto. Testes novos exercitam essa separação e pausa/retomada/limpeza do visual TankShot.
+- Analisador passou a registrar e rejeitar deslocamento acima de 2 px durante pausa. Os 14 testes Python atuais passam. Dados de pausa não são usados como erro de trajetória com relógio avançando.
+- Pendentes: compilação/testes da candidate11, repetição final nas nove fases, comparação offline por caso controlado, custo A/B com captura desligada, revisão de imagens, pacote QA, atualização da matriz e restauração do runner. Não considerar resultados de versões anteriores como aprovação da versão final.
+
+
+### R05 — candidate12 e repetição candidate13 (10/11, 22h)
+
+Candidate11 falhou apenas por acesso internal nos novos testes; corrigidos para reflexão, sem mudar visibilidade da API de runtime. Candidate12: core Unity1088/1088 e build Development aprovados, assembly `ae01f11317df2b54f46becf484b5ab309aaf92f47e1c978458ace004b2f6abde`. Em Stage_2-3, pausa deixou de deslocar os visuais: máximo0u nos dois clientes (112–115 amostras pausadas comparáveis), antes0,48u. Não aceito ainda: p95 posicional0,127506/0,125443u, ligeiramente acima0,125u; uma amostra inicial entre nascimento e primeiro FixedUpdate concentra o maior erro. O corredor tinha jogador adiante e os disparos terminavam após poucos passos. Candidate13 altera apenas setup Development para conferir Player/Bomb em todos os três tiles, permitindo medir voo sustentado; não amplia tolerância nem descarta a execução falha. Core/build e repetição final em andamento.
+
+Identidade de fontes:637 scripts runtime idênticos ao checkout após normalizar finais de linha; manifests de Packages iguais. Manifesto completo em `Logs/R05-candidate12/source-comparison.json`: as demais diferenças são fontes TMP com entradas fallback nulas extras, identidade gerada da build, migração Physics2Dschema6→11 (mesmos valores/matriz, sufixo unsigned e low-level nulo) e arquivos de exemplos/testes Mirror. Sem alteração de pacotes pelo R05. Verificação semântica da física e hashes runtime em `Logs/R05-candidate13/source-comparison.json`. Build e smokes usam o mesmo binário dos dois lados; o texto OnlineBuildIdentity isolado não prova suas fontes.
+
+Orquestração sequencial para continuar se houver interrupção: `python Logs/R05-finish.py candidate13` está aguardando a identidade da build, depois compila .NET, roda as nove fases renderizadas, referências offline e18 custos sem captura. Não executar uma segunda instância. Estado em `Logs/R05-candidate13/finish-state.json` e processos/console da sessão. Falha interrompe o lote. Preservados logs/identidades/DLL das builds antigas em `Logs/R05-retired-builds`; apenas cópias descartáveis R05 candidate4–10 foram removidas para liberar disco. Candidate12 permanece disponível. Sem publicação, commit ou push; runner ainda precisa ser restaurado ao final.
+
+
+### R05 — preparação da candidate14 (10/11,22h10)
+
+Candidate13 core1088/1088, build e compilação .NET passaram (0 erros;6 avisos em pacotes Mirror não alterados,0 nos arquivos runtime do jogo). Assembly `a37a88f0c4368399d5139115d743553fc10d1709ba7d640a1548c83705271849`. Stage_2-3 executou e a análise original falhou p95=0,1607u. Inspeção linha a linha: as maiores diferenças eram o aviso de pausa que chega ao cliente após o servidor parar, e a espera pela primeira amostra nova na retomada. O analisador excluía apenas pausa do cliente; agora separa também referência nativa pausada e registra `pauseTransitionSamples`. Não muda o limite de movimento2px, nem oculta drift durante pausa (continua avaliado e0u). Recalculando a janela de movimento: p95=0,119753/0,115912u, máximos0,129094/0,128605u,23/22 amostras válidas. Os máximos no nascimento entre FixedUpdates continuam registrados, sem afirmar precisão física subpixel. Resultado antigo preservado; gerar nova análise separada se necessário.
+
+A medição foi fortalecida: cada família móvel precisa de>=3 posições alinhadas; trilha QueenPixelTrail exigida no Hall, sem exigir movimento dessa partícula estacionária.18 testes do analisador aprovados (inclui pausa nativa chegando antes ao observador e comparação offline por casos).
+
+Candidate14 muda apenas probe Development: com motion capture desligada, não monta strings/amostras nem envia metadados de medição R05. O driver continua disparando os mesmos casos para o A/B. Assim o custo sem captura não inclui diagnóstico por projétil. Runner sincronizado com backup anterior mantido. `R05-finish.py candidate13` foi encerrado somente no controlador próprio antes de iniciar referências/custos; o smoke filho terminou e limpou seus processos. Nenhum offline/custo13 rodou. Controlador atual `python Logs/R05-finish.py candidate14` aguarda build14, depois .NET,9smokes renderizados,9referências offline,comparação e18custos. Não executar outra instância; verificar processos e `finish-state.json`. Core/build14 em andamento. Sem publicação; R05 continua parcial.
+
+
+### R05 — build final candidate14, primeiras integrações aprovadas (10/11,22h19)
+
+Core Unity1088/1088; build Development e .NET aprovados. Assembly `b7c70e056d6440b104901e5a24ab944853d983b3567faea568fa9f3a3cbc59fb`;637 fontes runtime idênticas ao checkout normalizando finais de linha. Compilação .NET sem erro/aviso de código do jogo;6 avisos de dependências Mirror sem alteração. Tools/Ci184/184 e analisador18/18. Protocolo68 mantido.
+
+- Stage_2-3: aprovado em ambos. P95=0,108175/0,116366u,45 posições alinhadas por cliente; drift em pausa0u. Comparação de nascimento/movimento/pausa sem mudar tolerância.
+- Stage_3-3: aprovado em ambos. FishMan e JellyFish: spriteMismatch0, drift em pausa0u; posições alinhadas85–86/137–141 amostras, erro p95<0,00000024u (erro numérico de renderer, não precisão física).
+- Hall em execução, depois seis fases restantes; offline/custo ainda não começaram. A revisão de imagens já iniciou em `Logs/R05-candidate14/visual-review.json`, explicitamente sem inferir suavidade/GPU ou aceite humano de frames estáticos.
+
+Controlador ativo `R05-finish.py candidate14` (iniciado pela sessão exec65965); estado em `Logs/R05-candidate14/finish-state.json`. Ao retomar, consultar estado/processos e saídas, não relançar o controlador se ainda ativo. Parou apenas se algum teste/análise falhar. Scripts de pacote e relatório final preparados em `Logs/R05-package.py` e `Logs/R05-final-report.py`, ainda não executados. Pacote QA-R05 ainda não existe. Runner precisa ser restaurado no fim. Cópias antigas candidate12/13 também retiradas com identidade/DLL preservadas em R05-retired-builds, para não esgotar o disco. Sem commit/push/publicação. R05 segue parcial até terminar todas as medições e entregar o aceite visual.
+
+
+### R05 — integrações6/9 e controle sem PNG (10/11,22h33)
+
+Candidate14 aprovou também Hall, Stage_3-6, Stage_3-4 e Stage_3-5. Stage_3-2 em execução, depois Stage_1-7/2-7. Ambas as visões verificadas sem divergência de sprite/visibilidade e sem drift na pausa nos relatórios aprovados; não confundir posição correta no tempo apresentado com ausência de retenção de dados.
+
+Analisador acrescentou `movingHoldSamples/movingHoldMaxMs`: separa um último ponto parado legítimo de retenção>100ms enquanto a referência nativa se desloca mais de2px. Não muda o critério posicional; deixa retenções explícitas. Hall renderizado com PNG: um caso no cliente1 com hold259ms e frame187ms, cliente2zero casos. Precisa do controle sem PNG para isolar custo de captura; não declarar ausência geral de travamento só por erro no stateTime baixo.19 testes sintéticos do analisador passam. Cada resultado final será recalculado em arquivo separado `projectiles-analysis-final.json`, preservando o primeiro.
+
+Custo ampliado para4cenários: Stage_3-6, Stage_3-5, Stage_2-3 e Hall (mais projéteis/partículas). Três pares por cena,24execuções ao total; Hall230s, demais120s. Mesma build/A-Bflag e janela nativa, motion capture/PNG desligados. Critérios do orçamento continuam os mesmos. Medição total de cena, não atribuição isolada de cada família.
+
+Outro controlador próprio ativo: `python Logs/R05-after-finish.py candidate14` (sessão84240), aguardando finish-state completed. Depois roda Hall renderizado sem PNG, recalcula9análises finais, confere orçamento, cria QA-R05 e exercita um lançamento de Tank/Poyo do pacote. Não relançar simultaneamente. R05-finish14 permanece na sessão65965. Ambos scripts falham sem aprovar se faltar evidência. Após terminar, agente ainda precisa revisar comparação offline/custo/controle/imagens, atualizar checklist e matriz, verificar UTF8/diff, restaurar runner e entregar. Nenhuma publicação autorizada/feita nesta etapa.
+
+
+### R05 —9/9 integrações aprovadas, offline iniciado (10/11,22h38)
+
+Todos os9smokes da candidate14 aprovados. Evidência `Logs/R05-peers-candidate14/<cena>/projectiles-analysis.json`;6cenas de inimigos/efeitos e3cenas de boss. Dois clientes reais e servidor, renderização com PNG, ciclos de pausa/retomada/reload; captura sem drops/truncamento. Referências offline iniciaram em Stage_2-3. Custos e Hall sem PNG ainda pendentes. Checklist atualizado para refletir a implementação atual, sem marcar aceite humano inexistente.
+
+
+### R05 — referências offline concluídas, custo em andamento (10/11,22h59)
+
+Nove referências offline terminaram com a mesma build14, save isolado. `Logs/R05-candidate14/R05-comparacao.json`:96rótulos controlados correspondentes, sem labels faltantes. Revisão qualificada em `offline-review.json`: velocidades das trajetórias simples/curva fixa compatíveis, mas órbita Clown inclui movimento independente do boss e Hall tem alvos/obstáculos/impactos diferentes. Não declarar replay idêntico de RNG ou todos os sprites/tempos iguais entre partidas independentes. Um caso Tank/Poyo offline (round0) desapareceu após1amostra visível; velocidade não comparável e causa não isolada. Rounds1/2 têm voo mensurável em ambos os modos. A velocidade condicional calculada exclui pares sem deslocamento e pode diferir do valor nominal do FixedUpdate; é comparação entre os registros, não nova regra de gameplay.
+
+Custo Stage_3-6:3pares aprovados na checagem de orçamento. Delta mediano wire+2,534KiB/s (<20); alocação servidor+1,060%, clientes+1,083%/+0,953%; work/frame com faixas sobrepostas, sem regressão resolvida. Não afirmar ganho por valores centrais negativos. Resumo parcial em `cost-Stage_3-6-partial.json`. Ainda faltam3cenários (gelo, Tank/Poyo, Hall); Stage_3-5 em execução. Controladores65965/84240 continuam ativos, sem outro Unity/SB6 concorrente. A rodada completa terá24execuções sem captura. Sem commit/push/publicação. Runner não restaurado ainda; pacote QA só será criado após orçamento e controle sem PNG.
+
+
+### R05 — custo3/4cenários dentro do orçamento (10/11,23h25)
+
+18/24execuções de custo concluídas. Stage_3-5:3pares, wire mediano-6,140KiB/s com faixas sobrepostas (não declarar ganho), maior aumento work/frame+0,029118ms no cliente2 (+1,708%, faixas separadas), GC sem regressão resolvida; dentro dos limites. Stage_2-3: primeiro par teve+29,922KiB/s e segundo-4,218KiB/s; a mediana das3repetições foi+5,525KiB/s, não extrapolar um par isolado. GC servidor+2,636%, clientes+1,386%/+1,186%, todos com faixas sobrepostas; work/frame também sobreposto. Sem problemas de medição. Resumos `cost-Stage_3-5-partial.json`/`cost-Stage_2-3-partial.json`; foguetes já descritos acima.
+
+Halllegacy1 terminou, final1 iniciou. Faltam Hall3pares e controle renderizado sem PNG; o controlador pós-custo ainda aguarda. Mesma build14, nenhum código C# mudou desde sua compilação. O R05 permanece parcial até fechar medições/entrega técnica e aceite visual; não publicar nem avançar R06. Sessões ativas65965(finish)/84240(after-finish), verificar processos/estado se retomar. Runner com sincronização/backup ativos; restaurar só ao terminar os processos. Nenhum pacote QA-R05 criado ainda.
+
+
+## R05 — entrega técnica concluída, aceite visual pendente (11/11/2026)
+
+Retomada após limite: os controladores concluíram em10/11,23h50, sem publicar/commit/push. Nenhum Unity/SB6/controlador R05 permaneceu ativo na conferência de11/11. Não foi iniciado R06. Checklist R05 continua aberto somente pelo aceite visual humano, não por uma execução técnica pendente. Permanecem29/32 checkboxes marcados; após aceite R05 serão30/32, restando R06/R08.
+
+### Implementação entregue
+
+-17famílias observadas: Heli, Icicle/partículas, FishMan, Matango, BirdRobot/Gurun/impactos, Despider, Faroh, JellyFish, Furama, BubbleFurama, Star reta/curva/órbita, SunHeart, FreezerVenus Tornado/Ice/Doll, Queen neve/coroa, QueenPixelTrail e TankShot. Protocolo68 inalterado. Clientes não executam IA, homing, RNG, contato, dano ou explosão para apresentar os projéteis.
+- `CoopProjectileVisual` registra o renderer inicializado, envia bordas aprovadas e endpoint antes de ocultar, reutilizando CoopSprites/CoopMotion. Frames aprovados com playback.speed0 evitam inventar um frame que o nativo saltou; o animator nativo/offline não é congelado. Preservado o primeiro frame de sombras R03 ao consumir registros pendentes.
+- Poyo passou a publicar o TankShot de fato no servidor; antes o objeto existia nativamente sem spawn para os clientes. A apresentação remota do Tank/Poyo escreve somente o filho visual, corrige o offset dos timestamps Mirror, limita preview a150ms/1u e congela na pausa até amostra nova na retomada. Owner prediction A14 preservada e regressões aprovadas.
+- Nenhuma cena/prefab exigiu wiring novo: registro pelas fábricas nativas e componentes runtime. Efeitos estáticos Fiber/Powder e mecanismos ambientais RocketPenguin/Vulcan continuam separados do trajeto R05, conforme notas de implementação; não transferir aceites para R06/R08.
+
+### Evidência final
+
+Build Development `b7c70e056d6440b104901e5a24ab944853d983b3567faea568fa9f3a3cbc59fb`. Fontes/identidade, core Unity1088/1088 e C# em `Logs/R05-candidate14/`. Compilação sem erro/aviso de código do jogo;6avisos em dependências Mirror sem alteração. Testes do analisador21/21; rodada Python CI e RoomDirectory registrada junto da conferência final.
+
+-9smokes renderizados: Stage_2-3,3-3,World3Hall,3-6,3-4,3-5,3-2,1-7,2-7. Ambos clientes aprovados. Relatórios originais preservados; versões com as métricas finais em `Logs/R05-peers-candidate14/<cena>/projectiles-analysis-final.json`.
+- P95 posicional máximo0,116366u=1,862px (TankShot). Erro comparado no tempo efetivamente apresentado, sem alegar precisão física a partir dos valores numéricos quase zero das demais famílias. Sprite/visibilidade sem divergências verificáveis; drift medido em pausa0u; efeitos breves/gaps/ausência de referência continuam explícitos. Impactos sem amostra pausada não são prova de congelamento daquela subfase.
+-9referências offline e96labels correspondentes em `R05-comparacao.json`; revisão em `offline-review.json`. Um primeiro Tank/Poyo offline tem só1amostra e não comprova velocidade; os outros2casos têm voo medido. Órbita com centro móvel, alvos, impactos e caminhos do Hall podem diferir entre partidas nativas. Não houve replay determinístico integral de RNG e não foram aprovadas como idênticas todas as sequências de sprites dessas execuções independentes.
+- Controle Hall renderizado sem PNG aprovado em `Logs/R05-no-png-candidate14/Stage_World3Hall/projectiles-analysis-final.json`:0retenções em movimento>100ms nos dois clientes,0drift pausado e0divergências verificáveis de sprite/visibilidade. A execução com PNG mantém1retenção259ms no cliente1, correlacionada a frame187ms; não foi apagada nem apresentada como correção de qualquer hitch de CPU/GPU/WAN.
+- A métrica movingHold foi revisada para não perder retenção quando o stateTime cai num gap de referência. Também conta separadamente `pauseHistoryHoldSamples`: um ponto anterior à pausa, aguardando confirmação de retomada, não representa o jogo andando durante todo o intervalo pausado.21testes sintéticos cobrem essas bordas. Nenhuma alteração C# após a build14; apenas analisador/relatórios/documentação foram refinados nesta retomada.
+
+### Custo A/B sem captura
+
+24execuções:4cenários×3pares, mesma DLL, flag Development legacy contra padrão. Capture/PNG desligados e sem gerador paralelo de peers sintéticos; servidor+2clientes reais. Mede CPU/alocação/tráfego totais da cena, não GPU nem custo isolado de cada família. O braço legacy desliga publicação/preview/spawn R05; correções comuns de autoridade estão nos dois braços, não é um binário histórico completo pré-R05. Janela de cada cenário inclui o mesmo setup/lançamentos/pausa nativos, especialmente a introdução no Hall.
+
+| Cenário | Delta mediano wire servidor | Maior aumento central de work/frame | Maior aumento central de alocação |
+| --- | --- | --- | --- |
+| Stage_3-6 |+2,534KiB/s | sem aumento central |+1,083% |
+| Stage_3-5 |-6,140KiB/s, faixas sobrepostas |+0,029118ms /1,708%, cliente2 |+0,025% |
+| Stage_2-3 |+5,525KiB/s | sem aumento central |+2,636%, faixas sobrepostas |
+| World3Hall |+4,204KiB/s |+0,027711ms /1,853%, faixas sobrepostas |+4,073%, cliente2 |
+
+Todos dentro dos limites prévios: incremento mediano total<=20KiB/s; nenhuma regressão sustentada>10% em work/frame/GC quando as faixas não se sobrepõem. Valores negativos com sobreposição não provam ganho. O primeiro par Tank teve+29,922KiB/s, preservado; o resultado das3repetições usa mediana, sem descartar o par. Evidência completa `Logs/R05-cost-candidate14/`, `cost-report.json` e `delivery.json`. Não extrapolar3pares para garantias estatísticas de toda máquina/rede.
+
+### Pacote e restauração
+
+`C:/Users/mauri/SB6-QA-R05` contém cópia imutável da DLL testada, ferramentas Python locais,9launchers .cmd e LEIA-ME.md. Fluxo real do pacote (servidor+2janelas, Tank/Poyo) aprovado; cada rodada cria pasta nova em runs, sem usar servidor remoto/saves normais. Identidade conferida por SHA256. Revisão de imagens em visual-review.json é do agente, não aceite perceptual humano.
+
+Runner restaurado com `R05-runner-sync.ps1 -Mode Restore`, estado arquivado em `Logs/R05-runner-sync/backup-20261110-163701/state-restored.json`. Hash/ausência de todos os arquivos do manifesto conferidos em runner-restored.json; Library/cache e migrações geradas não foram revertidos. Checkout do usuário mantém a implementação. Nenhum reset/clean nem limpeza de arquivos alheios.
+
+Para aceite: executar um .cmd de cada vez no pacote e observar nascimento/voo/impacto, pausa/retomada, remoção do emissor e recarga sem sprites antigos. O guia lista as famílias. Não há nova tarefa de implementação pendente neste lote; permanece o aceite visual do usuário, sem presumir que testes automatizados medem sensação, WAN ou input físico.
+
+
+Conferência final em11/11: Tools/Ci187/187, analisador21/21 e RoomDirectory16/16 aprovados.25arquivos C# modificados/novos passam UTF8 estrito/BOM; git diff --check sem erros. Os46itens do manifesto de restauração têm os hashes/ausências originais; nenhum Unity/SB6/controlador R05 ativo. DLL do pacote e cópia do analisador final conferidas. `final-verification.json` registra o fechamento técnico; não repetir build/smokes para simplesmente coletar o aceite humano. Se houver problema no QA, usar a pasta runs correspondente para diagnosticar antes de alterar código. Nenhuma publicação, commit/push ou avanço R06.

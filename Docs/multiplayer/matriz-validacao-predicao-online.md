@@ -677,3 +677,46 @@ A14 fica aberto só pelo aceite visual/comparação perceptual offline: 1-normal
 Usuário confirmou explicitamente: "Está aprovado A14." Após o roteiro fornecido e a entrega do pacote SB6-QA-A14, aceite humano registrado nos cenários testados. A14 passa a CONCLUÍDO no checklist; os registros anteriores de aceite pendente são históricos, superados por este aceite. Permanecem as evidências e limitações da entrega abilities6/protocolo68 (assembly30bbbefd…), sem ampliar o aceite para cenários não testados ou afirmar medição independente offline/GPU/WAN inexistente.
 
 Estado dos checkboxes:29/32 marcados (90,625%). A01–A14 e C01–C10 marcados; R01–R04 e R07 marcados; R05, R06 e R08 parciais. Algumas linhas marcadas mantêm ressalvas de QA global, que não foram apagadas. Próximo item aberto na sequência: R05. Publicação de R03/A14 permanece pendente; este registro não fez commit, push, deploy nem iniciou outro ID.
+
+
+## R05 — validação local em andamento (10/11/2026)
+
+Candidate14, protocolo68, assembly `b7c70e056d6440b104901e5a24ab944853d983b3567faea568fa9f3a3cbc59fb`. Implementação local, sem commit/push/publicação. Status atual no checkpoint original.
+
+| Critério | Estado/evidência |
+| --- | --- |
+| Core Unity online/COM |1088/1088; Logs/R05-candidate14/tests.xml |
+| C# |0 erros,0 avisos de código do jogo;6avisos em dependências Mirror não alteradas |
+| Integração2clientes renderizados |9/9 aprovados; Logs/R05-peers-candidate14 |
+| Trajeto/frame/visibilidade/pausa | aprovados nas amostras verificáveis; gaps/efeitos curtos/transições separados |
+| Referências offline por caso |9executadas,96labels correspondentes;1caso Tank sem voo mensurável, órbita/alvos/colisões qualificados em offline-review.json |
+| Custo A/B sem captura | em execução; foguetes3pares dentro do orçamento; gelo/Tank/Hall em validação |
+| Controle Hall renderizado sem PNG | pendente; isolar retenção correlacionada a captura |
+| Revisão de imagens |9cenas inspecionadas; somente estado estático, não aceite perceptual |
+| Aceite visual humano | pendente; não inferido dos logs |
+
+Não mede WAN, GPU, input físico ou custo isolado de cada família. A comparação offline não repete exatamente RNG/alvos/colisões. As limitações dos IDs anteriores não foram apagadas nem aceitas por esta rodada.
+
+
+## R05 — entrega técnica concluída em11/11/2026; aceite humano pendente
+
+Supera o estado em andamento da seção anterior. Candidate14/protocolo68, mesma DLL `b7c70e056d6440b104901e5a24ab944853d983b3567faea568fa9f3a3cbc59fb`; sem publicação/commit/push, sem avanço ao R06.
+
+| Critério | Resultado final |
+| --- | --- |
+| Core Unity online/COM e C# |1088/1088;0erros/avisos de código do jogo;6avisos de dependências Mirror |
+|17famílias /9cenários /2clientes |9/9aprovados; relatórios projectiles-analysis-final.json em Logs/R05-peers-candidate14 |
+| Trajeto/frame/visibilidade/pausa | P95 máximo1,862px;0divergências verificáveis de sprite/visibilidade; drift pausado0u onde medido |
+| Offline |9referências/96labels;1Tank sem voo suficiente, órbita/AI/contatos qualificados em offline-review.json |
+| Custo sem captura |24execuções/3pares por4cenários, dentro do orçamento; maior incremento mediano wire5,525KiB/s; maior aumento central alocação4,073% |
+| Controle Hall sem PNG | aprovado;0retenções em movimento>100ms,0drift pausado e0divergências verificáveis nos dois clientes |
+| Captura com PNG | preservada1retenção259ms associada a frame187ms; não confundir com o controle sem PNG |
+| Pacote QA | C:/Users/mauri/SB6-QA-R05, DLL conferida e fluxo servidor+2clientes testado |
+| Runner | arquivos sincronizados restaurados e hashes/ausências conferidos; cache não revertido |
+| Aceite perceptual humano | **PENDENTE**, não inferido dos logs/imagens |
+
+Evidência consolidada em Logs/R05-candidate14/{identity,delivery,cost-report,R05-comparacao,offline-review,extra-validation,runner-restored,visual-review}.json.21testes do analisador aprovados; relatório final de CI e RoomDirectory junto do checkpoint. As duas bordas de métricas (hold com gap e hold que inclui pausa) têm testes e contadores separados; não alteram os limites de trajetória.
+
+Limitações preservadas: Windows Development/localhost, custo de CPU headless e controle visual separado; sem medição WAN/GPU/input físico, sem replay integral de RNG, sem extrapolar3pares para todas máquinas. Efeitos<80ms, gaps>150ms e transições sem referência suficiente ficam explícitos. Imagens estáticas não provam suavidade percebida. Checklist permanece29/32até aceite R05; próximos itens de implementação após aceite:R06 e R08.
+
+Conferência final: Python CI187/187, analisador21/21, RoomDirectory16/16;25C# UTF8/BOM e diff sem erros;46entradas restauradas no runner e nenhum processo R05/Unity/SB6 ativo. Identidade do pacote/analisador conferida. Resultado em Logs/R05-candidate14/final-verification.json. Aguarda apenas aceite visual do usuário.

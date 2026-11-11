@@ -17,6 +17,8 @@ public sealed class BirdRobotRocket : MonoBehaviour
     public void Init(Vector2 travelDirection, GameObject shotOwner, AnimatedSpriteRenderer explosion, float gridSize, bool useSingleImpact = false)
     {
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
+        foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(BirdRobotRocket));
         singleImpact = useSingleImpact;
         direction = travelDirection;
         owner = shotOwner;
@@ -24,6 +26,9 @@ public sealed class BirdRobotRocket : MonoBehaviour
         // Keep a detached template so rockets still explode after their owner dies.
         impactTemplate = Instantiate(explosion.gameObject);
         impactTemplate.SetActive(false);
+        if (singleImpact)
+            foreach (var renderer in impactTemplate.GetComponentsInChildren<SpriteRenderer>(true))
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(BirdRobotRocketImpact));
     }
 
     private void Awake()

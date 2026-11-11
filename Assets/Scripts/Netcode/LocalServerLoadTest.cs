@@ -168,6 +168,7 @@ namespace Assets.Scripts.Netcode
             static string U() => " u=" + (DateTime.UtcNow.Ticks / 10000 - 63900000000000L).ToString(System.Globalization.CultureInfo.InvariantCulture);
             Debug.Log("[LoadTest] coop-world started scene=" + scene + U());
             if (HasArg("-load-test-enemies")) yield return CheckLoadTestEnemyTransitions();
+            if (HasArg("-r05-projectiles")) yield return LocalProjectileSmoke.Run();
             // 30 s of steady native world first: the pre-registered cost window ends at the first pause.
             // R02 controlled reproduction: "-load-test-hitch-ms N" blocks the server main thread N ms every 2.5 s (12 times)
             // inside that window, so long server frames happen at known instants. Without the flag nothing changes.
@@ -195,6 +196,7 @@ namespace Assets.Scripts.Netcode
                 Time.timeSinceLevelLoad < 12f || !OnlineCoopPlayersReady)) yield return null;
             if (!OnlineCoopPlayersReady || SceneManager.GetActiveScene().name != scene) throw new InvalidOperationException("Co-op world reload did not become ready");
             Debug.Log("[LoadTest] coop-world reloaded scene=" + scene + U());
+            if (HasArg("-r05-projectiles")) yield return LocalProjectileSmoke.EnsureEncounter();
             yield return new WaitForSecondsRealtime(3f);
             ToggleNativePause(true); Debug.Log("[LoadTest] coop-world paused index=2" + U());
             yield return new WaitForSecondsRealtime(2f);
@@ -1457,6 +1459,11 @@ namespace Assets.Scripts.Netcode
             }
             var camera = Camera.main;
             if (camera == null) return;
+            if (LocalProjectileSmoke.TryCapture(out string projectileFrame))
+            {
+                CaptureMountFrame(camera, projectileFrame);
+                return;
+            }
             if (!captureWarmed && (SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal) || SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal)) && Time.timeSinceLevelLoad > 1)
             {
                 CaptureMountFrame(camera, "warmup.png"); captureWarmed = true;

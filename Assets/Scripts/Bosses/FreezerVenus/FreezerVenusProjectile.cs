@@ -54,7 +54,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         visual.sortingLayerID = owner.body.sortingLayerID;
         visual.sortingOrder = owner.body.sortingOrder + (kind == AttackKind.Tornado ? -1 : 1);
         if (frames.Length > 0) visual.sprite = frames[kind == AttackKind.Tornado ? Mathf.Min(3, frames.Length - 1) : 0];
-        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(visual);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(visual, nameof(FreezerVenusProjectile));
         var rb = go.AddComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.gravityScale = 0f;
@@ -262,7 +262,7 @@ public sealed class FreezerVenusProjectile : MonoBehaviour
         for (int i = 2; i >= 0; i--)
         {
             renderer.sprite = frames[Mathf.Min(i, frames.Length - 1)];
-            if (i == 2) Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
+            if (i == 2) Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(FreezerVenusProjectile));
             float time = 0f;
             while (time < 0.1f)
             {

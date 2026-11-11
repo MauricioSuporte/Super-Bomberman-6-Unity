@@ -20,9 +20,17 @@ namespace Assets.Scripts.Netcode
         bool ownerWasPaused, awaitingResumeSample;
         double resumeAfter, resumeWaitStarted;
         NetworkBombFx ownerFx;
+        Transform observerVisual;
+        Vector3 observerLocal;
+        Vector2 observerPosition;
+        bool observerPaused, observerAwaitingResume;
+        double observerTime, observerLatestTime, observerResumeAfter;
         readonly RaycastHit2D[] previewHits = new RaycastHit2D[16];
         public uint InputTick => inputTick;
         public bool OwnerPresentationActive => ownerVisual != null;
+        internal bool ObserverPresentationActive => observerVisual != null;
+        internal double ObserverPresentationTime => observerTime;
+        internal double ObserverLatestTime => observerLatestTime;
 
         public void SetLaunch(GameObject owner)
         {
@@ -55,6 +63,7 @@ namespace Assets.Scripts.Netcode
             if (isServer || NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || ownerFx == null || !ownerFx.isLocalPlayer) return false;
             var sprite = GetComponentInChildren<SpriteRenderer>(true);
             if (sprite == null || sprite.transform == transform) return false;
+            ReleaseObserverPresentation();
             ownerVisual = sprite.transform; originalVisualLocal = ownerVisual.localPosition;
             ownerPosition = position;
             ownerWasPaused = awaitingResumeSample = false;
@@ -65,7 +74,7 @@ namespace Assets.Scripts.Netcode
 
         void LateUpdate()
         {
-            if (ownerVisual == null) return;
+            if (ownerVisual == null) { PresentApprovedObserver(); return; }
             if (GamePauseController.IsPaused) { ownerWasPaused = true; ApplyOwnerPosition(); return; }
             if (ownerWasPaused)
             {
@@ -98,6 +107,61 @@ namespace Assets.Scripts.Netcode
             ApplyOwnerPosition();
         }
 
+        void PresentApprovedObserver()
+        {
+            if (isServer || NetSync.Mode != NetSync.NetMode.Client || !NetworkClient.active || launchSpeed <= 0 ||
+                BombermanNetworkManager.CoopR05Legacy) return;
+            bool first = observerVisual == null;
+            if (first)
+            {
+                var sprite = GetComponentInChildren<SpriteRenderer>(true);
+                if (sprite == null || sprite.transform == transform) return;
+                observerVisual = sprite.transform; observerLocal = observerVisual.localPosition;
+                observerPosition = launchPosition; observerTime = launchTime;
+            }
+            if (GamePauseController.IsPaused)
+            {
+                observerPaused = true; ApplyObserverPosition(); return;
+            }
+            double now = NetworkBombFx.KickServerNow;
+            if (observerPaused)
+            {
+                observerPaused = false; observerAwaitingResume = true; observerResumeAfter = now;
+            }
+            Vector2 approved = launchPosition; double approvedTime = launchTime;
+            if (TryGetComponent<NetworkTransformReliable>(out var sync) && sync.clientSnapshots.Count > 0)
+            {
+                var sample = sync.clientSnapshots.Values[sync.clientSnapshots.Count - 1];
+                approved = sample.position;
+                // Mirror shifts transform timestamps for buffering. They are not the
+                // actual authority time at which this projectile occupied the point.
+                approvedTime = sample.remoteTime - BombermanNetworkManager.TransformVisualOffset(netIdentity);
+            }
+            observerLatestTime = approvedTime;
+            if (observerAwaitingResume && observerLatestTime < observerResumeAfter) { ApplyObserverPosition(); return; }
+            observerAwaitingResume = false;
+            float lead = launchSpeed * Mathf.Clamp((float)(System.Math.Max(observerTime, now)-approvedTime), 0, Mathf.Min(.15f, 1f/launchSpeed));
+            Vector2 expected = TankShot.PreviewNetworkTravel(approved, approved + direction * lead, castSize, launchMask,
+                NetworkClient.spawned.TryGetValue(ownerId, out var owner) ? owner.gameObject : null, previewHits);
+            observerPosition = first ? expected : Vector2.MoveTowards(observerPosition, expected,
+                launchSpeed * Mathf.Clamp(Time.unscaledDeltaTime, 0, .05f) * 1.5f);
+            observerTime = approvedTime + Vector2.Dot(observerPosition-approved, direction)/launchSpeed;
+            ApplyObserverPosition();
+        }
+
+        void ApplyObserverPosition()
+        {
+            if (observerVisual != null) observerVisual.position = new Vector3(observerPosition.x, observerPosition.y, transform.position.z) + transform.TransformVector(observerLocal);
+        }
+
+        void ReleaseObserverPresentation()
+        {
+            if (observerVisual != null) observerVisual.localPosition = observerLocal;
+            observerVisual = null; observerPaused = observerAwaitingResume = false;
+        }
+
+        void OnDisable() => ReleaseObserverPresentation();
+
         void ApplyOwnerPosition()
         {
             if (ownerVisual != null) ownerVisual.position = new Vector3(ownerPosition.x, ownerPosition.y, transform.position.z) + transform.TransformVector(originalVisualLocal);
@@ -111,6 +175,7 @@ namespace Assets.Scripts.Netcode
 
         public override void OnStopClient()
         {
+            ReleaseObserverPresentation();
             ReleaseOwnerPresentation(); ownerFx?.TankShotEnded(this); ownerFx = null; base.OnStopClient();
         }
     }

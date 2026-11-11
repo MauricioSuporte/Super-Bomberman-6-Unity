@@ -26,7 +26,7 @@ public sealed class HeliProjectile : MonoBehaviour
         SpriteRenderer renderer = projectile.AddComponent<SpriteRenderer>();
         renderer.sprite = projectileSprite;
         renderer.sortingOrder = 6;
-        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(HeliProjectile));
         HeliProjectile behaviour = projectile.AddComponent<HeliProjectile>();
         behaviour.direction = direction.normalized;
         behaviour.owner = owner;

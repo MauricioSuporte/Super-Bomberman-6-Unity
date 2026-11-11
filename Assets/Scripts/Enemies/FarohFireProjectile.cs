@@ -22,6 +22,8 @@ public sealed class FarohFireProjectile : MonoBehaviour
         float hitboxSizePercent,
         LayerMask targetMask)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(GetComponent<SpriteRenderer>(), nameof(FarohFireProjectile));
         this.tileSize = Mathf.Max(0.01f, tileSize);
         this.speed = Mathf.Max(0.01f, speed);
         this.remainingDistance = Mathf.Max(0.01f, travelDistanceTiles) * this.tileSize;

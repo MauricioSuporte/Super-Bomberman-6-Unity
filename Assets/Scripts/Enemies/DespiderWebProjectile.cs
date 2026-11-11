@@ -18,12 +18,14 @@ public sealed class DespiderWebProjectile : MonoBehaviour
 
     public static void Launch(AnimatedSpriteRenderer webTemplate, AnimatedSpriteRenderer expandTemplate, Vector2 origin, Vector2 direction, float tileSize)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         var effect = Create(webTemplate, origin, tileSize);
         // Copy the expansion now so the projectile survives its owner's death.
         effect.expansion = Instantiate(expandTemplate, effect.transform);
         effect.expansion.transform.localPosition = Vector3.zero;
         effect.expansion.enabled = false;
         effect.expansion.GetComponent<SpriteRenderer>().enabled = false;
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(effect.expansion.GetComponent<SpriteRenderer>(), nameof(DespiderWebProjectile));
         effect.origin = origin;
         effect.direction = direction;
         // Keep an invisible coordinator/template alive independently of each Web.
@@ -69,6 +71,7 @@ public sealed class DespiderWebProjectile : MonoBehaviour
         effect.web = visual;
         effect.hitbox = collider;
         effect.tileSize = Mathf.Max(0.01f, size);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(DespiderWebProjectile));
         return effect;
     }
 

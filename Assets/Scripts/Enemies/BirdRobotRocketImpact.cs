@@ -64,6 +64,7 @@ public sealed class BirdRobotRocketImpact : MonoBehaviour
         animation.idle = false;
         animation.enabled = true;
         animation.RestartAnimation();
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(visual.GetComponent<SpriteRenderer>(), nameof(BirdRobotRocketImpact));
         visuals.Add(animation);
         ages.Add(0f);
     }

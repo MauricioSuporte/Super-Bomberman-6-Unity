@@ -59,6 +59,8 @@ public class SunMaskHeartProjectile : MonoBehaviour
         if (floatAmplitude >= 0f) this.floatAmplitude = floatAmplitude;
         if (floatFrequency >= 0f) this.floatFrequency = floatFrequency;
 
+        foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(SunMaskHeartProjectile));
         initialized = true;
     }
 

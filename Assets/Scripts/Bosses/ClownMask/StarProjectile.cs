@@ -43,6 +43,8 @@ public class StarProjectile : MonoBehaviour
         if (customLifetime > 0f)
             lifeTime = customLifetime;
 
+        foreach (var sprite in GetComponentsInChildren<SpriteRenderer>(true))
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(sprite, nameof(StarProjectile));
         initialized = true;
         RestartLifetime();
     }
@@ -90,6 +92,8 @@ public class StarProjectile : MonoBehaviour
         initialized = true;
         UpdateOrbitRadiusAndVisibility();
         UpdateOrbitPosition();
+        foreach (var sprite in orbitVisuals)
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(sprite, nameof(StarProjectile));
         RestartLifetime();
     }
 
@@ -97,8 +101,6 @@ public class StarProjectile : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         orbitVisuals = GetComponentsInChildren<SpriteRenderer>(true);
-        foreach (var sprite in orbitVisuals)
-            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(sprite);
         orbitColliders = GetComponentsInChildren<Collider2D>(true);
         if (rb != null)
         {

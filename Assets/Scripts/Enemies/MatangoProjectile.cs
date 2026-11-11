@@ -39,7 +39,6 @@ public sealed class MatangoProjectile : MonoBehaviour
 
         renderer.enabled = true;
         renderer.sortingOrder = 6;
-        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
 
         if (projectileObject.TryGetComponent(out AnimatedSpriteRenderer animation))
         {
@@ -60,6 +59,7 @@ public sealed class MatangoProjectile : MonoBehaviour
 
         MatangoProjectile projectile = projectileObject.AddComponent<MatangoProjectile>();
         projectile.Initialize(launchDirection, speed, lifetimeSeconds, radius);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(MatangoProjectile));
         return projectile;
     }
 

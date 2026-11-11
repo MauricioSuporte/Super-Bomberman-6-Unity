@@ -99,6 +99,10 @@ namespace Assets.Scripts.Netcode
         void ClearCoopSprites()
         {
             ClearCoopBlackoutMasks(); ClearCoopPresentationMetrics(); ClearR03Diagnostics();
+            coopProjectiles.Clear(); coopProjectileEdges.Clear(); coopDeadProjectiles.Clear(); coopEarlyEnemyRenderers.Clear();
+#if UNITY_EDITOR || DEBUG
+            LocalProjectileSmoke.ClearViews();
+#endif
             foreach (var sprite in coopDynamicSprites.Values) if (sprite != null) Destroy(sprite);
             foreach (var texture in coopDynamicTextures.Values) if (texture != null) Destroy(texture);
             coopAnimationDefinitions.Clear(); coopAnimationClips.Clear(); coopVisualSamples.Clear();
@@ -393,15 +397,9 @@ namespace Assets.Scripts.Netcode
             coopEnemyTransitions.Clear();
             // A freshly created ground shadow/ripple is registered synchronously by its native owner.
             // Publish its first approved pose with the body's edge, not at the later discovery tick.
-            foreach (var renderer in coopPendingRenderers)
-            {
-                if (renderer == null) continue;
-                int id = renderer.GetEntityId().GetHashCode();
-                if (coopLastSprites.ContainsKey(id) || CoopEnemyVisualLimit(renderer) <= 0) continue;
-                var frame = CaptureCoopFrame(renderer);
-                coopEnemyTransitions.Add(frame); coopLastSprites[id] = frame; coopLastSentTime[id] = frame.time;
-                if (shapeDiagnostics) CoopShapePendingList(id).Add(CoopVisualSample.Full(frame));
-            }
+            foreach (var renderer in coopPendingRenderers) CaptureFreshCoopEnemyRenderer(renderer, shapeDiagnostics);
+            foreach (var renderer in coopEarlyEnemyRenderers) CaptureFreshCoopEnemyRenderer(renderer, shapeDiagnostics);
+            coopEarlyEnemyRenderers.Clear();
             foreach (var renderer in coopRenderers)
             {
                 if (renderer == null) continue;
@@ -435,6 +433,16 @@ namespace Assets.Scripts.Netcode
             }
             if (coopEnemyTransitions.Count > 0)
                 SendCoopSpriteDeltas(coopPeerBuffer, coopEnemyTransitions, System.Array.Empty<int>());
+        }
+
+        void CaptureFreshCoopEnemyRenderer(SpriteRenderer renderer, bool shapeDiagnostics)
+        {
+            if (renderer == null) return;
+            int id = renderer.GetEntityId().GetHashCode();
+            if (coopLastSprites.ContainsKey(id) || CoopEnemyVisualLimit(renderer) <= 0) return;
+            var frame = CaptureCoopFrame(renderer);
+            coopEnemyTransitions.Add(frame); coopLastSprites[id] = frame; coopLastSentTime[id] = frame.time;
+            if (shapeDiagnostics) CoopShapePendingList(id).Add(CoopVisualSample.Full(frame));
         }
 
         void PublishCoopMotion(bool shapeDiagnostics)
@@ -614,6 +622,9 @@ namespace Assets.Scripts.Netcode
             bool presentDiagnostics = CoopShapeDiagnostics;
             if (coopCatalog != null && coopViewRoot != null)
             {
+#if UNITY_EDITOR || DEBUG
+                if (coopVisualSamples.Count > 0) LocalProjectileSmoke.BeginPresent(clock);
+#endif
                 coopExpiredViews.Clear();
                 foreach (var pair in coopVisualSamples)
                 {
@@ -621,6 +632,9 @@ namespace Assets.Scripts.Netcode
                     clock = CoopCarrierClock(id, CoopVisualClock);
                     if (coopVisualRemovals.TryGetValue(id, out double removed) && clock >= removed)
                     {
+                        #if UNITY_EDITOR || DEBUG
+                        LocalProjectileSmoke.Removed(id, clock);
+#endif
                         ReleaseCoopMaskMaterial(id, null);
                         coopViewMaterialIds.Remove(id);
                         if (coopViews.Remove(id, out var view) && view != null)
@@ -638,6 +652,9 @@ namespace Assets.Scripts.Netcode
                     if (GamePauseController.IsPaused && samples.Count > 0 && (samples[^1].frame.enemyStepLimit > 0 || samples[^1].frame.pauseWithGameplay) && coopViews.ContainsKey(id))
                     {
                         RecordR03View(samples[^1].frame, clock, coopViews[id]);
+#if UNITY_EDITOR || DEBUG
+                        LocalProjectileSmoke.View(samples[^1].frame, clock, coopViews[id], samples[^1].frame.time, samples[^1].frame.time);
+#endif
                         if (presentDiagnostics) CoopPresentStat(id).pausedHeld++;
                         continue;
                     }
@@ -657,6 +674,9 @@ namespace Assets.Scripts.Netcode
                         interpolated = true; stateTime = clock;
                     }
                     PresentCoopSprite(frame, current.playbackOrigin);
+#if UNITY_EDITOR || DEBUG
+                    LocalProjectileSmoke.View(frame, clock, coopViews[id], stateTime, samples[^1].frame.time);
+#endif
                     if (presentStarted != 0) RecordCoopPresented(id, frame, interpolated, stateTime, clock, presentStarted);
                 }
                 foreach (int id in coopExpiredViews) { coopVisualSamples.Remove(id); coopVisualRemovals.Remove(id); }
@@ -683,7 +703,7 @@ namespace Assets.Scripts.Netcode
             foreach (uint id in expiredBombViews) bombVisualSamples.Remove(id);
         }
 
-        static double TransformVisualOffset(NetworkIdentity identity)
+        internal static double TransformVisualOffset(NetworkIdentity identity)
         {
             if (identity == null || !identity.TryGetComponent<NetworkTransformReliable>(out var sync)) return 0;
             return NetworkClient.sendInterval * (sync.sendIntervalMultiplier - 1 +

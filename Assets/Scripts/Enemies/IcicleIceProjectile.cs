@@ -58,7 +58,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
             ? projectileAnimationFrames[0]
             : projectileSprite;
         renderer.sortingOrder = 6;
-        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(IcicleIceProjectile));
 
         if (projectileAnimationFrames != null && projectileAnimationFrames.Length > 0)
         {
@@ -172,7 +172,7 @@ public sealed class IcicleIceProjectile : MonoBehaviour
         SpriteRenderer renderer = particle.AddComponent<SpriteRenderer>();
         renderer.sprite = particleSprite;
         renderer.sortingOrder = 7;
-        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(IcicleIceProjectile));
 
         Destroy(particle, particleLifetimeSeconds);
     }
