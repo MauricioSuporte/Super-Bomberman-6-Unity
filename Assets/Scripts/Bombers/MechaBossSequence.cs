@@ -141,8 +141,15 @@ public class MechaBossSequence : MonoBehaviour
 
         if (groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
             RebuildSpawnableCells();
-        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage && Assets.Scripts.Netcode.NetSync.IsServer)
-            TryStartSequence();
+        StartCoroutine(StartSequenceAfterSceneInitialization());
+    }
+
+    IEnumerator StartSequenceAfterSceneInitialization()
+    {
+        // StageIntroTransition may deactivate GameplayRoot from its Start.
+        // Let that happen before claiming sequenceStarted; OnEnable resumes it.
+        yield return null;
+        TryStartSequence();
     }
 
     void OnEnable() => TryStartSequence();

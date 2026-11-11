@@ -39,6 +39,15 @@ namespace Assets.Scripts.Netcode
             if (NetworkServer.active && singleton is BombermanNetworkManager manager) manager.PublishPortalMasks(true);
         }
 
+        internal static bool IsApprovedPortalMask(string name) =>
+            name == "Stage34PortalFixedMask" || name == "Pixel Portal Floor Mask";
+
+        internal static PortalMaskView CapturePortalMask(SpriteMask mask) =>
+            new PortalMaskView { id = mask.GetEntityId().GetHashCode(), position = mask.transform.TransformPoint(mask.sprite.bounds.center),
+                    rotation = mask.transform.rotation, scale = Vector3.Scale(mask.transform.lossyScale, new Vector3(mask.sprite.bounds.size.x, mask.sprite.bounds.size.y, 1f)), cutoff = mask.alphaCutoff,
+                    custom = mask.isCustomRangeActive, backLayer = mask.backSortingLayerID, frontLayer = mask.frontSortingLayerID,
+                    backOrder = mask.backSortingOrder, frontOrder = mask.frontSortingOrder };
+
         void PublishPortalMasks(bool force = false)
         {
             if (!NetSync.IsServer || !NetworkServer.active || NetworkServer.isLoadingScene ||
@@ -46,15 +55,11 @@ namespace Assets.Scripts.Netcode
             if (!force && Time.unscaledTime < nextPortalMaskSample) return;
             nextPortalMaskSample = Time.unscaledTime + 0.1f;
             var scene = SceneManager.GetActiveScene();
-            if (scene.name != "Stage_3-4" && scene.name != "BattleMode_7") return;
             portalMaskSend.Clear();
             foreach (var mask in FindObjectsByType<SpriteMask>())
             {
-                if (!mask.enabled || mask.sprite == null || mask.gameObject.scene != scene || mask.name != "Stage34PortalFixedMask") continue;
-                portalMaskSend.Add(new PortalMaskView { id = mask.GetEntityId().GetHashCode(), position = mask.transform.position,
-                    rotation = mask.transform.rotation, scale = mask.transform.lossyScale, cutoff = mask.alphaCutoff,
-                    custom = mask.isCustomRangeActive, backLayer = mask.backSortingLayerID, frontLayer = mask.frontSortingLayerID,
-                    backOrder = mask.backSortingOrder, frontOrder = mask.frontSortingOrder });
+                if (!mask.enabled || mask.sprite == null || mask.gameObject.scene != scene || !IsApprovedPortalMask(mask.name)) continue;
+                portalMaskSend.Add(CapturePortalMask(mask));
                 if (portalMaskSend.Count == 64) break;
             }
             if (!force && portalMaskSend.Count == 0 && !portalMasksWereActive) return;
@@ -99,9 +104,8 @@ namespace Assets.Scripts.Netcode
                     mask = go.AddComponent<SpriteMask>(); portalMaskViews[frame.id] = mask;
                 }
                 mask.transform.SetPositionAndRotation(frame.position, frame.rotation); mask.transform.localScale = frame.scale;
-                mask.sprite = portalMaskSprite; mask.alphaCutoff = frame.cutoff; mask.isCustomRangeActive = frame.custom;
-                mask.backSortingLayerID = frame.backLayer; mask.frontSortingLayerID = frame.frontLayer;
-                mask.backSortingOrder = frame.backOrder; mask.frontSortingOrder = frame.frontOrder;
+                mask.sprite = portalMaskSprite; mask.alphaCutoff = frame.cutoff;
+                ConfigurePortalMaskRange(mask, frame);
             }
             portalMaskRemoved.Clear();
             foreach (var pair in portalMaskViews)
@@ -111,6 +115,19 @@ namespace Assets.Scripts.Netcode
                 if (portalMaskViews[id] != null) DestroyPortalMaskObject(portalMaskViews[id].gameObject);
                 portalMaskViews.Remove(id);
             }
+        }
+
+        internal static void ConfigurePortalMaskRange(SpriteMask mask, PortalMaskView frame)
+        {
+            // Setters clamp against the opposite bound. Widen before moving either end,
+            // including when a reused view moves from a high interval to a lower one.
+            mask.backSortingOrder = short.MinValue;
+            mask.frontSortingOrder = short.MaxValue;
+            mask.frontSortingLayerID = frame.frontLayer;
+            mask.backSortingLayerID = frame.backLayer;
+            mask.frontSortingOrder = frame.frontOrder;
+            mask.backSortingOrder = frame.backOrder;
+            mask.isCustomRangeActive = frame.custom;
         }
 
         static void DestroyPortalMaskObject(Object value)

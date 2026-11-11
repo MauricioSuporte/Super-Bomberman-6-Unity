@@ -98,7 +98,7 @@ namespace Assets.Scripts.Netcode
 
         void ClearCoopSprites()
         {
-            ClearCoopBlackoutMasks(); ClearCoopPresentationMetrics(); ClearR03Diagnostics();
+            ClearCoopAbsorption(); ClearCoopBlackoutMasks(); ClearCoopPresentationMetrics(); ClearR03Diagnostics();
             coopProjectiles.Clear(); coopProjectileEdges.Clear(); coopDeadProjectiles.Clear(); coopEarlyEnemyRenderers.Clear();
 #if UNITY_EDITOR || DEBUG
             LocalProjectileSmoke.ClearViews();
@@ -214,6 +214,15 @@ namespace Assets.Scripts.Netcode
         {
             var state = source.CapturePlayback();
             if (source.ManualAnimationUpdate) state.speed = 0;
+            return state;
+        }
+
+        internal static AnimatedSpriteRenderer.PlaybackState CaptureCoopBossPlayback(AnimatedSpriteRenderer source)
+        {
+            var state = CaptureCoopPlayback(source);
+            // Boss pose edges are authoritative. Do not advance a local frame past
+            // a native hit/turn/cast boundary; root motion remains interpolated.
+            state.speed = 0;
             return state;
         }
 
@@ -383,13 +392,19 @@ namespace Assets.Scripts.Netcode
             bool visible = renderer.gameObject.activeInHierarchy && renderer.enabled && !renderer.forceRenderingOff;
             if (visible != previous.visible) return true;
             if (!visible) return false;
+            if ((byte)renderer.maskInteraction != previous.mask) return true;
+            if (IsCoopBossRenderer(renderer) && (renderer.color != previous.color ||
+                renderer.sortingLayerID != previous.sortingLayer || renderer.sortingOrder != previous.order ||
+                !(CaptureCoopAbsorption(renderer)?.Equals(previous.absorption) ?? previous.absorption == null))) return true;
             bool water = UsesCoopWater(renderer);
             if (water != (previous.water != null)) return true;
-            // Automatic clips already advance from their approved phase. Manual/idle poses are discrete.
-            return renderer.TryGetComponent<AnimatedSpriteRenderer>(out var animation) && animation.isActiveAndEnabled &&
-                (CaptureCoopPlayback(animation).speed != previous.playback.speed ||
-                 ((animation.ManualAnimationUpdate || animation.idle) && renderer.sprite != null &&
-                  (animation.CurrentFrame != previous.playback.frame || animation.idle != previous.playback.idle)));
+            if (!renderer.TryGetComponent<AnimatedSpriteRenderer>(out var animation) || !animation.isActiveAndEnabled) return false;
+            bool boss = IsCoopBossRenderer(renderer);
+            var playback = boss ? CaptureCoopBossPlayback(animation) : CaptureCoopPlayback(animation);
+            return playback.speed != previous.playback.speed ||
+                ((boss || animation.ManualAnimationUpdate || animation.idle) && renderer.sprite != null &&
+                 (playback.frame != previous.playback.frame || playback.idle != previous.playback.idle ||
+                  playback.frozen != previous.playback.frozen));
         }
 
         void PublishCoopEnemyTransitions(bool shapeDiagnostics)
@@ -639,7 +654,7 @@ namespace Assets.Scripts.Netcode
                         coopViewMaterialIds.Remove(id);
                         if (coopViews.Remove(id, out var view) && view != null)
                         {
-                            ReleaseCoopWater(view);
+                            ReleaseCoopAbsorption(view); ReleaseCoopWater(view);
                             Destroy(view.gameObject);
                         }
                         coopViewSpriteIds.Remove(id); coopViewClips.Remove(id);
@@ -674,6 +689,7 @@ namespace Assets.Scripts.Netcode
                         interpolated = true; stateTime = clock;
                     }
                     PresentCoopSprite(frame, current.playbackOrigin);
+                    RecordR06Boss("r06_view", coopViews[id], frame, clock, stateTime, samples[^1].frame.time);
 #if UNITY_EDITOR || DEBUG
                     LocalProjectileSmoke.View(frame, clock, coopViews[id], stateTime, samples[^1].frame.time);
 #endif
@@ -726,7 +742,7 @@ namespace Assets.Scripts.Netcode
             actor != null ? Mathf.Max(.01f, actor.tileSize) * 1.5f : 0;
 
         float CoopEnemyVisualLimit(SpriteRenderer renderer) => coopEnemyVisualLimits.TryGetValue(renderer.GetEntityId().GetHashCode(), out float limit)
-            ? limit : EnemyVisualLimit(renderer.GetComponentInParent<EnemyMovementController>(true));
+            ? limit : IsCoopBossRenderer(renderer) ? 1.5f : EnemyVisualLimit(renderer.GetComponentInParent<EnemyMovementController>(true));
 
         public static void CoopTrackAnimation(AnimatedSpriteRenderer animation)
         {

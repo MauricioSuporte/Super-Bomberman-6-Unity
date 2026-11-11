@@ -720,3 +720,70 @@ Evidência consolidada em Logs/R05-candidate14/{identity,delivery,cost-report,R0
 Limitações preservadas: Windows Development/localhost, custo de CPU headless e controle visual separado; sem medição WAN/GPU/input físico, sem replay integral de RNG, sem extrapolar3pares para todas máquinas. Efeitos<80ms, gaps>150ms e transições sem referência suficiente ficam explícitos. Imagens estáticas não provam suavidade percebida. Checklist permanece29/32até aceite R05; próximos itens de implementação após aceite:R06 e R08.
 
 Conferência final: Python CI187/187, analisador21/21, RoomDirectory16/16;25C# UTF8/BOM e diff sem erros;46entradas restauradas no runner e nenhum processo R05/Unity/SB6 ativo. Identidade do pacote/analisador conferida. Resultado em Logs/R05-candidate14/final-verification.json. Aguarda apenas aceite visual do usuário.
+
+
+## R05 — aceite visual aprovado em 11/11/2026
+
+Usuário confirmou: "Está aprovado R05 pode marcar como concluido." **R05 CONCLUÍDO**, superando os registros anteriores de aceite pendente. Mantidas a entrega técnica candidate14/protocolo68 e suas limitações. Checklist30/32; faltam R06/R08, ainda não iniciados. Sem publicação. A próxima ação autorizada é liberar espaço de artefatos antigos no C:, preservando fontes, saves e recuperação.
+
+
+### Limpeza autorizada de artefatos antigos —11/11/2026
+
+Após o aceite R05, usuário solicitou liberar espaço no C: antes de iniciar R06. Removidos17diretórios de builds intermediárias/duplicadas e39.813arquivos brutos obsoletos de testes (logs, capturas e imagens). Entre eles2.498originais de Movement identificados pelos logs dos testes; arquivos de Movement sem essa identificação foram preservados. Espaço efetivamente recuperado77,70GiB; C: terminou com82,09GiB livres (4,38GiB imediatamente antes da remoção; inventário inicial3,27GiB).
+
+Preservados código e estado Git, Assets/_Recovery, Packages/ProjectSettings, saves, backups de fontes/sincronizações, scripts, relatórios JSON/XML e evidências completas finais da candidate14. Library principal/runner mantidas para evitar reimportação. Históricos/configurações/skills/credenciais Codex/Claude e temporários não identificados também preservados. Sem falhas de remoção; diff/status Git não mudaram durante a limpeza. Apenas esta documentação de aceite/limpeza foi atualizada.
+
+**Evidências históricas anteriores:** os caminhos de raw logs/PNGs/builds antigas referenciados nas seções anteriores podem não existir mais. Relatórios resumidos e identidades permanecem; a limpeza não recalcula nem amplia aceites anteriores. Build de benchmark C:/Users/mauri/SB6-R05/candidate14 era duplicada e foi removida; a cópia aprovada permanece em **C:/Users/mauri/SB6-QA-R05**, com SHA256 conferido. Novo mapa de localização em Logs/R05-candidate14/artifact-locations.json. QA antigos R01/R03/A14 mantêm relatórios/saves e aviso de build removida.
+
+Manifesto e auditoria: Logs/disk-cleanup-20261111-{plan,result,inventory,details}.json e script .ps1. O manifesto result registra os caminhos exatos, contagens, bytes e verificações; não executar novamente os scripts antigos que dependiam de builds apagadas sem preparar um novo binário. R05 continua CONCLUÍDO,30/32; R06/R08 ainda não iniciados. Sem publicação/commit/push nesta limpeza.
+
+
+Complemento da limpeza build (11/11/2026): usuário perguntou especificamente sobre a pasta build. Inspeção confirmou que WorktreeBackups continha somente duas builds Windows antigas (não código/patches/saves); pasta removida. Validation/LocalServerLogs tiveram arquivos compilados, tar.gz, capturas e logs antigos removidos, preservando JSON/XML, scripts, rollback de prefabs e saves. Recuperados mais3,40GiB, total aproximado81,10GiB desde a limpeza; C: com85,48GiB livres. Restam apenas relatórios/dados pequenos em build. Manifesto Logs/disk-cleanup-build-20261111-result.json. Este registro supera a indicação anterior de WorktreeBackups preservado; backups reais de fontes/sincronização continuam preservados.
+
+
+## R06 — validação final12 em andamento (11/11/2026)
+
+| Critério | Evidência atual | Estado |
+|---|---|---|
+| Compilação/core |1097/1097 Unity e build12;195 CI completos em11, sem alteração Python posterior | Passou |
+| Mechas online |12: branco/preto/dourado, pausas/reload,2peers; análise de posição/poses passou | Passou |
+| Mechas offline |06 reproduziu bloqueio;07 corrigiu;12 repetiu as3entradas e finalizou | Passou |
+| Clown/Sun |12:2peers, pausas/reload, poses/posição validadas; sprite idle nulo corrigido | Passou |
+| Hall/Pretty/Venus |12:2peers, subida, absorção, pausa/reload; analisador e pixels originais passaram | Passou no fixture; aceite perceptual pendente |
+| Controle Hall sem PNG |12: zero divergência e zero deliveryPoseHolds nos2peers; erro p95<1pixel | Passou |
+| Máscaras dos portais |12: portal7 e portal34, dono/observador endpoints aprovados e desbloqueados | Passou |
+| Shader ausente no servidor |Teste12 valida fonte CPU mesmo com material nulo; lifetime/MPBs/roundtrip testados | Passou no teste; build Linux extra prevista |
+| Offline4cenas/comparação |12:1-6 passou; demais em execução, sem equivalência de RNG presumida | Em execução |
+| Custo baseline/final |8execuções Sun/Clown sem captura de diagnóstico/PNG previstas | Pendente |
+| BossRush |Smoke adicional preparado | Pendente |
+| QA e publicação |Pacote final12 preparado por script após gates; nenhum aceite manual/push/deploy | Pendente |
+
+Correção da leitura anterior: NÃO foi comprovado cenário preto no jogo. PNGs RGB originais mantêm arena/HUD; a conclusão baseada na visualização sequencial estava errada e foi retirada no checkpoint. O isolamento da máscara e a correção do clamp são melhorias de escopo/configuração, não prova de correção de uma tela preta.
+
+Poses manuais são conferidas contra o último state recebido. deliveryPoseHolds/idade são reportados separadamente: conferir um estado correto não prova ausência de atraso. Comparação de sprites por vizinhança±50ms foi substituída por sample-and-hold; testes exigem falhar para pose futura inventada. Automáticas dos bosses agora usam apenas os quadros aprovados, com movimento continuamente interpolado.
+
+R06 segue parcial até terminar a cadeia, revisar custos/offline e preparar QA. Estado/comandos em progresso-predicao-online.md; resultados em Logs/R06-candidate12/chain-state.json. Nenhum trabalho no R08 nem publicação.
+
+
+## R06 — entrega técnica final12 (11/11/2026), aceite visual pendente
+
+| Critério | Resultado/evidência | Estado |
+|---|---|---|
+| Compilação/testes |1097/1097 Unity core,195/195 CI; Windows Development e Linux Dedicated Server Release | Passou; Linux runtime não executado |
+| Mechas1-6 |Branco/preto/dourado entram offline e em2clientes reais | Passou no fixture |
+| Clown/Sun/Pretty/Venus |4cenas online, controle Hall semPNG,80PNG Hall; zero sprite divergente/retido por entrega nos relatórios12 | Passou na medição; visual humano pendente |
+| Pausa/reload/BossRush/portais |Reentrada,2portais owner/observer;BossRush1-7 com2peers | Passou nos cenários executados |
+| Offline×online |Logs/R06-comparacao.json,4cenas; sem replay idêntico RNG/input | Medido com limitações |
+| CPU/bytes |Logs/R06-candidate12/cost-report.json,8execuções,2repetições/configuração; semPNG/motion capture | Medido; custo de alocação explicitado no checkpoint |
+| QA |C:/Users/mauri/SB6-QA-R06,4atalhos/LEIA-ME.md, mesma DLL6e4a9ad7… | Aceite humano pendente |
+| Runner |Restaurado; runner-restore.log; Library não revertida | Preservação verificada |
+| Publicação/R08 |Não executados | Fora desta entrega |
+
+R06 continua parcial até aceite visual; checklist30/32. Limitações e números completos na seção final do checkpoint. A captura PNG tem custo próprio, cenários sem movimento/gaps/efeitos muito curtos não provam fluidez, e execução local não mede WAN/GPU/input físico. Custo Sun servidor+39.72KiB/s de alocação(+5.97%) e Clown+6.65KiB/s(+1.27%) registrados; tráfego estável dentro das faixas observadas. Nenhuma equivalência integral offline ou ganho universal foi inferido.
+
+
+## R06 — aceite humano registrado (11/11/2026)
+
+Usuário confirmou: "R06 está aprovado." R06 CONCLUÍDO nos cenários testados, superando os registros anteriores de aceite pendente. Mantidas as evidências e limitações da final12/protocolo69; sem ampliar o aceite para WAN/GPU ou runtime Linux não medidos. Checklist31/32 concluídos; resta R08. Nenhum commit, push ou publicação e R08 não iniciado nesta atualização.
+
+Retenção recomendada para R08: preservar C:/Users/mauri/SB6-QA-R06 como baseline aprovada. C:/Users/mauri/SB6-R06 contém a cópia duplicada final12 e candidatas intermediárias, dispensáveis quando a DLL de QA-R06 estiver conferida. Pacotes antigos QA-A14/R01/R02/R03/R05 não são necessários ao desenvolvimento do R08; seus runs/saves são evidências/dados de teste opcionais. Não houve exclusão nesta atualização.

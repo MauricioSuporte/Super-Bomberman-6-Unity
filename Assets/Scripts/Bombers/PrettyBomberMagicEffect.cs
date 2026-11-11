@@ -123,11 +123,18 @@ public sealed class PrettyBomberMagicEffect : MonoBehaviour
         Vector3 origin = boss.transform.position;
         var renderers = boss.GetComponentsInChildren<SpriteRenderer>(true);
         var interactions = new SpriteMaskInteraction[renderers.Length];
+        var sortingOrders = new int[renderers.Length];
+        int maskBack = int.MaxValue, maskFront = int.MinValue;
         float floorOffset = 0f;
         float topOffset = 0f;
         for (int i = 0; i < renderers.Length; i++)
         {
             interactions[i] = renderers[i].maskInteraction;
+            sortingOrders[i] = renderers[i].sortingOrder;
+            // Isolate this short reveal from the arena/player/HUD sorting batches.
+            renderers[i].sortingOrder = 10000 + sortingOrders[i];
+            maskBack = Mathf.Min(maskBack, renderers[i].sortingOrder);
+            maskFront = Mathf.Max(maskFront, renderers[i].sortingOrder);
             if (renderers[i].enabled)
             {
                 floorOffset = Mathf.Min(floorOffset, renderers[i].bounds.min.y - origin.y);
@@ -144,7 +151,14 @@ public sealed class PrettyBomberMagicEffect : MonoBehaviour
         maskObject.transform.SetParent(transform, false);
         maskObject.transform.position = origin + Vector3.up * floorOffset;
         maskObject.transform.localScale = new Vector3(4f, 6f, 1f);
-        maskObject.AddComponent<SpriteMask>().sprite = maskSprite;
+        var floorMask = maskObject.AddComponent<SpriteMask>();
+        floorMask.sprite = maskSprite;
+        floorMask.isCustomRangeActive = true;
+        floorMask.backSortingLayerID = floorMask.frontSortingLayerID = renderers.Length > 0 ? renderers[0].sortingLayerID : 0;
+        // Unity clamps back to the current front: establish the upper bound first.
+        floorMask.frontSortingOrder = renderers.Length > 0 ? maskFront + 1 : 10001;
+        floorMask.backSortingOrder = renderers.Length > 0 ? maskBack - 1 : 9999;
+        Assets.Scripts.Netcode.BombermanNetworkManager.NotifyPortalMasksChanged();
 
         float depth = Mathf.Ceil((topOffset - floorOffset + 0.125f) * pixelsPerUnit) / pixelsPerUnit;
         float time = 0f;
@@ -173,8 +187,16 @@ public sealed class PrettyBomberMagicEffect : MonoBehaviour
         {
             for (int i = 0; i < renderers.Length; i++)
                 if (renderers[i] != null)
+                {
                     renderers[i].maskInteraction = interactions[i];
-            Destroy(maskObject);
+                    renderers[i].sortingOrder = sortingOrders[i];
+                }
+            if (maskObject != null)
+            {
+                maskObject.SetActive(false);
+                Assets.Scripts.Netcode.BombermanNetworkManager.NotifyPortalMasksChanged();
+                Destroy(maskObject);
+            }
         }
     }
 

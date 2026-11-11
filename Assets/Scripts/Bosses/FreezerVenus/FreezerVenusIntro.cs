@@ -104,6 +104,7 @@ public sealed class FreezerVenusIntro : MonoBehaviour
         for (int i = 0; i < renderers.Length; i++)
         {
             originalMaterials[i] = renderers[i].sharedMaterial;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopSetAbsorptionLight(renderers[i], 0f);
             renderers[i].sortingLayerID = boss.body.sortingLayerID;
             renderers[i].sortingOrder = boss.body.sortingOrder + 3 + i;
             if (absorptionMaterial != null) renderers[i].sharedMaterial = absorptionMaterial;
@@ -113,11 +114,13 @@ public sealed class FreezerVenusIntro : MonoBehaviour
     private void ApplyAbsorptionAppearance(SpriteRenderer[] renderers, Color[] colors,
         bool[] visibleStates, float progress, float blinkPhase)
     {
+        float light = Mathf.SmoothStep(0f, 1f, progress);
         if (absorptionMaterial != null)
-            absorptionMaterial.SetFloat("_LightAmount", Mathf.SmoothStep(0f, 1f, progress));
+            absorptionMaterial.SetFloat("_LightAmount", light);
         bool visible = Mathf.FloorToInt(blinkPhase) % 2 == 0;
         for (int i = 0; i < renderers.Length; i++)
         {
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopSetAbsorptionLight(renderers[i], light);
             Color color = colors[i];
             color.a *= 1f - progress;
             renderers[i].color = color;
@@ -129,7 +132,11 @@ public sealed class FreezerVenusIntro : MonoBehaviour
     {
         if (absorptionRenderers != null)
             for (int i = 0; i < absorptionRenderers.Length; i++)
-                if (absorptionRenderers[i] != null) absorptionRenderers[i].sharedMaterial = originalMaterials[i];
+                if (absorptionRenderers[i] != null)
+                {
+                    Assets.Scripts.Netcode.BombermanNetworkManager.CoopSetAbsorptionLight(absorptionRenderers[i], null);
+                    absorptionRenderers[i].sharedMaterial = originalMaterials[i];
+                }
         if (absorptionMaterial != null) Destroy(absorptionMaterial);
         absorptionMaterial = null;
         absorptionRenderers = null;

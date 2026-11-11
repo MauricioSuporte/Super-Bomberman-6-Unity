@@ -21,11 +21,13 @@ namespace Assets.Scripts.Netcode
         public float enemyStepLimit;
         public CoopBlackoutMask blackout;
         public CoopWaterSurface water;
+        public CoopAbsorptionLight absorption;
         public bool Matches(CoopSpriteFrame other) => animation == 0 && other.animation == 0 && id == other.id && sprite == other.sprite && material == other.material &&
             sortingLayer == other.sortingLayer && order == other.order && position == other.position && scale == other.scale &&
             rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible && mask == other.mask &&
             enemyStepLimit == other.enemyStepLimit && pauseWithGameplay == other.pauseWithGameplay && (blackout == null ? other.blackout == null : blackout.Equals(other.blackout)) &&
-            (water == null ? other.water == null : water.Equals(other.water));
+            (water == null ? other.water == null : water.Equals(other.water)) &&
+            (absorption == null ? other.absorption == null : absorption.Equals(other.absorption));
     }
     public struct CoopSprites : NetworkMessage { public double time; public string scene; public CoopSpriteFrame[] frames; public int[] removed; }
 
@@ -510,7 +512,7 @@ namespace Assets.Scripts.Netcode
             var frame = new CoopSpriteFrame
             {
                 id = renderer.GetEntityId().GetHashCode(), sprite = CoopSpriteId(renderer.sprite), time = NetworkTime.localTime,
-                material = CatalogId(renderer.sharedMaterial, coopMaterialIds), blackout = CaptureCoopBlackoutMask(renderer.GetEntityId().GetHashCode()), water = CaptureCoopWater(renderer),
+                material = CatalogId(renderer.sharedMaterial, coopMaterialIds), blackout = CaptureCoopBlackoutMask(renderer.GetEntityId().GetHashCode()), water = CaptureCoopWater(renderer), absorption = CaptureCoopAbsorption(renderer),
                 enemyStepLimit = CoopEnemyVisualLimit(renderer), pauseWithGameplay = CoopPauseWithGameplay(renderer),
                 position = renderer.transform.position, rotation = renderer.transform.rotation,
                 scale = renderer.transform.lossyScale, color = renderer.color,
@@ -522,13 +524,15 @@ namespace Assets.Scripts.Netcode
             {
                 frame.pauseWithGameplay |= animation.RespectGamePause;
                 frame.animation = CaptureCoopAnimation(animation);
-                frame.playback = coopProjectiles.ContainsKey(frame.id) ? CaptureCoopProjectilePlayback(animation) : CaptureCoopPlayback(animation);
+                frame.playback = coopProjectiles.ContainsKey(frame.id) ? CaptureCoopProjectilePlayback(animation) :
+                    IsCoopBossRenderer(renderer) ? CaptureCoopBossPlayback(animation) : CaptureCoopPlayback(animation);
                 // Remove the sampled jump offset; the client reapplies the offset for its rendered animation frame.
                 frame.offsetRight = animation.FrameOffsetToWorld(Vector2.right);
                 frame.offsetUp = animation.FrameOffsetToWorld(Vector2.up);
                 Vector2 offset = animation.CurrentSpriteOffset;
                 frame.position -= frame.offsetRight * offset.x + frame.offsetUp * offset.y;
             }
+            RecordR06Boss("r06_native", renderer, frame, frame.time, frame.time, frame.time);
             return frame;
         }
 
@@ -709,8 +713,18 @@ namespace Assets.Scripts.Netcode
             coopViewSpriteIds[frame.id] = frame.sprite;
             view.sprite = CoopSpriteAt(frame.sprite);
             PresentCoopAnimation(view, frame, playbackOrigin);
+            // A held recipe cannot override an explicit native sprite with a null/stale idle frame.
+            if (frame.animation != 0 && frame.playback.speed == 0) view.sprite = CoopSpriteAt(frame.sprite);
             bool materialReady = true;
-            if (frame.blackout != null)
+            if (frame.absorption == null) ReleaseCoopAbsorption(view);
+            if (frame.absorption != null)
+            {
+                coopViewMaterialIds.Remove(frame.id);
+                ReleaseCoopWater(view);
+                ReleaseCoopMaskMaterial(frame.id, view);
+                materialReady = ApplyCoopAbsorption(view, frame.absorption);
+            }
+            else if (frame.blackout != null)
             {
                 coopViewMaterialIds.Remove(frame.id);
                 ReleaseCoopWater(view);
@@ -821,7 +835,14 @@ namespace Assets.Scripts.Netcode
             if (message.exclusiveExplosion) remoteExplosionAudio = source;
             source.ignoreListenerPause = true;
             source.clip = clip; source.volume = message.voice ? GameAudioSettings.ApplyVoiceSfxVolume(message.volume) : GameAudioSettings.ApplySfxVolume(message.volume); source.pitch = message.pitch;
-            source.Play(); Destroy(go, clip.length / Mathf.Max(0.1f, Mathf.Abs(message.pitch)) + 0.5f);
+            if (!message.voice && message.volume > 1f)
+            {
+                // AudioSource.volume clamps to one; the native Venus/Pretty gain uses one-shot scale.
+                source.volume = GameAudioSettings.ApplySfxVolume(1f);
+                source.PlayOneShot(clip, message.volume);
+            }
+            else source.Play();
+            Destroy(go, clip.length / Mathf.Max(0.1f, Mathf.Abs(message.pitch)) + 0.5f);
         }
     }
 }

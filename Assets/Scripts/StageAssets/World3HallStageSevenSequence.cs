@@ -420,6 +420,7 @@ namespace StageAssets
             audio.spatialBlend = 0f;
             // PlayOneShot gain can exceed one; keep the user's SFX setting on the source.
             audio.volume = GameAudioSettings.ApplySfxVolume(1f);
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(bossEntranceSfx, 2f, audio.pitch);
             audio.PlayOneShot(bossEntranceSfx, 2f);
             Destroy(audioObject, bossEntranceSfx.length + 0.1f);
 
@@ -496,6 +497,7 @@ namespace StageAssets
                 EndTime = now + tileDropSfx.length
             });
             // Start at the landing, without accumulating delays across blocks.
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(tileDropSfx, 1f, source.pitch);
             source.Play();
         }
 

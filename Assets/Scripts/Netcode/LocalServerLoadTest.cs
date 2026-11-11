@@ -168,6 +168,7 @@ namespace Assets.Scripts.Netcode
             static string U() => " u=" + (DateTime.UtcNow.Ticks / 10000 - 63900000000000L).ToString(System.Globalization.CultureInfo.InvariantCulture);
             Debug.Log("[LoadTest] coop-world started scene=" + scene + U());
             if (HasArg("-load-test-enemies")) yield return CheckLoadTestEnemyTransitions();
+            if (HasArg("-r06-bosses")) yield return LocalBossSmoke.Run();
             if (HasArg("-r05-projectiles")) yield return LocalProjectileSmoke.Run();
             // 30 s of steady native world first: the pre-registered cost window ends at the first pause.
             // R02 controlled reproduction: "-load-test-hitch-ms N" blocks the server main thread N ms every 2.5 s (12 times)
@@ -196,7 +197,7 @@ namespace Assets.Scripts.Netcode
                 Time.timeSinceLevelLoad < 12f || !OnlineCoopPlayersReady)) yield return null;
             if (!OnlineCoopPlayersReady || SceneManager.GetActiveScene().name != scene) throw new InvalidOperationException("Co-op world reload did not become ready");
             Debug.Log("[LoadTest] coop-world reloaded scene=" + scene + U());
-            if (HasArg("-r05-projectiles")) yield return LocalProjectileSmoke.EnsureEncounter();
+            if (HasArg("-r05-projectiles") || HasArg("-r06-bosses")) yield return LocalProjectileSmoke.EnsureEncounter();
             yield return new WaitForSecondsRealtime(3f);
             ToggleNativePause(true); Debug.Log("[LoadTest] coop-world paused index=2" + U());
             yield return new WaitForSecondsRealtime(2f);
@@ -1459,6 +1460,11 @@ namespace Assets.Scripts.Netcode
             }
             var camera = Camera.main;
             if (camera == null) return;
+            if (LocalBossSmoke.TryCapture(out string bossFrame))
+            {
+                CaptureMountFrame(camera, bossFrame);
+                return;
+            }
             if (LocalProjectileSmoke.TryCapture(out string projectileFrame))
             {
                 CaptureMountFrame(camera, projectileFrame);
@@ -1547,6 +1553,12 @@ namespace Assets.Scripts.Netcode
 
         void CaptureMountFrame(Camera camera, string filename)
         {
+            if (LocalBossSmoke.CaptureBackbuffer)
+            {
+                // Opt-in visible clients: capture the actual end-of-frame, including stencil and HUD.
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(captureDirectory, filename));
+                return;
+            }
             // Batch clients do not present their backbuffer. Render the actual
             // gameplay camera through URP instead of saving a black screenshot.
             var target = RenderTexture.GetTemporary(Mathf.Max(1, Screen.width), Mathf.Max(1, Screen.height), 24, RenderTextureFormat.ARGB32);
