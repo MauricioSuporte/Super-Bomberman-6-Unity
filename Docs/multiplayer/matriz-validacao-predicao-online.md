@@ -2,8 +2,9 @@
 
 Esta matriz complementa o [checklist de desenvolvimento](progresso-predicao-online.md)
 e o [plano completo](plano-aplicacao-predicao-online.md). Ela define a validação
-manual ainda necessária; **nenhum cenário desta matriz foi executado entre dois
-peers nesta retomada**. Criar o roteiro não conclui um ID nem comprova ganho.
+manual e a evidência acumulada nas seções datadas abaixo. O estado atual está no
+checklist e no relatório de fechamento; o roteiro original não invalida os
+aceites posteriores. Criar um roteiro não conclui um ID nem comprova ganho.
 
 ## Preparação e evidência
 
@@ -29,7 +30,8 @@ Testes EditMode e compilação não substituem esta matriz.
 O pacote Windows inclui `Start-Online-Diagnostics.cmd`; o runtime também aceita
 `-gameplay-latency-logs` ou `-online-motion-logs`. JSONL fica em
 `Application.persistentDataPath/Diagnostics/Movement`. A captura para após10 minutos
-ou8MiB e tem orçamento de180 eventos/segundo; conferir `capture_limit`/`dropped`
+ou ao atingir o limite registrado no cabeçalho (Development atual:64MiB por padrão).
+O orçamento regular é180 eventos/segundo; fixtures podem elevá-lo explicitamente. Conferir `capture_limit`/`dropped`
 antes de interpretar uma ausência como falha de gameplay. Para um teste novo,
 iniciar uma captura nova com o mecanismo existente de ativação/reinício do jogo.
 
@@ -46,9 +48,9 @@ correlação de células/hash e durações descrita abaixo.
 
 ## Cenários por ID
 
-Todos os critérios abaixo aguardam comparação manual. IDs parcialmente
-implementados também têm lacunas de código listadas no checkpoint; o roteiro
-não autoriza considerar essas lacunas resolvidas.
+A tabela define os critérios originais. Consultar os registros datados abaixo
+e o checklist para distinguir cenários já validados das limitações remanescentes;
+o roteiro por si só não autoriza considerar uma lacuna resolvida.
 
 | ID | Cenário mínimo | Critério observável |
 | --- | --- | --- |
@@ -809,3 +811,26 @@ A contagem anterior31/32 considerava apenas A01–A14, C01–C10 e R01–R08 e o
 | Linux/runner |Release compilou; runtimeLinuxnão testado;31caminhos restaurados/hashes conferidos | Escopos separados |
 
 Checklist31/33. R08 segue parcial até aceite, P0 continua aberto. Sem commit/push/publicação. Números completos, caminhos e ressalvas na seção final do checkpoint. Dados CPU/renderer e PNGs não provam WAN/GPU/input físico nem fluidez percebida. NativeFloatingPlatform/C08 preservado, sem nova cobertura de passageiro presumida. Não ignorar gaps/efeitos curtos nem retenções para produzir aprovação.
+
+
+## R08 — aceite do usuário registrado (11/11/2026)
+
+Usuário confirmou: "está aprovado, pode marcar como concluido." R08 CONCLUÍDO nos cenários testados, superando os registros anteriores de aceite pendente. Preservadas as limitações da final07/protocolo70, incluindo retenções instrumentadas, escopo CPU/renderer/AudioSource e ausência de runtime Linux/WAN/GPU medidos. Checklist **32/33 concluídos; somente P0 permanece aberto entre os IDs**, além da consolidação final de notas indicada fora dos IDs. Nenhum commit, push ou publicação nesta atualização.
+
+P0: estimativa inicial de120–240min para auditar evidências existentes, identificar/coletar comparações faltantes, revisar esperas intencionais versus retenções e consolidar relatório/notas. Estimativa provisória; bugs novos ou cobertura que exija muitas repetições podem ampliá-la. Esta atualização registra o aceite e a estimativa; não inicia a execução técnica do P0.
+
+## P0 concluído e fechamento global — 11/11/2026
+
+P0 CONCLUÍDO tecnicamente; checklist33/33 IDs e consolidação concluída. Fontes canônicas preservadas, sem novo aceite humano universal ou publicação. Detalhamento em [fechamento-predicao-online.md](fechamento-predicao-online.md) e na última seção do checkpoint.
+
+| Critério P0 | Evidência final06 | Estado |
+| --- | --- | --- |
+| Offline/online comparáveis | Mesmo DLL/protocolo70; Stage_1-1, duas pessoas, sequência horizontal, Blue Louie, speed3,5; saves isolados e janelas com margens2s | Atendido no escopo; sem replay bit a bit de RNG/ticks |
+| Eventos correlacionáveis |497/497 respostas normal/degradado, netId/player/tick/máscara;0origens desconhecidas/pares ausentes | Atendido; recebimento não prova aplicação de cada tick |
+| Pausa/controle/bordas | Pausa nativa com delta0 amostrado; respostas iniciadas pausadas excluídas; pulsos contra paredes preservados | Atendido; bloqueio de controle não implica geometria livre |
+| Separar hitch de espera | Máximos340,16/135,24ms mantidos; janelas FrameStats307,74/119,22ms; p95 e máximo separados | Atendido como diagnóstico; sem causa exata ou promessa de zero stalls |
+| Não inferir ações sem instrumento | Apenas resposta do root CPU instrumentado; habilidades/famílias históricas ficam em seus relatórios | Atendido; sem medir input físico/GPU/WAN |
+| Completude |7capturas sem dropped/limite/overflow;1109Unity/216Python; fontes/build conferidos | Atendido |
+| Consolidação/restauração | Skill validada,19relatórios históricos auditados,80entradas do runner restauradas | Atendido; caches gerados não revertidos |
+
+Artefatos Logs/P0-final-summary.json e P0-comparacao/correlation/motion-audit-candidate06*, conforme relatório. p95 normal18,49–34,61ms e degradado17,92–34,36ms (RTT129,75–134,50ms), com mais de60 amostras livres por grupo. Uma execução final por condição; sem generalizar para todas as combinações ou interpretar delta interno de replay como snap renderizado. Retenções R08 e demais limites históricos permanecem documentados. Sem publicação nesta execução.

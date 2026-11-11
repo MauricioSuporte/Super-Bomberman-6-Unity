@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import tempfile
+import json
 
 
 spec = importlib.util.spec_from_file_location("prediction_analysis", Path(__file__).parents[1] / "Diagnostics/analyze_prediction.py")
@@ -9,6 +11,39 @@ spec.loader.exec_module(analysis)
 
 
 class PredictionAnalysisTests(unittest.TestCase):
+    def test_cancelled_pulses_are_coverage_counts_not_successful_latencies(self):
+        result = analysis.summarize([
+            {"kind": "input_without_motion_cancelled", "durationMs": 200, "detail": "at_input:prediction_block=paused mounted=False;at_cancel:prediction_block=none"},
+            {"kind": "input_without_motion_cancelled", "durationMs": 200, "detail": "at_input:prediction_block=none mounted=False;at_cancel:prediction_block=none"}])[0]
+        self.assertEqual(1, result["cancelledBeforeMotionBlocked"])
+        self.assertEqual(1, result["cancelledBeforeMotionFree"])
+        self.assertEqual(0, result["freeInputToMotionSamples"])
+
+    def test_capture_quality_does_not_approve_limited_dropped_or_empty_capture(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "capture.jsonl"
+            for rows, complete in [([], False), ([{"kind": "capture_start"}], False),
+                ([{"kind": "capture_start"}, {"kind": "sample", "dropped": 2}], False),
+                ([{"kind": "capture_start"}, {"kind": "capture_limit"}], False),
+                ([{"kind": "capture_start"}, {"kind": "input_response_overflow"}], False),
+                ([{"kind": "capture_start"}, {"kind": "sample"}], True)]:
+                path.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+                self.assertEqual(complete, analysis.capture_quality([path])[0]["complete"])
+
+    def test_response_lock_is_excluded_and_hitches_remain_visible(self):
+        rows = [{"kind": "input_to_motion", "durationMs": 12, "frameMs": 16,
+                 "detail": "at_input:prediction_block=none mounted=False;at_response:prediction_block=paused"},
+                {"kind": "input_to_motion", "durationMs": 90, "frameMs": 90,
+                 "detail": "prediction_block=none mounted=False"},
+                {"kind": "input_to_motion", "durationMs": 2, "frameMs": 16,
+                 "detail": "prediction_block=none mounted=False"}]
+        result = analysis.summarize(rows)[0]
+        self.assertEqual(1, result["blockedAtResponseExcluded"])
+        self.assertEqual(2, result["freeInputToMotionSamples"])
+        self.assertEqual(1, result["hitchResponseSamples"])
+        self.assertEqual(90, result["maxMs"])
+        self.assertEqual(2, result["nonHitchMedianMs"])
+
     def test_world_presentation_cost_aggregates_families_without_becoming_input_latency(self):
         result = analysis.summarize([
             {"kind": "coop_family_cost", "detail": "family=Frog;sampled=20;changed=4;frame_payload_bytes=200;capture_cpu_ms=0.4"},

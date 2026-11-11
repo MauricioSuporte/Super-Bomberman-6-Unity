@@ -189,7 +189,7 @@ namespace Assets.Scripts.Netcode
                 var frame = new NetworkInputFrame { tick = ++localTick,
                     held = Blocked || OnlineChatOverlay.BlocksLocalInput ? 0 : sampledHeld, pressed = Blocked || OnlineChatOverlay.BlocksLocalInput ? 0 : pendingPressed };
                 pendingPressed = 0;
-                MotionDiagnosticProbe.NetworkInput(gameObject, "input_send", frame.held, frame.pressed);
+                MotionDiagnosticProbe.NetworkInput(gameObject, "input_send", frame.held, frame.pressed, commandTick: frame.tick);
                 CmdControls(frame);
                 // History retains the command actually sent. Rejection/completion
                 // must be able to replay its original directional intent.
@@ -304,7 +304,7 @@ namespace Assets.Scripts.Netcode
         [Command]
         void CmdControls(NetworkInputFrame frame)
         {
-            MotionDiagnosticProbe.NetworkInput(gameObject, "input_receive", frame.held, frame.pressed, Blocked);
+            MotionDiagnosticProbe.NetworkInput(gameObject, "input_receive", frame.held, frame.pressed, Blocked, frame.tick);
             if (!NetworkInputHistory.IsNewer(frame.tick, receivedTick)) return;
             receivedTick = frame.tick;
             if (movement == null || movement.isDead || GetComponent<NetworkPlayerState>()?.HasApprovedRevengeReturn == true) { processedTick = receivedTick; return; }

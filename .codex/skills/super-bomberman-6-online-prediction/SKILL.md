@@ -768,3 +768,47 @@ produced wrong Snow/Koro frames despite correct position. Keep approved sprite
 edges for automatic clips too; their local phase remains useful between samples.
 Use cached Shader references instead of shader.name in per-frame detection to
 avoid managed string churn without changing the transmitted state sequence.
+
+
+## Evidence and final comparison
+
+Use [the final evidence report](../../../Docs/multiplayer/fechamento-predicao-online.md)
+and its links to the canonical plan/checkpoint/matrix. Historical checked IDs do
+not establish universal zero lag. Preserve accepted scope and known limitations;
+never move an unmet criterion to another ID just to close the current one.
+
+For a controlled comparison, use the same Development binary, native scene,
+loadout, hardware-input path and sequence offline/online. Isolate save directories.
+The opt-in LocalPredictionSmoke provides walking/mounted reproduction; it is a
+diagnostic fixture, not an offline-equivalent whole-stage benchmark. Record exact
+binary/source identities and network/capture settings with the results.
+
+analyze_prediction.py keeps roles, players, captures and contexts separate.
+Exclude intentional locks at input and at response from free-input statistics.
+Report hitch-associated responses alongside the full distribution rather than
+silently filtering them out. Inspect its capture quality output: missing headers,
+dropped rows and capture limits invalidate absence-of-event claims. Percentiles
+need sufficient samples. A last approval's age is not a perceived freeze duration.
+Use actual presentation time/phase and frame-hitch evidence to investigate it;
+correlation alone does not prove capture overhead or transport is the cause.
+
+For approved environment phases, send discrete renderer edges immediately and
+keep the rest vertex when movement begins. Include every scored property in a
+probe's debounce key. Preserve each native actor's scaled/unscaled pause clock.
+Dedicated servers need a CPU clock for audio loops; AudioSource.isPlaying may
+remain false with the audio subsystem disabled. Preserve the original clip
+catalog/gain and an independently owned tail. Do not start a new diagnostic
+writer from teardown after the capture was flushed and closed.
+
+Poll input early, but observe feedback after the production presenters. Keep the
+existing final co-op capture last. Carry the actual frame.tick from send/receive
+to a pending response; the server's CurrentInputTick is its last processed tick,
+not the newly received command. Preserve unknown origins explicitly instead of
+matching the nearest tick or subtracting peer UTC timestamps.
+
+Defer a replaced input's cancellation until the final presentation sample: a
+long frame can move the actor in FixedUpdate and release its input in Update
+before LateUpdate observes that movement. Preserve the original held direction
+and tick. Bound deferred observations and invalidate capture completeness on
+overflow. Report maxima and hitch-associated responses alongside percentiles;
+a rare long frame must not become a zero-latency or missing-input claim.

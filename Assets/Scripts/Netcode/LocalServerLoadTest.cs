@@ -170,6 +170,7 @@ namespace Assets.Scripts.Netcode
             if (HasArg("-load-test-enemies")) yield return CheckLoadTestEnemyTransitions();
             if (HasArg("-r06-bosses")) yield return LocalBossSmoke.Run();
             if (HasArg("-r08-environment")) yield return LocalEnvironmentSmoke.Run();
+            if (HasArg("-p0-prediction")) yield return LocalPredictionSmoke.Run();
             if (HasArg("-r05-projectiles")) yield return LocalProjectileSmoke.Run();
             // 30 s of steady native world first: the pre-registered cost window ends at the first pause.
             // R02 controlled reproduction: "-load-test-hitch-ms N" blocks the server main thread N ms every 2.5 s (12 times)

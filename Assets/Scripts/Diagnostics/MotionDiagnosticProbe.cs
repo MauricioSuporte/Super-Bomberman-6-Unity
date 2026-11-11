@@ -24,6 +24,9 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
     int lastLocalHeld = -1, lastNetworkHeld = -1, lastAppliedHeld = -1, sentCount, receivedCount;
     bool pending, noMotionReported, sampling;
     string pendingContext;
+    uint? pendingCommandTick;
+    int pendingHeld;
+    readonly MotionDeferredObservations deferred = new();
 
     void Awake()
     {
@@ -38,9 +41,10 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         if (!sampling)
         {
             sampling = true;
+            if (!TryGetComponent<MotionDiagnosticLateProbe>(out _)) gameObject.AddComponent<MotionDiagnosticLateProbe>();
             previousPosition = transform.position;
             lastLocalHeld = lastNetworkHeld = lastAppliedHeld = -1;
-            receivedAt = -1; pending = false; bombs.Clear(); kickContacts.Clear();
+            receivedAt = -1; pending = false; deferred.Reset(); bombs.Clear(); kickContacts.Clear();
             GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("actor_start", movement));
         }
         bool local = NetSync.IsOnline ? networkInput != null && networkInput.isLocalPlayer :
@@ -54,18 +58,25 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         int previous = lastLocalHeld;
         lastLocalHeld = held;
         TrackResponse(held, previous);
-        var entry = GameplayLatencyDiagnostics.For("input_edge", movement, detail: "accepted local keyboard/controller/touch input");
+        var entry = GameplayLatencyDiagnostics.For("input_edge", movement, detail: State() + ";source=accepted_local_input");
         entry.held = held;
         GameplayLatencyDiagnostics.Write(entry);
     }
 
-    void TrackResponse(int held, int previous)
+    void TrackResponse(int held, int previous, uint? commandTick = null)
     {
         if ((held & 15) == (previous & 15)) return;
+        if (pending && !deferred.Defer(new MotionDeferredObservations.Pending {
+            direction = pendingDirection, startedAt = pendingAt, changedAt = Time.realtimeSinceStartupAsDouble,
+            inputContext = pendingContext, cancelContext = State(), commandTick = pendingCommandTick, held = previous }))
+            GameplayLatencyDiagnostics.Write(GameplayLatencyDiagnostics.For("input_response_overflow", movement,
+                detail: "Deferred observation capacity exceeded; capture is incomplete"));
         pendingDirection = DirectionFromMask(held);
         pending = pendingDirection != Vector2.zero;
         pendingAt = Time.realtimeSinceStartupAsDouble;
         pendingContext = State();
+        pendingCommandTick = commandTick;
+        pendingHeld = held;
         noMotionReported = false;
     }
 
@@ -73,20 +84,17 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         ((mask & 8) != 0 ? 1 : 0) - ((mask & 4) != 0 ? 1 : 0),
         ((mask & 1) != 0 ? 1 : 0) - ((mask & 2) != 0 ? 1 : 0)).normalized;
 
-    void LateUpdate()
+    internal void ObservePresentedFrame()
     {
         if (!GameplayLatencyDiagnostics.Enabled || !sampling) return;
         double now = Time.realtimeSinceStartupAsDouble;
         Vector2 position = transform.position;
         Vector2 delta = position - previousPosition;
         previousPosition = position;
+        if (deferred.Count > 0) deferred.Observe(delta, now, EmitDeferred);
         if (pending && Vector2.Dot(delta, pendingDirection) > 0.001f)
         {
-            var response = GameplayLatencyDiagnostics.For("input_to_motion", movement, detail: "at_input:" + pendingContext + ";at_response:" + State());
-            response.durationMs = (now - pendingAt) * 1000;
-            response.delta = delta;
-            response.held = lastLocalHeld >= 0 ? lastLocalHeld : lastNetworkHeld;
-            GameplayLatencyDiagnostics.Write(response);
+            WriteResponse(pendingAt, pendingContext, pendingCommandTick, pendingHeld, delta, now);
             pending = false;
         }
         if (pending && !noMotionReported && now - pendingAt >= 0.5)
@@ -109,6 +117,33 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
             GameplayLatencyDiagnostics.Write(entry);
         }
         ObserveBombs(now, sample);
+    }
+
+    void WriteResponse(double at, string inputContext, uint? commandTick, int held, Vector2 delta, double now)
+    {
+        var response = GameplayLatencyDiagnostics.For("input_to_motion", movement,
+            detail: "at_input:" + inputContext + ";at_response:" + State() +
+                ";observation=after_presentation;command_tick=" + (commandTick?.ToString() ?? "unknown"));
+        response.durationMs = (now - at) * 1000;
+        if (commandTick.HasValue) response.inputTick = commandTick.Value;
+        response.delta = delta; response.held = held;
+        GameplayLatencyDiagnostics.Write(response);
+    }
+
+    void EmitDeferred(MotionDeferredObservations.Pending item, bool responded, double durationMs, Vector2 delta)
+    {
+        if (responded)
+        {
+            WriteResponse(item.startedAt, item.inputContext, item.commandTick, item.held, delta,
+                item.startedAt + durationMs / 1000);
+            return;
+        }
+        var cancelled = GameplayLatencyDiagnostics.For("input_without_motion_cancelled", movement,
+            detail: "at_input:" + item.inputContext + ";at_cancel:" + item.cancelContext +
+                ";reason=input_changed;command_tick=" + (item.commandTick?.ToString() ?? "unknown"));
+        cancelled.durationMs = durationMs; cancelled.held = item.held;
+        if (item.commandTick.HasValue) cancelled.inputTick = item.commandTick.Value;
+        GameplayLatencyDiagnostics.Write(cancelled);
     }
 
     public static string ClassifyPredictionBlock(MovementController motor, NetworkPlayerInput input, NetworkBombFx fx)
@@ -179,22 +214,28 @@ public sealed class MotionDiagnosticProbe : MonoBehaviour
         foreach (var bomb in expiredBombs) kickContacts.Remove(bomb);
     }
 
-    public static void NetworkInput(GameObject player, string kind, int held, int pressed = 0, bool blocked = false)
+    public static void NetworkInput(GameObject player, string kind, int held, int pressed = 0, bool blocked = false, uint? commandTick = null)
     {
         if (!GameplayLatencyDiagnostics.Enabled || !player.TryGetComponent<MotionDiagnosticProbe>(out var probe)) return;
         double now = Time.realtimeSinceStartupAsDouble;
-        if (kind == "input_send") probe.sentCount++;
+        if (kind == "input_send")
+        {
+            probe.sentCount++;
+            if (probe.pending && !probe.pendingCommandTick.HasValue && DirectionFromMask(held) == probe.pendingDirection)
+                probe.pendingCommandTick = commandTick;
+        }
         if (kind == "input_receive")
         {
             probe.receivedCount++;
             probe.receivedAt = now;
-            probe.TrackResponse(held, probe.lastNetworkHeld);
+            probe.TrackResponse(held, probe.lastNetworkHeld, commandTick);
         }
         bool changed = held != probe.lastNetworkHeld;
         probe.lastNetworkHeld = held;
         if (!changed && pressed == 0 && now < probe.nextNetworkLog) return;
         probe.nextNetworkLog = now + 1;
         var entry = GameplayLatencyDiagnostics.For(kind, probe.movement, detail: "blocked=" + blocked);
+        if (commandTick.HasValue) entry.inputTick = commandTick.Value;
         entry.held = held; entry.pressed = pressed;
         GameplayLatencyDiagnostics.Write(entry);
     }

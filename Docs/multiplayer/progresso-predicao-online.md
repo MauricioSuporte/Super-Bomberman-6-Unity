@@ -237,11 +237,11 @@ manual; o histórico preserva decisões, resultados e tentativas anteriores.
 
 ## Checklist por ID
 
-Resumo atual (11/11/2026): **31/33 IDs concluídos; R08 com entrega técnica pronta/aceite humano pendente e P0 aberto**.
-Esta contagem não representa percentual de esforço; validação manual com dois peers
-continua pendente mesmo em IDs marcados. Consolidação de documentação é item separado.
+Resumo atual (11/11/2026): **33/33 IDs concluídos; P0 e consolidação final concluídos**.
+Esta contagem não representa esforço nem cobertura universal de QA. Aceites humanos
+e limitações permanecem restritos aos cenários registrados nas seções datadas.
 
-- [ ] P0: ferramenta/contexto implementados/testados, incluindo barco45 e logs de força/snap/reconciliação C07; novas capturas comparáveis pendentes.
+- [x] P0: concluído em11/11/2026; candidata06/protocolo70. Capturas comparáveis offline/2peers normal/degradado, polling/observação final separados, tick original e cancelamento diferido; qualidade/contextos/pausa/bordas/hitches auditados. Unity1109/1109, Python216/216,497/497respostas correlacionadas. Máximos340/135ms e limites mantidos no relatório final; runner restaurado. Sem publicação.
 - [x] A01: implementação e testes de locomoção montada; manual pendente.
 - [x] A02: proxy, capacidade, confirmação/rejeição e testes; manual pendente.
 - [x] A03: predição/autoridade de dash e testes; manual pendente.
@@ -273,8 +273,8 @@ continua pendente mesmo em IDs marcados. Consolidação de documentação é ite
 - [x] R05: concluído em 11/11/2026, aceite visual do usuário: "Está aprovado R05 pode marcar como concluido." Entrega candidate14/protocolo68: 17 famílias, core1088/1088, 9 cenários com 2 clientes, referências offline e 24 medições de custo qualificadas. Pacote SB6-QA-R05 aprovado; limitações preservadas. Sem publicação; próximos R06/R08.
 - [x] R06: CONCLUÍDO em 11/11/2026; usuário confirmou "R06 está aprovado", nos cenários testados com o pacote C:/Users/mauri/SB6-QA-R06. Mechas1-6 com3entradas corrigidas offline/online; Pretty/Venus com subida gradual, máscara, absorção e áudio aprovados.1097/1097 Unity,195 CI;2clientes reais,4cenas offline,2portais e BossRush passaram;8custos baseline/final e comparação online/offline registrados;servidor Linux Release compilou (runtime Linux não testado). Protocolo69. Sem publicação/R08.
 - [x] R07: itens/rolagem/push, ovos e poses de montaria alinhados; transporte independente de ator, migração de arco/fila aprovada após stop/disable/destroy e cleanup sem tomar pose/input de outro player. Suíte894 e probe2clients com8samples móveis por client após remoção,0erros/avisos. Manual gráfico/offline e casos ambientais continuam na matriz; publicação deste último lote ainda pendente.
-- [ ] R08: entrega técnica final07/protocolo70 concluída em11/11; aceite visual/auditivo pendente em C:/Users/mauri/SB6-QA-R08.5cenas com2peers+5offline, poses/flip/alpha/sorting/pausa, loop/tail SnowBall e sons;core1106em04,18focados06,202CI;Windows/Linuxcompilados;custos/comparação qualificados. Retenções pontuais de amostra até261ms registradas; não declarar zero travamentos. Sem publicação; P0 permanece aberto.
-- [ ] Consolidar skill e notas (atualizadas até55: motion independente do ator, itens/montaria, custos, reconexão e teardown); matriz atualizada com integração automática2peers. Manual gráfico e consolidação dos IDs parciais pendentes.
+- [x] R08: CONCLUÍDO em11/11/2026; usuário confirmou "está aprovado, pode marcar como concluido", nos cenários testados com C:/Users/mauri/SB6-QA-R08. Entrega final07/protocolo70.5cenas com2peers+5offline, poses/flip/alpha/sorting/pausa, loop/tail SnowBall e sons;core1106em04,18focados06,202CI;Windows/Linuxcompilados;custos/comparação qualificados. Retenções pontuais de amostra até261ms registradas; não declarar zero travamentos. Sem publicação; P0 foi fechado na seção final abaixo.
+- [x] Consolidar skill e notas: concluído em11/11/2026, atéR08/P0. Plano/checkpoint/matriz preservados como fontes canônicas; fechamento-predicao-online.md reúne evidências e limites. Skill validada; QA histórico não é convertido em aprovação universal.
 
 Um ID só deve ser marcado concluído com implementação/testes identificados;
 registrar separadamente validação manual ainda não realizada. Hipóteses de
@@ -6193,3 +6193,47 @@ Logs/R08-comparacao.json:5cenas offline×online,18/53/5/17/18sprites comuns resp
 ### Próxima ação humana
 
 Em C:/Users/mauri/SB6-QA-R08, abrir UM atalho por vez:1-Vulcan-e-Vulcao,2-Bolhas-e-Chip,3-Barril,4-Penguin-e-Bola-de-Neve,5-Foguete-de-Bloco. Observar os dois clientes: continuidade, pose/inversão, alvo/sombra, fragmentos/fade, sons sem duplicação e loop SnowBall terminando, pausa e reentrada sem resíduos. LEIA-ME.md detalha o roteiro. Saves isolados; cada rodada preserva seus logs em runs/. R08 só será marcado concluído após aceite do usuário; P0 segue depois.
+
+
+## R08 — aceite do usuário registrado (11/11/2026)
+
+Usuário confirmou: "está aprovado, pode marcar como concluido." R08 CONCLUÍDO nos cenários testados, superando os registros anteriores de aceite pendente. Preservadas as limitações da final07/protocolo70, incluindo retenções instrumentadas, escopo CPU/renderer/AudioSource e ausência de runtime Linux/WAN/GPU medidos. Checklist **32/33 concluídos; somente P0 permanece aberto entre os IDs**, além da consolidação final de notas indicada fora dos IDs. Nenhum commit, push ou publicação nesta atualização.
+
+P0: estimativa inicial de120–240min para auditar evidências existentes, identificar/coletar comparações faltantes, revisar esperas intencionais versus retenções e consolidar relatório/notas. Estimativa provisória; bugs novos ou cobertura que exija muitas repetições podem ampliá-la. Esta atualização registra o aceite e a estimativa; não inicia a execução técnica do P0.
+
+## P0 iniciado — 11/11/2026
+
+Autorizado concluir o plano integralmente. Em execução: inventário de evidências por ID, reprodução comparável offline/online via input sintético no caminho nativo, auditoria das esperas intencionais e consolidação das notas/skill. P0 permanece aberto até obter evidência real; estimativa inicial120–240min. Sem autorização nova de commit, push ou publicação.
+
+### P0 — execução inicial
+
+Suíte core1106/1106 em `Logs/P0-candidate01/tests.xml` (Unity6000.6.0f1). A primeira execução do wrapper perdeu seu console/terminou antes do Unity; o processo Unity permaneceu acompanhado e o XML final foi recuperado, sem declarar build concluído. Cadeia durável em `Logs/P0-chain-state.json`; candidate02 é piloto. Python204/204; analisador agora registra qualidade/completude das capturas, bloqueio na resposta e amostras associadas a hitch sem ocultá-las da distribuição completa. Skill consolidada e validada por quick_validate (PyYAML isolado em Logs). Reprodução final inclui pausa nativa idêntica offline/online; candidate02 anterior a essa adição não deve ser tratado como validação final da pausa.
+
+Overlay reversível em `Logs/P0-runner-sync/backup-20261111-171721`; restauração obrigatória ao encerrar. R08 QA preservado como baseline. P0 ainda aberto; não há publicação/commit/push nesta execução.
+
+### P0 — auditoria do ponto de observação e correlação
+
+Candidate03 compila e passou1106/1106, com pausa nativa equivalente e cancelamentos instrumentados. Suas capturas são controle anterior à correção de diagnóstico, não a entrega final. A auditoria revelou duas lacunas: input_receive usava CurrentInputTick (último processado no servidor), não frame.tick; MotionDiagnosticProbe observava no LateUpdate -200, antes dos presenters finais. Correção em preparação para04: tick original explícito nos logs send/receive e preservado até resposta/cancelamento; observador separado em ordem32000, mantendo polling cedo. Sem alteração de comando/simulação/protocolo70. Candidatos anteriores não podem comprovar o novo ponto de observação/correlação. Cadeias em Logs/P0-final-state.json (03) e Logs/P0-complete-state.json (04); não sobrepor Unity/SB6. P0 permanece aberto.
+
+### P0 — ajuste da ordem final do observador
+
+04 compilou, mas o core falhou1/1106: CoopCaptureRunsAfterEveryLateUpdateThatMovesOverlays exige que CoopLateCaptureDriver32000 continue sendo o último callback. O novo observador somente de diagnóstico estava também em32000. Ajustado para31999, após motor/FX/montaria e antes da captura global, preservando a invariável existente; não alterar nem afrouxar o teste. XML04 e estado falho preservados. Próxima entrega candidata05; fonte de gameplay/protocolo70 inalterada. Suíte Python final216/216 em Logs/P0-python-final-error.log. Falha de encerramento relay03 e regressão Windows estão documentadas em Logs/P0-relay-control-failure.json. P0 aberto até repetir testes e medir05.
+
+### P0 — resposta diferida no frame de release
+
+05 concluiu offline, dois peers normais e degradados (capturas completas), mas a auditoria encontrou um falso cancelamento: no tick4782, FixedUpdate recuperou movimento após um frame de288,6ms do client; Update soltou a direção antes de LateUpdate. O log cancelava o pending antes de observar o root final. A autoridade registrou recebimento do tick e um frame longo simultâneo de258,7ms; não inferir trânsito por subtração UTC nem atribuir causa a rede/GC sem profiler. O cliente terminou na borda(-7,4), mas o servidor estava em(-6,3125,4): a referência estática de parede não demonstra por si só o estado da autoridade. Dados preservados em Logs/P0-wall-command-reference.json, sem declarar pulse perdido ou latência zero.
+
+Correção para06: MotionDeferredObservations mantém até32 intents substituídos até o observador final. Registra resposta se houve deslocamento no frame, senão cancelamento no instante da mudança; overflow torna a captura incompleta. Mantém máscara/tick do intent e os hitches na distribuição completa, com máximo explícito. Três regressões Unity adicionadas (release após movimento Fixed, cancelamento sem deslocamento, limite/reuso). P0 não concluído até medir06;05 fica como controle anterior à correção de medição. Gameplay/protocolo70 inalterados.
+
+## P0 e consolidação final concluídos — 11/11/2026
+
+Estado atual **33/33 IDs concluídos**, mais consolidação da skill/notas concluída. Esta seção supera os estados P0 abertos dos controles anteriores; preserva falhas e limitações históricas. Critérios técnicos da matriz atendidos com candidata06/protocolo70, sem novo aceite manual universal.
+
+- Unity1109/1109; Python216/216; skillvalidada;7C# UTF8 e fontes/Packages conferidos antes de restaurar;0erros/avisos C# finais.
+- Mesmo DLL nos três modos, SHA fd4f299a7edf4fb343f8452d2a6677f8021239174f2a9d2ac837a420ead8abc7. Offline2P, servidor+2clientes normais e degradados, Stage_1-1/Blue Louie/speed3,5, mesma programação horizontal e pausa nativa. Margens de2s; não há replay idêntico de RNG/ticks.
+-7capturas completas sem perda/limite/overflow;497/497 respostas com envio/recebimento/origem correlacionados (248normal,249degradado). Mais de60 amostras livres por player/contexto; nenhuma latência atribuída a ação não instrumentada.
+- p95 offline17,53–17,84ms; normal18,49–34,61ms; degradado17,92–34,36ms, com RTT mediano por grupo129,75–134,50ms. Max livres340,16/135,24ms preservados e associados a janelas de trabalho307,74/119,22ms, sem atribuir causa exata. Duas respostas iniciadas pausadas excluídas; dois pulsos contra bordas mantidos sem chamar de input perdido/latência zero. Pausa com delta0 nas amostras.
+- Registros de reconciliação interna não são prova de snap visível; amostragem10Hz não comprova ausência de stalls. Uma execução final/configuração; não mede GPU/input físico/WAN/Android/runtime Linux. Custos históricos por família continuam separados; retenções R08 não foram declaradas corrigidas.
+- Runner restaurado:80 entradas de fonte/metas conferidas; caches gerados Library/Build/projetos não revertidos. Build final imutável em C:/Users/mauri/SB6-P0/candidate06.
+
+Relatório final: Docs/multiplayer/fechamento-predicao-online.md. Dados: Logs/P0-final-summary.json, P0-comparacao-candidate06*.json, P0-correlation-candidate06-*.json, P0-motion-audit-candidate06-*.json, P0-source-comparison.json, P0-evidence-audit.json (19relatórios históricos) e P0-runner-restore-check.json. Controles02–05 preservados como controles/tentativas, não como dados finais06. Nenhum commit, push ou publicação realizado. Não há outro ID de implementação aberto neste checklist; limites de QA acima continuam explícitos.
