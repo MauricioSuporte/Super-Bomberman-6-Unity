@@ -21,10 +21,18 @@
 - Host/COM de Battle não usam o catálogo de inimigos cooperativo; o caminho offline nativo não mudou. Não foi executado host cooperativo nesta rodada.
 - A interpolação do fade foi exercitada pela regressão e pelo ciclo online; capturas de 1 Hz não medem suavidade de GPU nem substituem avaliação perceptual do fade em hardware do jogador.
 - Navegação física por controle/mobile, abertura real de aplicativo Discord e APK Android não foram testadas interativamente. São usados os mesmos inputs e URL existentes.
-- Baseline final após ajustes de título: 1123/1123 Passed, zero failed; Build/CI/chameleon-fade-title-tests.xml e Logs/chameleon-fade-title-tests.log. Sem warning/error CS. Publicação pelo Actions full/both pendente neste registro.
+- Baseline final após ajustes de título: 1123/1123 Passed, zero failed; Build/CI/chameleon-fade-title-tests.xml e Logs/chameleon-fade-title-tests.log. Sem warning/error CS. Publicação pelo Actions full/both concluída para servidor e canal dos clientes: revisão 4656e1b49f4a92b4eeb8bc24c192d4bcb9570075.
 
 ## Preservação e limpeza
 
 Logs, XML, result/config JSON, hashes e capturas desta execução permanecem em Logs/chameleon-* e Build/CI/chameleon-*. Não foram removidos saves do usuário, recovery, caches ativos, código ou testes. Deltas automáticos de fontes/Physics2D e arquivos PerformanceTestRun gerados pela suíte devem ser restaurados/removidos apenas após encerrar o runner, por terem sido produzidos a partir de checkout inicialmente limpo.
 
 Limpeza executada após o runner encerrar: restaurados somente Assets/Resources/Fonts/PressStart2P-Regular SDF.asset e ProjectSettings/Physics2DSettings.asset, alterações automáticas do teste; nenhum output de evidência removido. Arquivo compacto local: Build/CI/chameleon-evidence.zip.
+
+## Publicação confirmada
+
+- Actions: https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/actions/runs/43158541576 — gates de testes/build, deploy e publicação do canal concluídos com sucesso; anexação dos artefatos ainda em andamento no registro final.
+- Ativação 2026-11-12 05:33:43 UTC (01:33:43 America/Cuiaba), success=true. Serviço sb6-rooms active. API pública /health: ok=true, protocolo 71, buildIdentity 4656e1b49f4a92b4eeb8bc24c192d4bcb9570075.
+- Servidor Linux Assembly-CSharp SHA256 8dc300dc2546ea81abb493f3f51c560b440b47204630b5759a13d360b9d17dff, workingTreeDirtyBeforeBuild=false, benchmarkHarness=false.
+- Manifesto público da release online-v0.5.0 conferido: sourceCommit correspondente e três URLs apontando para assets uploaded. Windows/Linux/Android e servidor compilados com sucesso; Unity da release 1123/1123 Passed.
+- Manifests, XML da release e verificação pública preservados em Build/CI/chameleon-release-evidence. ZIP anterior SHA256 40e7cdaa313b46da823bd4b251b235cbd225cc54d63c341c6bf033a8337b9cf5. Nenhuma remoção adicional de outputs.
