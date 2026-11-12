@@ -455,42 +455,7 @@ namespace Assets.Scripts.Netcode
             var changed = coopChangedSprites;
             var current = coopCurrentSprites;
             changed.Clear(); current.Clear();
-            foreach (var renderer in coopRenderers)
-            {
-                if (renderer == null) continue;
-                int id = renderer.GetEntityId().GetHashCode();
-                current.Add(id);
-                bool active = renderer.gameObject.activeInHierarchy;
-                // Send the visible -> hidden transition once. Sleeping pool objects
-                // need no repeated transform/material/sprite reads or initial clone.
-                if (!active && (!coopLastSprites.TryGetValue(id, out var sleeping) || !sleeping.visible))
-                {
-                    if (shapeDiagnostics) ForgetCoopShape(id);
-                    continue;
-                }
-                long metricStarted = GameplayLatencyDiagnostics.Enabled ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-                var frame = CaptureCoopFrame(renderer);
-                bool hadPrevious = coopLastSprites.TryGetValue(id, out var previous);
-                bool frameChanged = !hadPrevious || !frame.Matches(previous);
-                if (shapeDiagnostics) TakeCoopShapePending(id, coopShapeSent);
-                int extraFrames = 0;
-                if (frameChanged && hadPrevious && !CoopScreenSpace(renderer, id) && TryCoopRestAnchor(id, previous, frame, out var anchor))
-                {
-                    // R02: after unsent (unchanged) ticks the client would interpolate from the old sample across the
-                    // whole rest. The approved rest pose at the previous server frame starts the segment where it began.
-                    changed.Add(anchor); extraFrames++;
-                    if (shapeDiagnostics) coopShapeSent.Add(CoopVisualSample.Full(anchor));
-                }
-                if (frameChanged) { changed.Add(frame); coopLastSentTime[id] = frame.time; }
-                RecordCoopPresentationMetric(renderer, frame, frameChanged, metricStarted);
-                if (shapeDiagnostics)
-                {
-                    // A reposition of this server frame was already queued by TrackCoopOverlays (anchor + cut sample).
-                    if (frameChanged) coopShapeSent.Add(new CoopVisualSample { frame = frame, playbackOrigin = frame.time, cut = coopRepositionIds.Contains(id) });
-                    EvaluateCoopShape(renderer, id, coopShapeSent, frame.time, extraFrames);
-                }
-                coopLastSprites[id] = frame;
-            }
+            foreach (var renderer in coopRenderers) CaptureCoopRenderer(renderer, shapeDiagnostics);
             FlushCoopPresentationMetrics();
             var removed = coopRemovedSprites;
             removed.Clear();
@@ -509,6 +474,45 @@ namespace Assets.Scripts.Netcode
             CaptureCoopTileAnimations(peers);
             coopDirtyMaps.Clear();
             PublishCoopMotion(shapeDiagnostics);
+        }
+
+        void CaptureCoopRenderer(SpriteRenderer renderer, bool shapeDiagnostics)
+        {
+            if (renderer == null) return;
+            int id = renderer.GetEntityId().GetHashCode();
+            coopCurrentSprites.Add(id);
+            bool visible = renderer.enabled && renderer.gameObject.activeInHierarchy && !renderer.forceRenderingOff;
+            // Send disappearance once, then stop sampling hidden directional/disguise
+            // branches too. Their GameObjects stay active while their renderers are off;
+            // sampling them still serializes a full animation frame every 50 ms.
+            // Keep the last sent visible state until this transition has been published.
+            if (!visible && (!coopLastSprites.TryGetValue(id, out var sleeping) || !sleeping.visible))
+            {
+                if (shapeDiagnostics) ForgetCoopShape(id);
+                return;
+            }
+            long metricStarted = GameplayLatencyDiagnostics.Enabled ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+            var frame = CaptureCoopFrame(renderer);
+            bool hadPrevious = coopLastSprites.TryGetValue(id, out var previous);
+            bool frameChanged = !hadPrevious || !frame.Matches(previous);
+            if (shapeDiagnostics) TakeCoopShapePending(id, coopShapeSent);
+            int extraFrames = 0;
+            if (frameChanged && hadPrevious && !CoopScreenSpace(renderer, id) && TryCoopRestAnchor(id, previous, frame, out var anchor))
+            {
+                // R02: after unsent (unchanged) ticks the client would interpolate from the old sample across the
+                // whole rest. The approved rest pose at the previous server frame starts the segment where it began.
+                coopChangedSprites.Add(anchor); extraFrames++;
+                if (shapeDiagnostics) coopShapeSent.Add(CoopVisualSample.Full(anchor));
+            }
+            if (frameChanged) { coopChangedSprites.Add(frame); coopLastSentTime[id] = frame.time; }
+            RecordCoopPresentationMetric(renderer, frame, frameChanged, metricStarted);
+            if (shapeDiagnostics)
+            {
+                // A reposition of this server frame was already queued by TrackCoopOverlays (anchor + cut sample).
+                if (frameChanged) coopShapeSent.Add(new CoopVisualSample { frame = frame, playbackOrigin = frame.time, cut = coopRepositionIds.Contains(id) });
+                EvaluateCoopShape(renderer, id, coopShapeSent, frame.time, extraFrames);
+            }
+            coopLastSprites[id] = frame;
         }
 
         CoopSpriteFrame CaptureCoopFrame(SpriteRenderer renderer)

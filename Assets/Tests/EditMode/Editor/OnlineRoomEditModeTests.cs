@@ -4097,6 +4097,67 @@ public sealed partial class OnlineRoomEditModeTests
         CollectionAssert.AreEqual(new[] { 20 }, result.removed);
     }
 
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    public void CoopHiddenBranchesPublishOneDisappearanceAndFreshReappearance(int hiddenKind)
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var root = new GameObject("HiddenBranchManager");
+        root.SetActive(false);
+        var actor = new GameObject("DisguiseBranch", typeof(SpriteRenderer));
+        var texture = new Texture2D(2, 2);
+        var sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.zero);
+        try
+        {
+            var manager = root.AddComponent<BombermanNetworkManager>();
+            var type = typeof(BombermanNetworkManager);
+            var renderer = actor.GetComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            ((Dictionary<Sprite, int>)type.GetField("coopSpriteIds", flags).GetValue(manager))[sprite] = 0;
+            ((Dictionary<Material, int>)type.GetField("coopMaterialIds", flags).GetValue(manager))[renderer.sharedMaterial] = 0;
+            var capture = type.GetMethod("CaptureCoopRenderer", flags);
+            var changes = (List<CoopSpriteFrame>)type.GetField("coopChangedSprites", flags).GetValue(manager);
+            var last = (Dictionary<int, CoopSpriteFrame>)type.GetField("coopLastSprites", flags).GetValue(manager);
+            void Hide(bool hidden)
+            {
+                if (hiddenKind == 0) renderer.enabled = !hidden;
+                else if (hiddenKind == 1) actor.SetActive(!hidden);
+                else renderer.forceRenderingOff = hidden;
+            }
+            void Capture() { changes.Clear(); capture.Invoke(manager, new object[] { renderer, false }); }
+            Hide(true);
+            Capture();
+            Assert.IsEmpty(changes, "A never-visible branch must not allocate a remote view.");
+            Hide(false);
+            Capture();
+            Assert.IsTrue(changes[^1].visible);
+            // Model the previously published animated disguise, whose full frames never Matches.
+            int id = renderer.GetEntityId().GetHashCode();
+            var animated = last[id]; animated.animation = 12; last[id] = animated;
+            Hide(true);
+            Capture();
+            Assert.AreEqual(1, changes.Count);
+            Assert.IsFalse(changes[0].visible, "Observers still need the disappearance edge.");
+            for (int i = 0; i < 6000; i++)
+            {
+                actor.transform.position = new Vector3(i, 2, 0);
+                Capture();
+                Assert.IsEmpty(changes, "Hidden native changes must not fill the reliable channel.");
+            }
+            Hide(false);
+            Capture();
+            Assert.IsTrue(changes[^1].visible);
+            Assert.AreEqual(actor.transform.position, changes[^1].position);
+            Assert.AreEqual(0, changes[^1].sprite);
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(sprite);
+            Object.DestroyImmediate(texture); Object.DestroyImmediate(root);
+        }
+    }
+
     [Test]
     public void CoopTileDeltasPreserveRemovalRecreationAndTransformChanges()
     {

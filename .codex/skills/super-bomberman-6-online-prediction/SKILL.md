@@ -816,3 +816,14 @@ before LateUpdate observes that movement. Preserve the original held direction
 and tick. Bound deferred observations and invalidate capture completeness on
 overflow. Report maxima and hitch-associated responses alongside percentiles;
 a rare long frame must not become a zero-latency or missing-input claim.
+
+
+Co-op capture reads CPU material/shader data even on headless servers. Keep
+`PlayerSettings.dedicatedServerOptimizations` disabled: stripping all shaders
+caused over 141k warnings, multi-second stalls and KCP timeout in an actual
+one-player Stage_1-3 room. Validate the real Linux Server subtarget; a Windows
+Player launched with `-server -nographics` does not exercise that stripping.
+Skip never-visible and already-hidden SpriteRenderer branches before capture,
+using enabled/activeInHierarchy/forceRenderingOff. Directional/disguise children
+can stay active while hidden. Send disappearance once and full current state
+on reappearance; preserve approved sprite edges for visible automatic clips.
