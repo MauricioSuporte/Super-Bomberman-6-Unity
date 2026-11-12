@@ -31,8 +31,11 @@ Do not rewrite unrelated assets merely to address these warnings.
 
 Title Battle Mode offers Offline first, then Online. Offline opens the existing
 BattleModeMenu; Online opens the shared OnlineLobby before native configuration.
-Only Battle Mode currently has the integrated online flow. Normal Game/Boss
-Rush room modes are identifiers for future work.
+The current directory/runtime has Battle Mode, Normal Game and Boss Rush room
+modes and cooperative Stage_* flows. Verify the touched mode in current code;
+old Battle-only/future-work descriptions are not an offline-only exemption.
+Use the permanent parity contract and dated checklist evidence rather than
+assuming every combination has universal manual acceptance.
 
 The server owns room ids, configuration, gameplay decisions and scene changes;
 human movement/normal player animation currently use owner simulation and

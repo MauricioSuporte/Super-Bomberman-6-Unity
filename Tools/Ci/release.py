@@ -109,8 +109,9 @@ def protocol():
     source = (ROOT / "Assets/Scripts/Netcode/OnlineVersionAuthenticator.cs").read_text(encoding="utf-8-sig")
     version = int(re.search(r"ProtocolVersion\s*=\s*(\d+)", source)[1])
     directory = (ROOT / "Tools/RoomDirectory/supervisor.py").read_text(encoding="utf-8-sig")
-    if version != int(re.search(r"^PROTOCOL = (\d+)", directory, re.M)[1]):
-        raise RuntimeError("directory and game protocols differ")
+    directory_version = int(re.search(r"^PROTOCOL = (\d+)", directory, re.M)[1])
+    if version != directory_version:
+        raise RuntimeError(f"directory protocol {directory_version} differs from game protocol {version}; update Tools/RoomDirectory/supervisor.py with the wire version before release")
     return version
 
 

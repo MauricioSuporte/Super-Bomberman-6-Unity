@@ -6,8 +6,11 @@ description: Implement, debug, or polish Mirror multiplayer in Super Bomberman 6
 # Super Bomberman 6 Online
 
 Extend the existing scene-driven game and `BombermanNetworkManager` partials.
-Follow the active checkout's `AGENTS.md`. This is an evolving Battle Mode
-implementation, not completed multiplayer for every mode.
+Follow the active checkout's `AGENTS.md` and
+[the mandatory offline/online regression contract](../../../Docs/multiplayer/contrato-validacao-offline-online.md).
+The prediction checklist is complete in its documented scope; every new feature
+still needs authority/replication/presentation integration and full validation.
+Do not use old Battle-only descriptions to exempt cooperative content.
 
 ## Find the live implementation
 

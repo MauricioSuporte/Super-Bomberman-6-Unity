@@ -30,6 +30,13 @@ public sealed class OnlineChatEditModeTests
         typeof(OnlineChatOverlay).GetMethod("Update", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(chat, null);
     }
 
+    static System.Collections.IEnumerator WaitForFrameAfter(int consumedFrame)
+    {
+        float deadline = Time.realtimeSinceStartup + 5;
+        while (Time.frameCount <= consumedFrame && Time.realtimeSinceStartup < deadline) yield return null;
+        Assert.Greater(Time.frameCount, consumedFrame, "The chat closing-frame guard must be checked in a later gameplay frame.");
+    }
+
     [OneTimeSetUp]
     public void SynchronizePresenceAudioCatalogs() => CoopSceneCatalogBuilder.Generate();
 
@@ -142,10 +149,12 @@ public sealed class OnlineChatEditModeTests
         Assert.LessOrEqual(corners[2].y, safeFrame.yMax);
         yield return new WaitForSecondsRealtime(OnlineChatRules.SendInterval);
         SetChatKeys(chat, keyboard, Key.Enter);
+        int submitFrame = Time.frameCount;
         Assert.IsTrue(OnlineChatOverlay.BlocksLocalInput, "Keep Enter blocked in the closing input update.");
         yield return null; yield return null;
         SetChatKeys(chat, keyboard);
         yield return null; yield return null;
+        yield return WaitForFrameAfter(submitFrame);
         Assert.IsFalse(OnlineChatOverlay.BlocksLocalInput, $"Enter must send and close chat: typing={typeof(OnlineChatOverlay).GetField("typing", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(chat)}, release={typeof(OnlineChatOverlay).GetField("releaseKeys", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(chat)}, frame={Time.frameCount}");
         deadline = Time.realtimeSinceStartup + 3;
         while (!history.text.Contains(OnlineChatRules.FormatLine("CHAT_TEST", "oi", 1)) && Time.realtimeSinceStartup < deadline) yield return null;
@@ -156,9 +165,11 @@ public sealed class OnlineChatEditModeTests
         yield return null; yield return null;
         Assert.IsTrue(OnlineChatOverlay.BlocksLocalInput);
         SetChatKeys(chat, keyboard, Key.Escape);
+        int escapeFrame = Time.frameCount;
         yield return null; yield return null;
         SetChatKeys(chat, keyboard);
         yield return null; yield return null;
+        yield return WaitForFrameAfter(escapeFrame);
         Assert.IsFalse(OnlineChatOverlay.BlocksLocalInput);
         Assert.IsFalse(GamePauseController.IsPaused, "Esc used to close chat must not pause.");
         SetChatKeys(chat, keyboard, Key.Z);

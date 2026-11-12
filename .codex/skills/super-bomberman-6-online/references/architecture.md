@@ -24,7 +24,7 @@ Slots take the first free P1-P6 id and stay stable when a participant leaves.
 Six occupied slots reject another connection. Connected slots are fixed Man;
 the host assigns COM/Off to empty slots. Joining is restricted to the lobby;
 configuration requires two participants. `OnlineRoomMode` names Battle Mode,
-Normal Game and Boss Rush, but the latter two are future work.
+Normal Game and Boss Rush. Consult current cooperative Stage_* runtime and the permanent parity contract; historical future-work labels do not exempt new content from online integration.
 
 ## Actual simulation and presentation
 

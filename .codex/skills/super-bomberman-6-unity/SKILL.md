@@ -9,6 +9,14 @@ Use this skill as the procedural companion to the repository `AGENTS.md`.
 Keep work aligned with the current Unity 2D architecture and its scene,
 prefab, Resources, save, and player-count integration.
 
+## Mandatory parity gate
+
+Every game task must assess and preserve offline/online parity. Read
+[the permanent regression contract](../../../Docs/multiplayer/contrato-validacao-offline-online.md)
+for the user's mandatory full Unity/Python and actual-peer validation gates.
+Extend the existing online/prediction paths for new content instead of delivering
+an offline-only feature. Record blocked/inapplicable coverage honestly.
+
 ## Establish the live baseline
 
 - Confirm the active checkout/branch and the Editor project root. A source repo,
@@ -27,8 +35,9 @@ prefab, Resources, save, and player-count integration.
 - Read [references/current-baseline.md](references/current-baseline.md) for the
   current rendering, online integration, persistence and validation boundaries.
 - For Mirror/network gameplay or online menu/round/pause changes, use
-  [super-bomberman-6-online](../super-bomberman-6-online/SKILL.md). Keep its
-  authority/presentation guidance separate from offline-only work.
+  [super-bomberman-6-online](../super-bomberman-6-online/SKILL.md). Use its
+  authority/presentation guidance for every touched game feature; do not assume
+  a feature is exempt because its source lives outside Netcode.
 - Read `references/project-map.md` to find the current owner and neighboring
   systems.
 - Read `references/workflows.md` for items, abilities, bombs, mounts, bosses,

@@ -166,6 +166,18 @@ This file gives repository-specific guidance for AI coding agents working on
   references, prefabs, `Resources.Load(...)` paths, audio hooks, animations,
   or serialized defaults.
 
+
+## Mandatory offline/online regression contract
+
+- User policy established 2026-11-11: every new or changed game feature must work offline and online in the modes where it applies. Offline-only completion is not acceptable. Assess network impact for every game task, including enemies, bosses, items, abilities, scenes/prefabs, presentation, audio, cameras, UI and persistence.
+- Read `Docs/multiplayer/contrato-validacao-offline-online.md` and route through the Unity/Online/Prediction skills. The original plan/checkpoint/matrix and maintained implementation notes remain canonical; a closed checklist is a regression baseline, not automatic support for a new feature.
+- For game code, Unity content, tools or pipeline changes, run available Unity/C# compilation, the full EditMode baseline (`OnlineRoomEditModeTests;BattleModeComEditorTests;OnlineChatEditModeTests;OnlineLobbyInputEditModeTests`) and both Python suites (`Tools/RoomDirectory` and `Tools/Ci`, unittest discovery). Verify positive test counts and resolve introduced errors/warnings. A quick CI build alone does not satisfy the task's full Unity gate.
+- Validate touched gameplay/presentation offline and with a dedicated server plus two real clients (owner and observer), including relevant pause, interruption, death, ownership and scene/round/teardown paths. Check host/COM paths when different and affected. Add meaningful regressions to existing owners. Explain genuinely inapplicable roles; do not silently exempt a feature because its implementation is outside Netcode.
+- Keep authority for gameplay outcomes and use bounded prediction/reconciliation or approved presentation as appropriate. Do not enable client RNG/damage/native world coroutines or duplicate host effects. Shared offline NetworkBehaviours are not pure clients merely because !isServer.
+- Preserve wire compatibility: game ProtocolVersion, RoomDirectory supervisor.PROTOCOL, manifests and published client/server must agree. Run the real repository protocol regression before push; never bypass the mismatch gate to deploy.
+- Preserve build/source/DLL identities, isolated saves and complete evidence. Automated tests are not universal perceptual/platform acceptance. If checks cannot run, report the precise missing coverage/blocker and keep the validation pending; never call an untested role passed.
+- Keep learned behavior in the maintained notes/skills. Archive final evidence and a cleanup manifest before removing temporary outputs; never remove production prediction code, regression tests, documentation, user saves/recovery or active runner caches as test cleanup.
+
 ## Validation expectations
 
 - Always fix warnings introduced by your implementation before finalizing the
@@ -176,8 +188,8 @@ This file gives repository-specific guidance for AI coding agents working on
   report any check that cannot run (for example, because the project is open
   in another Unity instance).
 - Prefer targeted manual validation in the touched scene or mode.
-- For shared gameplay changes, validate both single-player and multiplayer
-  behavior when practical.
+- For shared gameplay changes, validation of offline and online behavior is
+  mandatory under the regression contract above.
 - If input flow changes, consider keyboard, controller, and mobile code paths.
 - If persistence changes, consider both fresh saves and existing saves.
 - Existing first-party Edit Mode coverage lives in

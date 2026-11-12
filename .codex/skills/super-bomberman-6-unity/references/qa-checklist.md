@@ -1,7 +1,9 @@
 # QA Checklist
 
-Use this as a targeted verification pass. Select the sections affected by the
-change; do not imply that unchecked combinations were covered.
+Use the mandatory contract in `Docs/multiplayer/contrato-validacao-offline-online.md`:
+full Unity/Python baseline plus relevant offline/dedicated-two-client checks for
+game changes. Select affected scenarios below without implying untested combinations
+were covered; a targeted scenario pass does not replace the automated baseline.
 
 ## Contents
 
@@ -27,6 +29,10 @@ change; do not imply that unchecked combinations were covered.
   covered without scene authoring.
 - Do not claim that tests, compilation, a build, or a scene passed unless it
   was actually run.
+
+Frame-gated UI tests must wait for Time.frameCount to advance after the consumed
+closing frame. Several EditMode coroutine yields can occur without a new gameplay
+frame; preserve the real same-frame input guard instead of disabling it to pass.
 
 ## Online checks
 

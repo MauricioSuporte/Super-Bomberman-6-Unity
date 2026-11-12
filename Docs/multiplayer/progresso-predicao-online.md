@@ -6237,3 +6237,13 @@ Estado atual **33/33 IDs concluídos**, mais consolidação da skill/notas concl
 - Runner restaurado:80 entradas de fonte/metas conferidas; caches gerados Library/Build/projetos não revertidos. Build final imutável em C:/Users/mauri/SB6-P0/candidate06.
 
 Relatório final: Docs/multiplayer/fechamento-predicao-online.md. Dados: Logs/P0-final-summary.json, P0-comparacao-candidate06*.json, P0-correlation-candidate06-*.json, P0-motion-audit-candidate06-*.json, P0-source-comparison.json, P0-evidence-audit.json (19relatórios históricos) e P0-runner-restore-check.json. Controles02–05 preservados como controles/tentativas, não como dados finais06. Nenhum commit, push ou publicação realizado. Não há outro ID de implementação aberto neste checklist; limites de QA acima continuam explícitos.
+
+## Contrato permanente e correção de publicação — 11/11/2026
+
+Usuário definiu que todo recurso/ajuste precisa preservar offline e online. A regra agora está em AGENTS.md, CLAUDE.md e nas três skills do projeto, com receita e invariantes em Docs/multiplayer/contrato-validacao-offline-online.md. O checklist33/33 e os aceites anteriores continuam como baseline de regressão, sem converter limitações em aprovação universal.
+
+O Actions43115713402/job130843038109 falhou antes de compilar/publicar: Game ProtocolVersion70 versus supervisor.PROTOCOL67. Corrigido o diretório para70 e adicionado teste real de alinhamento do repositório, mais diagnóstico numérico para mismatch. O gate de compatibilidade continua ativo. Preflight local real (inclui SSH somente leitura) passou.
+
+Validação ampliada:1120/1120 Unity (core/COM/chat/lobby),218/218PythonCi e16/16RoomDirectory. O primeiro full teve1119/1120 por uma suposição de scheduling no teste de chat: vários yield null não garantem novo Time.frameCount. O teste agora espera o frame seguinte para verificar release após Enter/Esc, mantendo a guarda de produção e a asserção de bloqueio no frame de fechamento; full repetido passou. Runtime C# de gameplay não foi alterado nesta correção; os peers P0 anteriores mantêm seu escopo, sem serem apresentados como nova execução.
+
+Conhecimento e evidências preservados antes de limpeza. Ver Docs/multiplayer/arquivo-evidencias-predicao.md: ZIP validado com12.112 arquivos; cerca de31,95GiB de alvos antigos identificados. A exclusão automática foi bloqueada pela política da ferramenta; nenhum alvo apagado. Script manual conferido e índice no arquivo local. Código/testes/skills/documentação/saves/cache ativo não são alvos. A publicação corrigida será identificada pelo novo commit/Actions, não por reexecutar o job antigo no commit d8e0122de.

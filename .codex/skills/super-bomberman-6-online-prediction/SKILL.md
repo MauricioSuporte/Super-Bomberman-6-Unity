@@ -10,6 +10,10 @@ Read [the maintained implementation notes](../../../Docs/multiplayer/prediction-
 for the actual baseline; source code wins over historical descriptions. This skill
 records techniques, not authorization to deploy, publish or disconnect rooms.
 
+For every game change, follow [the permanent parity and validation contract](../../../Docs/multiplayer/contrato-validacao-offline-online.md).
+A new feature must pass the full Unity/Python baseline and relevant offline/two-peer
+checks; the closed checklist does not make new content online automatically.
+
 ## Choose the timeline from the cause
 
 Trace the offline action first: input edge, actor/target, movement lock, geometry,

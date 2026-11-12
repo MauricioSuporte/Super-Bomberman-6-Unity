@@ -11,6 +11,21 @@ import release
 
 
 class ReleaseProfileTests(unittest.TestCase):
+    def test_repository_directory_and_game_protocols_agree(self):
+        self.assertGreater(release.protocol(), 0)
+
+    def test_protocol_error_reports_both_values_before_any_release(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Assets/Scripts/Netcode").mkdir(parents=True)
+            (root / "Tools/RoomDirectory").mkdir(parents=True)
+            (root / "Assets/Scripts/Netcode/OnlineVersionAuthenticator.cs").write_text("public const int ProtocolVersion = 70;", encoding="utf-8")
+            (root / "Tools/RoomDirectory/supervisor.py").write_text("PROTOCOL = 67\n", encoding="utf-8")
+            with patch.object(release, "ROOT", root), patch.object(release, "command") as external:
+                with self.assertRaisesRegex(RuntimeError, "directory protocol 67 differs from game protocol 70"):
+                    release.preflight()
+                external.assert_not_called()
+
     def test_all_platform_assets_upload_before_the_update_pointer_changes(self):
         for fail_platform in (None, "Linux", "Android"):
             with self.subTest(fail_platform=fail_platform), tempfile.TemporaryDirectory() as temporary:
