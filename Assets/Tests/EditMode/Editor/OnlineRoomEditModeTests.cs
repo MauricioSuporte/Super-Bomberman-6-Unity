@@ -4011,6 +4011,77 @@ public sealed partial class OnlineRoomEditModeTests
     }
 
     [Test]
+    public void UpdateMenuRequiresAValidDifferentPublishedBuild()
+    {
+        string current = new string('a', 40), next = new string('b', 40);
+        string Release(string commit) => JsonUtility.ToJson(new UpdateReleaseFixture
+            { body = "<!-- sb6-update:{\"sourceCommit\":\"" + commit + "\"} -->" });
+        Assert.IsFalse(GameUpdateController.HasPublishedUpdate(Release(current), current));
+        Assert.IsTrue(GameUpdateController.HasPublishedUpdate(Release(next), current));
+        Assert.IsFalse(GameUpdateController.HasPublishedUpdate(Release(next), "local-development"));
+        Assert.IsFalse(GameUpdateController.HasPublishedUpdate(Release("invalid"), current));
+        Assert.IsFalse(GameUpdateController.HasPublishedUpdate("{broken", current));
+        Assert.IsFalse(GameUpdateController.HasPublishedUpdate("{}", current));
+    }
+
+    [System.Serializable]
+    sealed class UpdateReleaseFixture { public string body; }
+
+    [Test]
+    public void ChameleonCatalogIncludesEveryGeneratedPlayerSheet()
+    {
+        CoopSceneCatalogBuilder.Generate();
+        var catalog = Resources.Load<CoopSceneCatalog>("CoopScenes/Stage_1-3");
+        Assert.IsNotNull(catalog);
+        var sprites = new HashSet<Sprite>(catalog.sprites);
+        int checkedFrames = 0;
+        foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/Resources/Sprites/Bombers" }))
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+            if (!path.Contains("/Generated/")) continue;
+            foreach (var asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path))
+                if (asset is Sprite sprite)
+                {
+                    Assert.IsTrue(sprites.Contains(sprite), path + ":" + sprite.name);
+                    checkedFrames++;
+                }
+        }
+        Assert.Greater(checkedFrames, 0);
+    }
+
+    [Test]
+    public void CoopFadeInterpolatesAndFinishesBeforeHiding()
+    {
+        var root = new GameObject("FadeManager");
+        var canvas = new GameObject("Fade", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+        try
+        {
+            var manager = root.AddComponent<BombermanNetworkManager>();
+            manager.enabled = false;
+            var image = canvas.GetComponent<UnityEngine.UI.Image>();
+            image.color = Color.black;
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var apply = typeof(BombermanNetworkManager).GetMethod("ApplyCoopFade", flags);
+            var present = typeof(BombermanNetworkManager).GetMethod("PresentCoopFades", flags);
+            apply.Invoke(manager, new object[] { image, Color.clear, false });
+            Assert.IsTrue(canvas.activeSelf);
+            Assert.AreEqual(1f, image.color.a);
+            var samples = (System.Collections.IDictionary)typeof(BombermanNetworkManager).GetField("coopFadeSamples", flags).GetValue(manager);
+            var sample = samples[image];
+            var started = sample.GetType().GetField("started");
+            started.SetValue(sample, Time.unscaledTime - .05f);
+            present.Invoke(manager, null);
+            Assert.That(image.color.a, Is.InRange(.4f, .6f));
+            Assert.IsTrue(canvas.activeSelf);
+            started.SetValue(sample, Time.unscaledTime - .2f);
+            present.Invoke(manager, null);
+            Assert.AreEqual(0f, image.color.a);
+            Assert.IsFalse(canvas.activeSelf);
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(canvas); }
+    }
+
+    [Test]
     public void CoopVisualBatchesRoundTripWithoutLosingPoseOrTileRemoval()
     {
         var frame = new CoopSpriteFrame { id = 12, sprite = 3, visible = true,

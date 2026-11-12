@@ -344,6 +344,7 @@ namespace Assets.Scripts.Netcode
             coopRemovedSprites.Clear(); coopCurrentSprites.Clear(); coopChangedTiles.Clear();
             coopInitializedPeers.Clear(); coopMissingAssets.Clear();
             coopSpriteIds.Clear(); coopTileIds.Clear(); coopMaterialIds.Clear(); coopSoundIds.Clear();
+            coopFadeSamples.Clear();
             coopCinematicImages.Clear(); coopClientImages.Clear();
             coopClientCameras.Clear(); coopApprovedCamera = null;
             coopSpotlightImage = null;
@@ -359,6 +360,7 @@ namespace Assets.Scripts.Netcode
 
         void TickCoopWorld()
         {
+            if (!NetworkServer.active) PresentCoopFades();
             TickWorldBombMotions();
             TickCoopEnvironmentAudio();
             PublishPortalMasks();

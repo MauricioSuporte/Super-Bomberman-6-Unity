@@ -17,6 +17,42 @@ namespace Assets.Scripts.Netcode
     {
         readonly List<Image> coopCinematicImages = new();
         readonly Dictionary<string, Image> coopClientImages = new();
+        sealed class CoopFadeSample
+        {
+            public Color from, to;
+            public float started;
+            public bool visible;
+        }
+        readonly Dictionary<Image, CoopFadeSample> coopFadeSamples = new();
+
+        void ApplyCoopFade(Image image, Color color, bool visible)
+        {
+            if (!coopFadeSamples.TryGetValue(image, out var sample))
+            {
+                sample = new CoopFadeSample();
+                coopFadeSamples.Add(image, sample);
+            }
+            sample.from = image.color;
+            sample.to = color;
+            if (!visible) sample.to.a = 0f;
+            sample.started = Time.unscaledTime;
+            sample.visible = visible;
+            if (visible) image.gameObject.SetActive(true);
+        }
+
+        void PresentCoopFades()
+        {
+            foreach (var pair in coopFadeSamples)
+            {
+                var image = pair.Key;
+                if (image == null) continue;
+                var sample = pair.Value;
+                float progress = Mathf.Clamp01((Time.unscaledTime - sample.started) / .1f);
+                image.color = Color.Lerp(sample.from, sample.to, progress);
+                if (progress >= 1f && !sample.visible) image.gameObject.SetActive(false);
+            }
+        }
+
         Image coopSpotlightImage;
         readonly Dictionary<string, Camera> coopClientCameras = new();
         string coopApprovedCamera;
@@ -87,6 +123,11 @@ namespace Assets.Scripts.Netcode
             foreach (var frame in frames ?? System.Array.Empty<CoopCinematicFrame>())
             {
                 if (!coopClientImages.TryGetValue(frame.path, out var image) || image == null) continue;
+                if (!frame.spotlight)
+                {
+                    ApplyCoopFade(image, frame.color, frame.visible);
+                    continue;
+                }
                 image.gameObject.SetActive(frame.visible); image.color = frame.color;
                 if (!frame.spotlight || image.material == null || !image.material.HasProperty("_EllipseX")) continue;
                 var material = image.material;

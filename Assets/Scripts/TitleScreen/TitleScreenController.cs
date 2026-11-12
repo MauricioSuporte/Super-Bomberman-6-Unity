@@ -271,6 +271,7 @@ public class TitleScreenController : MonoBehaviour
     const int RESET_SAVE_SELECTABLE_LINE_START = 6;
 
     int menuIndex;
+    bool updateAvailable;
     bool locked;
     bool ignoreStartKeyUntilRelease;
     bool bootedSession;
@@ -394,6 +395,14 @@ public class TitleScreenController : MonoBehaviour
     void Start()
     {
         RequestStabilizedLayoutRefresh("Start");
+        StartCoroutine(Assets.Scripts.Netcode.GameUpdateController.CheckAvailability(available =>
+        {
+            if (updateAvailable == available) return;
+            if (menuMode == MenuMode.Main && menuIndex >= 3)
+                menuIndex += available ? 1 : -1;
+            updateAvailable = available;
+            RefreshMenuText();
+        }));
     }
 
     void OnEnable()
@@ -1981,7 +1990,7 @@ public class TitleScreenController : MonoBehaviour
                     if (cursorRenderer != null)
                         yield return PlayCursorConfirm();
 
-                    if (menuIndex == 3)
+                    if (updateAvailable && menuIndex == 3)
                     {
                         Assets.Scripts.Netcode.GameUpdateController.Run();
                         locked = false;
@@ -2128,6 +2137,7 @@ public class TitleScreenController : MonoBehaviour
 
                     if (menuIndex == OptionsDiscordIndex)
                     {
+                        locked = false;
                         Assets.Scripts.Netcode.GameUpdateController.OpenDiscord();
                         while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA)) yield return null;
                         continue;
@@ -2244,7 +2254,7 @@ public class TitleScreenController : MonoBehaviour
         if (menuMode == MenuMode.Sound) return 3;
         if (menuMode == MenuMode.Video) return 6;
         if (menuMode == MenuMode.ResetSaveConfirm) return 2;
-        return 5;
+        return updateAvailable ? 5 : 4;
     }
 
     int GetCurrentLanguageIndex()
@@ -2409,7 +2419,7 @@ public class TitleScreenController : MonoBehaviour
                 $"<size={size}>{gameModes}</size>\n" +
                 $"<size={size}>{achievements}</size>\n" +
                 $"<size={size}>{options}</size>\n" +
-                $"<size={size}><color=#FFD86AFF>{GameTextDatabase.Online.UpdateGame}</color></size>\n" +
+                (updateAvailable ? $"<size={size}><color=#FFD86AFF>{GameTextDatabase.Online.UpdateGame}</color></size>\n" : "") +
                 $"<size={size}>{exit}</size>" +
                 "</align>";
 

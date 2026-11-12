@@ -34,6 +34,12 @@ public sealed class CoopSceneCatalogBuilder : IPreprocessBuildWithReport
                 : scene.path.EndsWith("/Stage_3-4.unity", StringComparison.Ordinal)
                     ? new[] { "Assets/Resources/StageAssets/BigWorm.png" } : Array.Empty<string>();
             var dependencies = AssetDatabase.GetDependencies(new[] { scene.path }.Concat(shared).Concat(runtimeResources).ToArray(), true);
+            // Chameleons select any active player's generated sheet at runtime.
+            // These textures are not necessarily readable and cannot use pixel fallback.
+            if (dependencies.Any(p => p.Contains("Chameleon", StringComparison.OrdinalIgnoreCase)))
+                dependencies = dependencies.Concat(AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/Resources/Sprites/Bombers" })
+                    .Select(AssetDatabase.GUIDToAssetPath).Where(p => p.Contains("/Generated/", StringComparison.Ordinal)))
+                    .Distinct().ToArray();
             var objects = dependencies.Where(p => p.StartsWith("Assets/", StringComparison.Ordinal) &&
                 !p.StartsWith(root + "/", StringComparison.Ordinal) && !p.EndsWith(".unity", StringComparison.OrdinalIgnoreCase))
                 .SelectMany(AssetDatabase.LoadAllAssetsAtPath).Where(o => o is Sprite or TileBase or Material or AudioClip)

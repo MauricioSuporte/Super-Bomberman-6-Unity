@@ -21,6 +21,44 @@ namespace Assets.Scripts.Netcode
         TextMeshProUGUI status;
         bool finished;
 
+        public static IEnumerator CheckAvailability(Action<bool> completed)
+        {
+            completed(false);
+            string current = OnlineVersionAuthenticator.BuildIdentity;
+            if (!ValidCommit(current)) yield break;
+            using var request = UnityWebRequest.Get(ReleaseApi);
+            request.SetRequestHeader("User-Agent", "SB6-Update-Check");
+            request.timeout = 10;
+            yield return request.SendWebRequest();
+            if (request.result == UnityWebRequest.Result.Success)
+                completed(HasPublishedUpdate(request.downloadHandler.text, current));
+        }
+
+        public static bool HasPublishedUpdate(string releaseJson, string current)
+        {
+            if (!ValidCommit(current) || string.IsNullOrEmpty(releaseJson)) return false;
+            try
+            {
+                string body = JsonUtility.FromJson<Release>(releaseJson)?.body;
+                if (string.IsNullOrEmpty(body)) return false;
+                const string marker = "<!-- sb6-update:";
+                int begin = body.IndexOf(marker, StringComparison.Ordinal);
+                int end = begin < 0 ? -1 : body.IndexOf(" -->", begin, StringComparison.Ordinal);
+                if (end <= begin) return false;
+                var manifest = JsonUtility.FromJson<Manifest>(body.Substring(begin + marker.Length, end - begin - marker.Length));
+                return manifest != null && ValidCommit(manifest.sourceCommit) &&
+                    !string.Equals(manifest.sourceCommit, current, StringComparison.OrdinalIgnoreCase);
+            }
+            catch (ArgumentException) { return false; }
+        }
+
+        static bool ValidCommit(string value)
+        {
+            if (value == null || value.Length != 40) return false;
+            foreach (char c in value) if (!Uri.IsHexDigit(c)) return false;
+            return true;
+        }
+
         public static void OpenDiscord() => Application.OpenURL(DiscordInvite);
         public static void Run()
         {

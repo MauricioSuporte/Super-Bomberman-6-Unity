@@ -58,8 +58,9 @@ namespace Assets.Scripts.Netcode
             var fade = StageIntroTransition.Instance != null ? StageIntroTransition.Instance.fadeImage : null;
             if (fade != null)
             {
-                fade.gameObject.SetActive(message.fadeVisible);
-                fade.color = message.fade;
+                // Cinematics owns this image's continuous presentation.
+                if (message.cinematics == null || !System.Array.Exists(message.cinematics, frame => frame.path == CoopPath(fade.transform)))
+                    ApplyCoopFade(fade, message.fade, message.fadeVisible);
             }
             foreach (var state in message.health ?? System.Array.Empty<CoopHealthFrame>())
                 if (coopSceneHealth.TryGetValue(state.path, out var actor) && actor != null)
