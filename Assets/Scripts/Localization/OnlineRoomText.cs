@@ -36,7 +36,8 @@ public sealed class OnlineRoomText
     public string NoPassword => LanguageText("NO PASSWORD", "パスワードなし", "SIN CLAVE", "SEM SENHA");
     public string Creator => LanguageText("CREATOR", "作成者", "CREADOR", "CRIADOR");
     public string NameColumn => LanguageText("NAME", "名前", "NOMBRE", "NOME");
-    public string PlayersColumn => LanguageText("PLAYERS", "人数", "JUGADORES", "JOGADORES");
+    public string PlayersColumn => LanguageText("P", "人数", "JUG.", "JOG.");
+    public string TypeColumn => LanguageText("MODE", "種別", "MODO", "MODO");
     public string PasswordColumn => LanguageText("PASS", "パス", "CLAVE", "SENHA");
     public string Yes => LanguageText("YES", "あり", "SÍ", "SIM");
     public string No => LanguageText("NO", "なし", "NO", "NÃO");

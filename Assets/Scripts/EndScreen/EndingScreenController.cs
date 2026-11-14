@@ -73,6 +73,16 @@ public class EndingScreenController : MonoBehaviour
     [SerializeField] bool compactVerticalSpacing = true;
 
     public bool Running { get; private set; }
+    public bool CreditsSkipped => creditsSkippedByUser;
+    public bool ShowingFinalMessage { get; private set; }
+    bool approvedFinalMessage;
+
+    public void ApplyOnlineCreditsPhase(bool skipped, bool finalMessage)
+    {
+        if (Assets.Scripts.Netcode.NetSync.Mode != Assets.Scripts.Netcode.NetSync.NetMode.Client || !Running) return;
+        creditsSkippedByUser |= skipped;
+        approvedFinalMessage |= finalMessage;
+    }
 
     Material runtimeMsgMat;
 
@@ -192,7 +202,7 @@ public class EndingScreenController : MonoBehaviour
 
     public void ForceHide()
     {
-        Running = false;
+        Running = false; ShowingFinalMessage = approvedFinalMessage = creditsSkippedByUser = false;
 
         if (starComemoration != null)
             starComemoration.StopAndClear();
@@ -210,7 +220,7 @@ public class EndingScreenController : MonoBehaviour
     public IEnumerator Play(Image fadeImageOptional)
     {
         Running = true;
-        creditsSkippedByUser = false;
+        ShowingFinalMessage = approvedFinalMessage = creditsSkippedByUser = false;
 
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
@@ -308,6 +318,7 @@ public class EndingScreenController : MonoBehaviour
         if (creditsRoutine != null)
             yield return creditsRoutine;
 
+        ShowingFinalMessage = true;
         if (messageText != null)
         {
             LocalizedTmpFontFallback.Apply(messageText);
@@ -363,7 +374,7 @@ public class EndingScreenController : MonoBehaviour
 
         PlayerInputManager input;
 
-        while (rt != null && rt.anchoredPosition.y < endY)
+        while (rt != null && rt.anchoredPosition.y < endY && !creditsSkippedByUser && !approvedFinalMessage)
         {
             input = PlayerInputManager.Instance;
             if (!Assets.Scripts.Netcode.BombermanNetworkManager.IsMenuObserver && input != null && input.AnyGetDown(PlayerAction.Start))

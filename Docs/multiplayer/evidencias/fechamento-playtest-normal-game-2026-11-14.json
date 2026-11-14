@@ -1,0 +1,3562 @@
+{
+  "status": "40/40 treated and validated within recorded scope; NG11 performance symptom not reproduced, not an asserted root-cause fix",
+  "gates": {
+    "Unity": 1180,
+    "RoomDirectoryPython": 16,
+    "CiPython": 218,
+    "csharpNewWarnings": 0,
+    "strictUtf8Cs": 73
+  },
+  "runtimeRoles": "Offline, Linux dedicated plus two rendered clients, graphical host plus remote; scenario-specific coverage and limitations in canonical checkpoint.",
+  "sourceFormattingAfterB25": "One trailing ASCII space removed in LocalPredictionSmoke.cs; tokens unchanged.",
+  "realSaveSha256": "efc6c5adffa5c58c53d4f63b9bec89600323cc2722477149c89ef536e00f4d63",
+  "saveLimitation": "Older B15/B16 incident: prior first-slot state remains unknown; do not restore old empty backup over preserved second slot.",
+  "artifacts": {
+    "Build\\NormalPlaytest\\Batch25\\identity.json": {
+      "bytes": 1994,
+      "sha256": "2d2e627cc05348e56d7e3bb0b976f4d41054a0a0354db40ea3456299f806869a",
+      "data": {
+        "head": "d1b928a28752bc46487f8af920dfaa7ac7bde8fe",
+        "protocol": 74,
+        "patchSha256": "68f6d4f9c390e1ef54f9e5af95821d674d0f843edbfd46092c631f371d1230f2",
+        "untracked": {
+          "Assets/Resources/Items/RandomLouieEgg.prefab": "8b0573ac29cc9f5f39143c351c6686eccf3a0fe75c848bc60bdb24256615c4e6",
+          "Assets/Resources/Items/RandomLouieEgg.prefab.meta": "60e271278787f534a640c9aa76d90300a3b23d74481bb13e77be0f566302c5aa",
+          "Assets/Scripts/Netcode/PlayerNetworkTransform.cs": "3a9976420275405b0486da47ea47fada3b1a6a1914b248801fa140c8f0f9b03e",
+          "Assets/Scripts/Netcode/PlayerNetworkTransform.cs.meta": "ac2b64a67accaa614bb92ffc4a054cc57f8f25bb11fd5666c61cdbd11174f9e6",
+          "Assets/Tests/EditMode/Editor/OnlineRoomStageLabelTests.cs": "7fa232de47e1903f7cc4543f339815f43b26dbf2457683263f722fc593345878",
+          "Assets/Tests/EditMode/Editor/OnlineRoomStageLabelTests.cs.meta": "2e9747f70679ae11f31b13c24bfe3d2e3dcd5383779c05bdd1e81fa5f748db36",
+          "Docs/multiplayer/correcoes-playtest-normal-game-2026-11-12.md": "42cbd5cec12622aac94055ac673f84885cad3a9e7b90ecc0f935dfc2077f5f22",
+          "Docs/multiplayer/evidencias/limpeza-arquivos-testes-2026-11-14.json": "f8dad058be3946f60211d6bae2a14ac918aaaad8be1dde7d25bd6b9defe56bcd",
+          "Docs/multiplayer/evidencias/playtest-normal-game-ng03-2026-11-12.md": "e40b67b4eec5720cb468873208d468f66459c0d4bb46e7765482fdc3da703cc0"
+        },
+        "fullBaseline": {
+          "id": "2",
+          "testcasecount": "1180",
+          "result": "Passed",
+          "total": "1180",
+          "passed": "1180",
+          "failed": "0",
+          "inconclusive": "0",
+          "skipped": "0",
+          "asserts": "0",
+          "engine-version": "3.5.0.0",
+          "clr-version": "4.0.30319.42000",
+          "start-time": "2026-11-14 22:58:24Z",
+          "end-time": "2026-11-14 22:58:27Z",
+          "duration": "3,7856783"
+        },
+        "windowsAssemblySha256": "5079068584d2a5f4c37cc9e6ab05f5310f25fc45a81cbcea4a7f22cb39f96c1e",
+        "linuxAssemblySha256": "b97a304c496460bcadfcdaab6a9389097a44596700c8dc11a06f4976acebce67"
+      }
+    },
+    "Build\\NormalPlaytest\\Batch25\\final-gates.json": {
+      "bytes": 719,
+      "sha256": "f05caf305dbd78b1807b013a33c0c1dc91868e24b42de58fdd928ede274ffc18",
+      "data": {
+        "editMode": {
+          "total": 1180,
+          "passed": 1180,
+          "failed": 0
+        },
+        "pythonRoomDirectory": {
+          "total": 16,
+          "passed": 16
+        },
+        "pythonCi": {
+          "total": 218,
+          "passed": 218
+        },
+        "csharpIncremental": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "restoredDependencyBuild": {
+          "errors": 0,
+          "existingMirrorVendorWarnings": 6
+        },
+        "utf8": {
+          "files": 73,
+          "passed": true
+        },
+        "runtimeAcceptance": "Passed: UI15 rendered roles across3 modes; music5 rendered roles across offline/dedicated/host with actual minimize/restore; all40 backlog statuses in canonical checkpoint.",
+        "postFormattingCsharpIncremental": {
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "Build\\NormalPlaytest\\Batch25\\utf8-review.json": {
+      "bytes": 4174,
+      "sha256": "1a16cd776c972a899c90f8a5e8d02714754b877600abd4c9e698bc3c0ca9534d",
+      "data": {
+        "passed": true,
+        "count": 73,
+        "files": [
+          "Assets/Scripts/Animated/AnimatedSpriteRenderer.cs",
+          "Assets/Scripts/BattleMode/BattleMode9MinecartController.cs",
+          "Assets/Scripts/Bomb/Bomb.cs",
+          "Assets/Scripts/Bomb/BombController.cs",
+          "Assets/Scripts/Bombers/MechaBossSequence.cs",
+          "Assets/Scripts/Bombers/PrettyBomberDefeatSequence.cs",
+          "Assets/Scripts/Destructible/CoreMechanismsDestructible.cs",
+          "Assets/Scripts/EndScreen/EndingScreenController.cs",
+          "Assets/Scripts/Enemies/BirdRobotRedMovementController.cs",
+          "Assets/Scripts/Enemies/BirdRobotRocket.cs",
+          "Assets/Scripts/Enemies/GurunMovementController.cs",
+          "Assets/Scripts/Enemies/HurricaneMovementController.cs",
+          "Assets/Scripts/Explosions/BoilerPowderTrailIgniterPrefab.cs",
+          "Assets/Scripts/Explosions/PowderIgniterFlame.cs",
+          "Assets/Scripts/GameManager.cs",
+          "Assets/Scripts/Health/BossEscapeOnLastLife.cs",
+          "Assets/Scripts/Health/CharacterHealth.cs",
+          "Assets/Scripts/Indestructible/PushIndestructibleTileHandler.cs",
+          "Assets/Scripts/Itens/ItemPickup.cs",
+          "Assets/Scripts/Itens/ItemType.cs",
+          "Assets/Scripts/Localization/OnlineRoomText.cs",
+          "Assets/Scripts/Mounts/Movimentation/MountVisualController.cs",
+          "Assets/Scripts/Mounts/PinkLouieShadowAnimator.cs",
+          "Assets/Scripts/Mounts/PinkLouieShadowController.cs",
+          "Assets/Scripts/Netcode/BombermanNetworkManager.cs",
+          "Assets/Scripts/Netcode/LocalEnvironmentSmoke.cs",
+          "Assets/Scripts/Netcode/LocalPredictionSmoke.cs",
+          "Assets/Scripts/Netcode/LocalProjectileSmoke.cs",
+          "Assets/Scripts/Netcode/LocalServerLoadTest.cs",
+          "Assets/Scripts/Netcode/NetworkBoatPrediction.cs",
+          "Assets/Scripts/Netcode/NetworkMountAnimation.cs",
+          "Assets/Scripts/Netcode/NetworkPlayerAnimation.cs",
+          "Assets/Scripts/Netcode/NetworkPlayerInput.cs",
+          "Assets/Scripts/Netcode/NetworkPlayerSetup.cs",
+          "Assets/Scripts/Netcode/NetworkRevengeReturn.cs",
+          "Assets/Scripts/Netcode/OnlineChatOverlay.cs",
+          "Assets/Scripts/Netcode/OnlineCoopBlackoutMasks.cs",
+          "Assets/Scripts/Netcode/OnlineCoopCinematics.cs",
+          "Assets/Scripts/Netcode/OnlineCoopEnvironment.cs",
+          "Assets/Scripts/Netcode/OnlineCoopMusic.cs",
+          "Assets/Scripts/Netcode/OnlineCoopSession.cs",
+          "Assets/Scripts/Netcode/OnlineCoopSprites.cs",
+          "Assets/Scripts/Netcode/OnlineCoopStageStatus.cs",
+          "Assets/Scripts/Netcode/OnlineCoopWorld.cs",
+          "Assets/Scripts/Netcode/OnlineLobbyCreation.cs",
+          "Assets/Scripts/Netcode/OnlineLobbyMenu.cs",
+          "Assets/Scripts/Netcode/OnlinePortalMasks.cs",
+          "Assets/Scripts/Netcode/OnlineRoomBrowser.cs",
+          "Assets/Scripts/Netcode/OnlineVersionAuthenticator.cs",
+          "Assets/Scripts/Pause/OnlineGamePause.cs",
+          "Assets/Scripts/PlayerMovimentation/MovementController.cs",
+          "Assets/Scripts/PlayerMovimentation/PlayerPushedOutOfInvalidTile.cs",
+          "Assets/Scripts/PlayerPersistentStats.cs",
+          "Assets/Scripts/PlayersSpawner.cs",
+          "Assets/Scripts/SaveSystem/OnlineCoopSettings.cs",
+          "Assets/Scripts/SaveSystem/SaveSystem.cs",
+          "Assets/Scripts/Sound/GameAudioSettings.cs",
+          "Assets/Scripts/Sound/GameMusicController.cs",
+          "Assets/Scripts/Stage/StageLabel.cs",
+          "Assets/Scripts/StageAssets/Boat/BoatRideZone.cs",
+          "Assets/Scripts/StageAssets/FragileFloor/FragileFloor.cs",
+          "Assets/Scripts/StageAssets/Stage32VolcanoEyesAnimator.cs",
+          "Assets/Scripts/StageAssets/World3EndStageCelebrationEffect.cs",
+          "Assets/Scripts/StageAssets/World3HallPortal.cs",
+          "Assets/Scripts/StageAssets/World3RoomTwoTransition.cs",
+          "Assets/Scripts/StageIntro/StagePreIntroPlayersWalk.cs",
+          "Assets/Scripts/Unlock/UnlockProgress.cs",
+          "Assets/Tests/EditMode/Editor/OnlineRoomEnemyForcePredictionTests.cs",
+          "Assets/Tests/EditMode/Editor/OnlineRoomProjectileAuthorityTests.cs",
+          "Assets/Tests/EditMode/Editor/OnlineRoomRevengeCartTests.cs",
+          "Assets/Tests/EditMode/Editor/OnlineRoomWorldBombMotionTests.cs",
+          "Assets/Scripts/Netcode/PlayerNetworkTransform.cs",
+          "Assets/Tests/EditMode/Editor/OnlineRoomStageLabelTests.cs"
+        ]
+      }
+    },
+    "Build\\NormalPlaytest\\Batch25\\frozen-csharp-review.json": {
+      "bytes": 703,
+      "sha256": "78053a3dabfcaf932fad1df23d18005818bd7d705e52e064683914dc15158281",
+      "data": {
+        "trackedCsDiffSha256": "2f8196a3b3f0d48f2422499463bbb1cbb51ce464caf872daf3644d0bfd7f2ed7",
+        "trackedCsFrozen": true,
+        "untrackedCs": {
+          "Assets/Scripts/Netcode/PlayerNetworkTransform.cs": "3a9976420275405b0486da47ea47fada3b1a6a1914b248801fa140c8f0f9b03e",
+          "Assets/Tests/EditMode/Editor/OnlineRoomStageLabelTests.cs": "7fa232de47e1903f7cc4543f339815f43b26dbf2457683263f722fc593345878"
+        },
+        "sourcePatchSha256": "68f6d4f9c390e1ef54f9e5af95821d674d0f843edbfd46092c631f371d1230f2",
+        "note": "This verifies C# source against build-start state; Unity-generated font/physics/test-run metadata and live documentation are identified separately, not claimed byte-for-byte reproducible."
+      }
+    },
+    "Build\\NormalPlaytest\\Batch25\\ui-scale-metrics-review.json": {
+      "bytes": 71003,
+      "sha256": "fd8bf5748832e94a96dec0b275ef7276791bbdfb543f8a4daf0d132b68ea22e6",
+      "data": [
+        {
+          "run": "host-ui-battle-01",
+          "role": "client",
+          "samples": 24,
+          "groups": {
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 209.37,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 209.365,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 209.3625,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.17
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.56
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ]
+          },
+          "logSha256": "4ad3a8d4a16b4ca16c219c0f718994f5b0c1f64d2a2b655e7f04b698abf8422f",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "host-ui-battle-01",
+          "role": "host",
+          "samples": 24,
+          "groups": {
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 209.37,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 209.365,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 209.3625,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.17
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.56
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ]
+          },
+          "logSha256": "976b57e2714f9f92ea43086c4ba771f0c778930b2373c9cd74cb0c5485ddbf27",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "host-ui-bossrush-01",
+          "role": "client",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 259.54,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 259.535,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 259.5325,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "6107c6d255f06ebd26d2a1bff3ba8dfd294d6fe79a1e86456076d27dd84f8ccf",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "host-ui-bossrush-01",
+          "role": "host",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 259.54,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 259.535,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 259.5325,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "c428a1b6084f076bb7bd272b9955af31332c609c5e4931711b19665990d0567f",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "host-ui-normal-01",
+          "role": "client",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "597ffbf089fcf2e699eb9f5141e631ef60268bb19a794ef342e81c8190534fec",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "host-ui-normal-01",
+          "role": "host",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "9ed71e53348691d753350b2f0c5a0fcd8e18dd2df2df6c4fdca216063f7f1882",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-battle-01",
+          "role": "client-1",
+          "samples": 24,
+          "groups": {
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 209.37,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 209.365,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 209.3625,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.17
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.56
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ]
+          },
+          "logSha256": "20e5de6603ae035cfea650e35e81572e87c71049ad3531f8b046409bfb680fc0",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-battle-01",
+          "role": "client-2",
+          "samples": 24,
+          "groups": {
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 209.37,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 209.365,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 209.3625,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.17
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.56
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ]
+          },
+          "logSha256": "90e7715a48e8c50d55c4e4ef1f1452c692e1b1a23224fee0c68d16776652ee74",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-battle-offline-01",
+          "role": "player",
+          "samples": 24,
+          "groups": {
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 209.37,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 209.365,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 209.3625,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.17
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 90.67,
+                "normalizedHeight": 62.165
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.51
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.505
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 52.5025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.56
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 59.555
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 137.58,
+                "normalizedHeight": 52.0025
+              }
+            ]
+          },
+          "logSha256": "06018d08117a3e1bfeda0555608f397486d78056f6517606f98092e8cb1c031a",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-bossrush-01",
+          "role": "client-1",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 259.54,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 259.535,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 259.5325,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "7ea0619b3864a7ce0190b497c3b7cb59745c35b84036ebc4cd578e8be6abec89",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-bossrush-01",
+          "role": "client-2",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 259.54,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 259.535,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 259.5325,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "58157452b2eb1b1f6a048702a47eacaecb79641ef9f2b29ad0c02e0a0168ae38",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-bossrush-offline-01",
+          "role": "player",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 97.04,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 172.84,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 163.71,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 105.06,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 259.54,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 259.535,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 259.5325,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "24d76466466b3826934dec0b813c5e247c0de00d7b060db2cc525ec2c8fc5e0a",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-normal-01",
+          "role": "client-1",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "82d25c66722402a2aa9acdc01dcb0cacc40b175fd269ff0c2daa72aa6b94ebb1",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-normal-01",
+          "role": "client-2",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "009f3f37e173dc7d2e71f11c6a2750454514a61a2ed0d07710f701ec82368e26",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        },
+        {
+          "run": "ui-normal-offline-01",
+          "role": "player",
+          "samples": 27,
+          "groups": {
+            "intro": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 108.67,
+                "normalizedHeight": 11.0025
+              }
+            ],
+            "pause-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 181.98,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 181.975,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 181.9725,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 99.8,
+                "normalizedHeight": 64.22
+              }
+            ],
+            "pause-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "pause-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 154.58,
+                "normalizedHeight": 55.0025
+              }
+            ],
+            "confirm-English": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 161.98,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 161.975,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 161.9725,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-Japanese": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 113.19,
+                "normalizedHeight": 72.0
+              }
+            ],
+            "confirm-Spanish": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 129.45,
+                "normalizedHeight": 63.0025
+              }
+            ],
+            "confirm-PortugueseBr": [
+              {
+                "screen": "384x336",
+                "zoom": 1.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.01
+              },
+              {
+                "screen": "512x448",
+                "zoom": 2.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.005
+              },
+              {
+                "screen": "1920x1080",
+                "zoom": 4.0,
+                "normalizedWidth": 153.84,
+                "normalizedHeight": 63.0025
+              }
+            ]
+          },
+          "logSha256": "269a3bca7f39052d7141c46c7ff00cfcf4b0277ca32c2d3ec6221056cd0e6adc",
+          "metricsPassed": true,
+          "visualReview": "Passed: offline language/intro/confirmation sheets and all five rendered roles per mode reviewed against original captures."
+        }
+      ]
+    },
+    "Build\\NormalPlaytest\\Batch25\\campaign-radius-host-review.json": {
+      "bytes": 861,
+      "sha256": "1784e7fed87c4ea19a902d8cb7132493cb64a4e4d0c9a5760e6730a6067f5296",
+      "data": {
+        "accepted": true,
+        "scene": "Stage_1-1",
+        "authorityRadius": {
+          "1": 1,
+          "2": 1
+        },
+        "actualHostAndRemote": true,
+        "stopped": true,
+        "errors": [],
+        "priorCoverage": "B19 offline/dedicated initial radius1 in1-1 and minimum2 outside1-1; larger loadouts and excluded Battle/BossRush covered by owner regressions.",
+        "clientComponentCaveat": "Pure-client BombController.explosionRadius=9 is inactive prefab configuration, not authoritative radius. NetworkPlayerState SyncVars update PlayerPersistentStats runtime for HUD; bombs and explosion footprint are authority outcomes. Do not accept the client component probe as an authority measurement.",
+        "logSha256": {
+          "host": "9ed71e53348691d753350b2f0c5a0fcd8e18dd2df2df6c4fdca216063f7f1882",
+          "client": "597ffbf089fcf2e699eb9f5141e631ef60268bb19a794ef342e81c8190534fec"
+        }
+      }
+    },
+    "Build\\NormalPlaytest\\Batch25\\generated-cleanup-manifest.json": {
+      "bytes": 1385,
+      "sha256": "5512a8bbc5cf82976ba65121c7e3082868979dbfd8f80131f82a829b65ead9ef",
+      "data": {
+        "status": "completed",
+        "files": [
+          {
+            "path": "Assets/Resources/Fonts/PressStart2P-Regular SDF.asset",
+            "generatedSha256": "82e371433407e0c4d6d0983bbe41f83f65eefaf50fac90652a6a8552613f1a0c",
+            "restoredHeadSha256": "418a2fdc237743e061a4eef7acfe2d569cded05fc1fd536ddd114d6b670cb08c",
+            "reason": "Only confirmed Unity-generated null fallback entries or equivalent serialization migration."
+          },
+          {
+            "path": "Assets/Resources/Fonts/Retro Gaming SDF.asset",
+            "generatedSha256": "b515f0d8c30c9bef9df35c09d5b5b83c0562d7e8253b60715cf3fecccaa749ab",
+            "restoredHeadSha256": "0bdb24b5a6c642a2c17a28d019d2ee48ef2f8639af531bab5085f64e4102fa44",
+            "reason": "Only confirmed Unity-generated null fallback entries or equivalent serialization migration."
+          },
+          {
+            "path": "ProjectSettings/Physics2DSettings.asset",
+            "generatedSha256": "af505fe248c817d70da84bb2fa8336424d34fc6ef6690c03bf50546c626697b1",
+            "restoredHeadSha256": "a4e6f2da6043e3a1e1dcdb738a5f020fe0dc629317ef76822ca951939c266992",
+            "reason": "Only confirmed Unity-generated null fallback entries or equivalent serialization migration."
+          }
+        ],
+        "sourceFormattingOnly": "LocalPredictionSmoke.cs line822 trailing ASCII space removed after validation; no tokens/behavior changed, frozen build source preserved in Batch25/source.patch."
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-build-compatibility-review.json": {
+      "bytes": 632,
+      "sha256": "9d1b8081d5d3c994f1e04829f493e808e586885ad5cd45f6d9a56152dc4527a8",
+      "data": {
+        "audioProductionPatchUnchanged": {
+          "Assets/Scripts/Sound/GameMusicController.cs": {
+            "unchangedPatch": true,
+            "sha256": "735b70f330f2651df7e2cee891373bed8a9d65ae818ce6d7aa6abd29b194592d"
+          },
+          "Assets/Scripts/Netcode/OnlineCoopMusic.cs": {
+            "unchangedPatch": true,
+            "sha256": "6e688d047b459c08c0c2eb1c00292d140851c3e98e06cbaf21c082b0fd57f514"
+          },
+          "Assets/Scripts/Pause/OnlineGamePause.cs": {
+            "unchangedPatch": true,
+            "sha256": "aeab2b8a846755aadf0902a7b37f5bd5570ea6624052cf700ca9df991476072a"
+          }
+        },
+        "uiUsesBatch25": true,
+        "musicUsesFrozenBatch24": true
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-offline-02\\music-ui-journal.json": {
+      "bytes": 1210,
+      "sha256": "f56294babdfd53ea6cdf3ba3502fb6c271f8687ec75cd33fae47f93a3f44ead6",
+      "data": [
+        {
+          "utc": "2026-11-14T23:22:54.227558+00:00",
+          "role": "player",
+          "action": "minimize",
+          "windowIds": [
+            8258616
+          ],
+          "windowMapping": "single window",
+          "logByteOffset": 59319,
+          "observedPostActionLogByteOffset": 59319,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=7.957 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.035140 dsp=24.640",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        },
+        {
+          "utc": "2026-11-14T23:28:12.227353+00:00",
+          "role": "player",
+          "action": "restore",
+          "windowIds": [
+            8258616
+          ],
+          "windowMapping": "single window",
+          "logByteOffset": 1899288,
+          "observedPostActionLogByteOffset": 1928601,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=5.732 length=68.387 loop=True playing=True focus=True volume=0.280 peak=0.086779 dsp=342.635",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        }
+      ]
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-offline-02\\music-minimized-review.json": {
+      "bytes": 1657,
+      "sha256": "f4d87798444cdbb16ff0a91511b8940f04dceedf93f148c5b3d7bdc43a651baf",
+      "data": {
+        "player": {
+          "introSamples": 675,
+          "loopSamples": 531,
+          "loopWraps": [
+            "1",
+            "2"
+          ],
+          "introPeakMax": 0.183078,
+          "loopPeakMax": 0.198937,
+          "dspStart": 24.896,
+          "dspEnd": 337.429,
+          "journal": [
+            {
+              "utc": "2026-11-14T23:22:54.227558+00:00",
+              "role": "player",
+              "action": "minimize",
+              "windowIds": [
+                8258616
+              ],
+              "windowMapping": "single window",
+              "logByteOffset": 59319,
+              "observedPostActionLogByteOffset": 59319,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=7.957 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.035140 dsp=24.640",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            },
+            {
+              "utc": "2026-11-14T23:28:12.227353+00:00",
+              "role": "player",
+              "action": "restore",
+              "windowIds": [
+                8258616
+              ],
+              "windowMapping": "single window",
+              "logByteOffset": 1899288,
+              "observedPostActionLogByteOffset": 1928601,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=5.732 length=68.387 loop=True playing=True focus=True volume=0.280 peak=0.086779 dsp=342.635",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            }
+          ],
+          "logSha256": "a54753b37dee6b617ac454c9ea94a1fe44c6092b221d0f03592acadc580c072d"
+        }
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-offline-02\\manual-review.json": {
+      "bytes": 304,
+      "sha256": "d479e7196ba6f5f4ec1716685101cb82bad1d611256e2b49c4fb8f9f7a718ef6",
+      "data": {
+        "accepted": true,
+        "actualMinimizeAndRestoreObserved": true,
+        "twoLoopsMinimized": true,
+        "nonzeroOutputBeforeDuringAfter": true,
+        "nativePauseResumeCompleted": true,
+        "exitCode": 0,
+        "realSaveUnchanged": true,
+        "scope": "Offline rendered Windows; dedicated and host still pending."
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-offline-02\\result.json": {
+      "bytes": 79,
+      "sha256": "e0b8549998224b5429bd1376eb8077ccd6659cb253c890a7a13fe4d9e6f0c0c3",
+      "data": {
+        "exitCode": 0,
+        "failure": null,
+        "completed": true,
+        "frames": 0
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-02\\music-ui-journal.json": {
+      "bytes": 2734,
+      "sha256": "f06d9313a0cf3b86fb68345dadcaf8173231fe5f077ecaf5894fd74181e556dc",
+      "data": [
+        {
+          "utc": "2026-11-14T23:29:21.487611+00:00",
+          "role": "client-1",
+          "action": "minimize",
+          "windowIds": [
+            38473438,
+            9570382
+          ],
+          "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+          "logByteOffset": 221376,
+          "observedPostActionLogByteOffset": 221376,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=15.424 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.054514 dsp=26.667",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        },
+        {
+          "utc": "2026-11-14T23:29:21.591165+00:00",
+          "role": "client-2",
+          "action": "minimize",
+          "windowIds": [
+            38473438,
+            9570382
+          ],
+          "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+          "logByteOffset": 239068,
+          "observedPostActionLogByteOffset": 239068,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=15.445 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.086975 dsp=25.685",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        },
+        {
+          "utc": "2026-11-14T23:34:42.473433+00:00",
+          "role": "client-1",
+          "action": "restore",
+          "windowIds": [
+            38473438,
+            9570382
+          ],
+          "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+          "logByteOffset": 2504113,
+          "observedPostActionLogByteOffset": 2617896,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=14.330 length=68.387 loop=True playing=True focus=False volume=0.280 peak=0.063250 dsp=347.669",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        },
+        {
+          "utc": "2026-11-14T23:34:42.569514+00:00",
+          "role": "client-2",
+          "action": "restore",
+          "windowIds": [
+            38473438,
+            9570382
+          ],
+          "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+          "logByteOffset": 2494110,
+          "observedPostActionLogByteOffset": 2611943,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=14.394 length=68.387 loop=True playing=True focus=True volume=0.280 peak=0.036419 dsp=346.773",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        }
+      ]
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-02\\music-minimized-review.json": {
+      "bytes": 3648,
+      "sha256": "51e788fd7ef0ba22fc4f2ac41c72b08244014b462558b30ff9c0d1c15c26da2c",
+      "data": {
+        "client-1": {
+          "introSamples": 654,
+          "loopSamples": 529,
+          "loopWraps": [
+            "1",
+            "2"
+          ],
+          "introPeakMax": 0.185885,
+          "loopPeakMax": 0.194919,
+          "dspStart": 26.944,
+          "dspEnd": 333.952,
+          "journal": [
+            {
+              "utc": "2026-11-14T23:29:21.487611+00:00",
+              "role": "client-1",
+              "action": "minimize",
+              "windowIds": [
+                38473438,
+                9570382
+              ],
+              "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+              "logByteOffset": 221376,
+              "observedPostActionLogByteOffset": 221376,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=15.424 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.054514 dsp=26.667",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            },
+            {
+              "utc": "2026-11-14T23:34:42.473433+00:00",
+              "role": "client-1",
+              "action": "restore",
+              "windowIds": [
+                38473438,
+                9570382
+              ],
+              "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+              "logByteOffset": 2504113,
+              "observedPostActionLogByteOffset": 2617896,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=14.330 length=68.387 loop=True playing=True focus=False volume=0.280 peak=0.063250 dsp=347.669",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            }
+          ],
+          "logSha256": "ee7d6de6d56c1aeb6a2e6371ea07e1dbc28ad4ca4d62d4b0b2c4a2a23432d38d"
+        },
+        "client-2": {
+          "introSamples": 654,
+          "loopSamples": 527,
+          "loopWraps": [
+            "1",
+            "2"
+          ],
+          "introPeakMax": 0.216093,
+          "loopPeakMax": 0.191123,
+          "dspStart": 25.941,
+          "dspEnd": 333.013,
+          "journal": [
+            {
+              "utc": "2026-11-14T23:29:21.591165+00:00",
+              "role": "client-2",
+              "action": "minimize",
+              "windowIds": [
+                38473438,
+                9570382
+              ],
+              "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+              "logByteOffset": 239068,
+              "observedPostActionLogByteOffset": 239068,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=15.445 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.086975 dsp=25.685",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            },
+            {
+              "utc": "2026-11-14T23:34:42.569514+00:00",
+              "role": "client-2",
+              "action": "restore",
+              "windowIds": [
+                38473438,
+                9570382
+              ],
+              "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+              "logByteOffset": 2494110,
+              "observedPostActionLogByteOffset": 2611943,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=14.394 length=68.387 loop=True playing=True focus=True volume=0.280 peak=0.036419 dsp=346.773",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            }
+          ],
+          "logSha256": "b3e329c51b8a53d4d13620087744e57df540ff3abb41c87cb40cdaf3c0ec1cc4"
+        }
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-02\\manual-review.json": {
+      "bytes": 339,
+      "sha256": "cbd59ca15e1375ca432c9b5fe116535125c464e207194b4cafdf10549f7df8e8",
+      "data": {
+        "accepted": true,
+        "actualMinimizeAndRestoreObservedForBothWindows": true,
+        "twoLoopsMinimizedBothClients": true,
+        "nativePauseResumeAuthorityCompleted": true,
+        "worldReloadAndTeardownCompleted": true,
+        "errors": [],
+        "scope": "Linux dedicated + two rendered Windows clients; no individual PID/window mapping asserted."
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\music-02\\result.json": {
+      "bytes": 2313,
+      "sha256": "71302f37fdb1969e9bfc976ad10535d5c96c957570a97a5739511a2814531d66",
+      "data": {
+        "scene": "Stage_1-1",
+        "seconds": 480,
+        "actualDedicatedLinux": true,
+        "actualMirrorClients": 2,
+        "rendered": true,
+        "transport": "KCP through isolated SSH UDP bridge",
+        "checks": {
+          "twoConnections": true,
+          "worldCompleted": true,
+          "receivedScene": true,
+          "errors": {
+            "server": [],
+            "client-1": [],
+            "client-2": []
+          }
+        },
+        "identity": {
+          "head": "d1b928a28752bc46487f8af920dfaa7ac7bde8fe",
+          "protocol": 74,
+          "patchSha256": "97ac1a5ec6ba5f993c562103907116b39cd55a9a37055024187ab0bd5d4c325a",
+          "untracked": {
+            "Assets/Resources/Items/RandomLouieEgg.prefab": "8b0573ac29cc9f5f39143c351c6686eccf3a0fe75c848bc60bdb24256615c4e6",
+            "Assets/Resources/Items/RandomLouieEgg.prefab.meta": "60e271278787f534a640c9aa76d90300a3b23d74481bb13e77be0f566302c5aa",
+            "Assets/Scripts/Netcode/PlayerNetworkTransform.cs": "3a9976420275405b0486da47ea47fada3b1a6a1914b248801fa140c8f0f9b03e",
+            "Assets/Scripts/Netcode/PlayerNetworkTransform.cs.meta": "ac2b64a67accaa614bb92ffc4a054cc57f8f25bb11fd5666c61cdbd11174f9e6",
+            "Assets/Tests/EditMode/Editor/OnlineRoomStageLabelTests.cs": "4445e39346418ba0c8791bfd85c1a5c17243ec32b5fd65861a3990c33e00639e",
+            "Assets/Tests/EditMode/Editor/OnlineRoomStageLabelTests.cs.meta": "2e9747f70679ae11f31b13c24bfe3d2e3dcd5383779c05bdd1e81fa5f748db36",
+            "Docs/multiplayer/correcoes-playtest-normal-game-2026-11-12.md": "5598044f15f61ce36b803655dea6b0247344a854925dda6be6897f513c06f509",
+            "Docs/multiplayer/evidencias/playtest-normal-game-ng03-2026-11-12.md": "e40b67b4eec5720cb468873208d468f66459c0d4bb46e7765482fdc3da703cc0"
+          },
+          "fullBaseline": {
+            "id": "2",
+            "testcasecount": "1180",
+            "result": "Passed",
+            "total": "1180",
+            "passed": "1180",
+            "failed": "0",
+            "inconclusive": "0",
+            "skipped": "0",
+            "asserts": "0",
+            "engine-version": "3.5.0.0",
+            "clr-version": "4.0.30319.42000",
+            "start-time": "2026-11-14 18:53:31Z",
+            "end-time": "2026-11-14 18:53:34Z",
+            "duration": "3,7440068"
+          },
+          "windowsAssemblySha256": "61a9b1cdfc7b18d3b05be47514bf57b9cb14025a3ac995df2990ab3c82b6f5c7",
+          "linuxAssemblySha256": "0140258d129ae468c51aef9f3897236bcb9a69810a9cd5e8e5c0049301161942"
+        }
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\host-music-01\\music-ui-journal.json": {
+      "bytes": 2718,
+      "sha256": "c45f94b4dacbc44e98e1773024fc587ffd6b7a7cee20620ad62e7abe670434db",
+      "data": [
+        {
+          "utc": "2026-11-14T23:37:47.102386+00:00",
+          "role": "host",
+          "action": "minimize",
+          "windowIds": [
+            1770520,
+            9635918
+          ],
+          "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+          "logByteOffset": 284544,
+          "observedPostActionLogByteOffset": 284544,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=26.773 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.058199 dsp=38.080",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        },
+        {
+          "utc": "2026-11-14T23:37:47.189505+00:00",
+          "role": "client",
+          "action": "minimize",
+          "windowIds": [
+            1770520,
+            9635918
+          ],
+          "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+          "logByteOffset": 323986,
+          "observedPostActionLogByteOffset": 323986,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=26.667 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.050683 dsp=33.963",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        },
+        {
+          "utc": "2026-11-14T23:42:56.014795+00:00",
+          "role": "host",
+          "action": "restore",
+          "windowIds": [
+            1770520,
+            9635918
+          ],
+          "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+          "logByteOffset": 2440840,
+          "observedPostActionLogByteOffset": 2546517,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=13.882 length=68.387 loop=True playing=True focus=False volume=0.280 peak=0.018137 dsp=347.029",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        },
+        {
+          "utc": "2026-11-14T23:42:56.110402+00:00",
+          "role": "client",
+          "action": "restore",
+          "windowIds": [
+            1770520,
+            9635918
+          ],
+          "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+          "logByteOffset": 2483805,
+          "observedPostActionLogByteOffset": 2607032,
+          "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=13.882 length=68.387 loop=True playing=True focus=True volume=0.280 peak=0.018137 dsp=342.997",
+          "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+        }
+      ]
+    },
+    "Build\\NormalPlaytest\\Batch24\\host-music-01\\music-minimized-review.json": {
+      "bytes": 3625,
+      "sha256": "c72172724c7b568609c88bccc9a331b774520a2a7def48705a19239fbb18cf3b",
+      "data": {
+        "client": {
+          "introSamples": 610,
+          "loopSamples": 527,
+          "loopWraps": [
+            "1",
+            "2"
+          ],
+          "introPeakMax": 0.17575,
+          "loopPeakMax": 0.189041,
+          "dspStart": 34.219,
+          "dspEnd": 329.344,
+          "journal": [
+            {
+              "utc": "2026-11-14T23:37:47.189505+00:00",
+              "role": "client",
+              "action": "minimize",
+              "windowIds": [
+                1770520,
+                9635918
+              ],
+              "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+              "logByteOffset": 323986,
+              "observedPostActionLogByteOffset": 323986,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=26.667 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.050683 dsp=33.963",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            },
+            {
+              "utc": "2026-11-14T23:42:56.110402+00:00",
+              "role": "client",
+              "action": "restore",
+              "windowIds": [
+                1770520,
+                9635918
+              ],
+              "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+              "logByteOffset": 2483805,
+              "observedPostActionLogByteOffset": 2607032,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=13.882 length=68.387 loop=True playing=True focus=True volume=0.280 peak=0.018137 dsp=342.997",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            }
+          ],
+          "logSha256": "69c07979ad8a2e7a94692c78bc37004a9b2e541d1713a7761aa42006b71fce33"
+        },
+        "host": {
+          "introSamples": 610,
+          "loopSamples": 528,
+          "loopWraps": [
+            "1",
+            "2"
+          ],
+          "introPeakMax": 0.187958,
+          "loopPeakMax": 0.187369,
+          "dspStart": 38.336,
+          "dspEnd": 333.355,
+          "journal": [
+            {
+              "utc": "2026-11-14T23:37:47.102386+00:00",
+              "role": "host",
+              "action": "minimize",
+              "windowIds": [
+                1770520,
+                9635918
+              ],
+              "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+              "logByteOffset": 284544,
+              "observedPostActionLogByteOffset": 284544,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1 time=26.773 length=153.577 loop=False playing=True focus=False volume=0.280 peak=0.058199 dsp=38.080",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            },
+            {
+              "utc": "2026-11-14T23:42:56.014795+00:00",
+              "role": "host",
+              "action": "restore",
+              "windowIds": [
+                1770520,
+                9635918
+              ],
+              "windowMapping": "both own game windows; individual PID-to-window assignment not asserted",
+              "logByteOffset": 2440840,
+              "observedPostActionLogByteOffset": 2546517,
+              "lastAudioProbe": "[NormalPlaytest] music output clip=Stage_1-1Loop time=13.882 length=68.387 loop=True playing=True focus=False volume=0.280 peak=0.018137 dsp=347.029",
+              "evidence": "Agent observed the own game window through Sky and completed one action followed by fresh state; this journal does not itself perform UI input."
+            }
+          ],
+          "logSha256": "6aa128296fa84a0d648c7ff62461ec0523a891084dadb9438028fe7c6f893b7b"
+        }
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\host-music-01\\manual-review.json": {
+      "bytes": 229,
+      "sha256": "5725fd252c2b3acb92030404f743b542373b17efd5477c7d5f32a98fafec3811",
+      "data": {
+        "accepted": true,
+        "actualMinimizeAndRestoreObservedForBoth": true,
+        "twoLoopsMinimizedBoth": true,
+        "nonzeroAudioBeforeDuringAfter": true,
+        "nativePauseResume": true,
+        "stopHostCompleted": true,
+        "errors": []
+      }
+    },
+    "Build\\NormalPlaytest\\Batch24\\host-music-01\\result.json": {
+      "bytes": 2287,
+      "sha256": "f7e8a1dd1105ebd3f73bcd6da479cff683076833c8689c28ccfc2759239f29ac",
+      "data": {
+        "actualHost": true,
+        "actualRemoteClients": 1,
+        "checks": {
+          "scene": "Stage_1-1",
+          "case": "music",
+          "caseCompleted": true,
+          "easyCompleted": false,
+          "deaths": 0,
+          "revivals": 0,
+          "localMovement": 0,
+          "remoteMovement": 0,
+          "stopped": true,
+          "errors": {
+            "host": [],
+            "client": []
+          }
+        },
+        "identity": {
+          "head": "d1b928a28752bc46487f8af920dfaa7ac7bde8fe",
+          "protocol": 74,
+          "patchSha256": "97ac1a5ec6ba5f993c562103907116b39cd55a9a37055024187ab0bd5d4c325a",
+          "untracked": {
+            "Assets/Resources/Items/RandomLouieEgg.prefab": "8b0573ac29cc9f5f39143c351c6686eccf3a0fe75c848bc60bdb24256615c4e6",
+            "Assets/Resources/Items/RandomLouieEgg.prefab.meta": "60e271278787f534a640c9aa76d90300a3b23d74481bb13e77be0f566302c5aa",
+            "Assets/Scripts/Netcode/PlayerNetworkTransform.cs": "3a9976420275405b0486da47ea47fada3b1a6a1914b248801fa140c8f0f9b03e",
+            "Assets/Scripts/Netcode/PlayerNetworkTransform.cs.meta": "ac2b64a67accaa614bb92ffc4a054cc57f8f25bb11fd5666c61cdbd11174f9e6",
+            "Assets/Tests/EditMode/Editor/OnlineRoomStageLabelTests.cs": "4445e39346418ba0c8791bfd85c1a5c17243ec32b5fd65861a3990c33e00639e",
+            "Assets/Tests/EditMode/Editor/OnlineRoomStageLabelTests.cs.meta": "2e9747f70679ae11f31b13c24bfe3d2e3dcd5383779c05bdd1e81fa5f748db36",
+            "Docs/multiplayer/correcoes-playtest-normal-game-2026-11-12.md": "5598044f15f61ce36b803655dea6b0247344a854925dda6be6897f513c06f509",
+            "Docs/multiplayer/evidencias/playtest-normal-game-ng03-2026-11-12.md": "e40b67b4eec5720cb468873208d468f66459c0d4bb46e7765482fdc3da703cc0"
+          },
+          "fullBaseline": {
+            "id": "2",
+            "testcasecount": "1180",
+            "result": "Passed",
+            "total": "1180",
+            "passed": "1180",
+            "failed": "0",
+            "inconclusive": "0",
+            "skipped": "0",
+            "asserts": "0",
+            "engine-version": "3.5.0.0",
+            "clr-version": "4.0.30319.42000",
+            "start-time": "2026-11-14 18:53:31Z",
+            "end-time": "2026-11-14 18:53:34Z",
+            "duration": "3,7440068"
+          },
+          "windowsAssemblySha256": "61a9b1cdfc7b18d3b05be47514bf57b9cb14025a3ac995df2990ab3c82b6f5c7",
+          "linuxAssemblySha256": "0140258d129ae468c51aef9f3897236bcb9a69810a9cd5e8e5c0049301161942"
+        }
+      }
+    }
+  }
+}

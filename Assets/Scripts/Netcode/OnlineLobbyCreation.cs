@@ -20,8 +20,8 @@ namespace Assets.Scripts.Netcode
         static string ConnectingText(OnlineRoomText text) => text.Connecting.TrimEnd('.') + new string('.', (int)(Time.unscaledTime * 3f) % 4);
         readonly TextMeshProUGUI[] creationCaptions = new TextMeshProUGUI[4];
         readonly TextMeshProUGUI[] tableHeaders = new TextMeshProUGUI[5];
-        static readonly float[] ColumnX = { -84, -28, 30, 67, 94 };
-        static readonly float[] ColumnWidth = { 38, 70, 42, 28, 22 };
+        static readonly float[] ColumnX = { -83, -33, 17, 56, 89 };
+        static readonly float[] ColumnWidth = { 42, 54, 42, 32, 30 };
 
         void CreateCreationForm(Transform parent)
         {
@@ -86,14 +86,14 @@ namespace Assets.Scripts.Netcode
         {
             for (int i = 0; i < tableHeaders.Length; i++)
             {
-                tableHeaders[i] = Label(parent, "Column" + i, ColumnX[i], 53, ColumnWidth[i], 10, 4);
+                tableHeaders[i] = Label(parent, "Column" + i, ColumnX[i], 46, ColumnWidth[i], 10, 6);
                 tableHeaders[i].color = Gold;
             }
         }
 
         void RefreshRoomTableHeader(OnlineRoomText text)
         {
-            string[] headings = { text.Creator, text.NameColumn, text.RoomType, text.PlayersColumn, text.PasswordColumn };
+            string[] headings = { text.Creator, text.NameColumn, text.TypeColumn, text.PlayersColumn, text.PasswordColumn };
             for (int i = 0; i < tableHeaders.Length; i++) tableHeaders[i].text = headings[i];
         }
 
@@ -110,7 +110,7 @@ namespace Assets.Scripts.Netcode
             for (int i = 0; i < 5; i++)
             {
                 Position(cells[i].rectTransform, ColumnX[i], 4, ColumnWidth[i], 18);
-                cells[i].fontSize = 4;
+                cells[i].fontSize = 6;
                 cells[i].richText = false;
                 cells[i].textWrappingMode = TextWrappingModes.NoWrap;
                 cells[i].overflowMode = TextOverflowModes.Ellipsis;

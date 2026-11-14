@@ -46,6 +46,7 @@ namespace StageAssets
         [SerializeField] private AudioClip eruptionStartSfx;
         [SerializeField] private AudioClip eruptionInTheAirSfx;
         [SerializeField] private AudioClip eruptionFallSfx;
+        [SerializeField, Min(0f)] private float eruptionSfxGain = 3f;
 
         [Header("Rendering")]
         [SerializeField] private string sortingLayerName = "Default";
@@ -368,8 +369,8 @@ namespace StageAssets
         {
             if (clip != null && audioSource != null)
                 {
-                Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip);
-                audioSource.PlayOneShot(clip);
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, eruptionSfxGain);
+                audioSource.PlayOneShot(clip, eruptionSfxGain * Mathf.Clamp01(GameAudioSettings.SfxVolume));
             }
         }
 

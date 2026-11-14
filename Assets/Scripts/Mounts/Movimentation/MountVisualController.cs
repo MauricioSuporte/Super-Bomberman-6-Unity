@@ -95,6 +95,7 @@ public class MountVisualController : MonoBehaviour
 
     private SpriteRenderer[] allSpriteRenderers;
     private AnimatedSpriteRenderer[] allAnimatedRenderers;
+    private PinkLouieShadowController networkPinkShadow;
 
     private bool suppressedByRedBoat;
 
@@ -435,6 +436,7 @@ public class MountVisualController : MonoBehaviour
     {
         allSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         allAnimatedRenderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        networkPinkShadow = GetComponentInChildren<PinkLouieShadowController>(true);
         CacheOriginalAnimationTiming();
     }
 
@@ -480,6 +482,7 @@ public class MountVisualController : MonoBehaviour
         SetRendererBranchEnabled(active, true);
         ApplyPinkRidingHorizontalFlipOverride(face);
         if (isPinkLouieVisual && !IsPinkRidingAnimationActive()) ForceDisableRightRenderer();
+        networkPinkShadow?.PresentNetworkGrounded(Time.deltaTime);
         ApplyBlinkSyncFromOwnerIfNeeded(); ApplyExternalTintIfNeeded(); ApplyPlayerEffectTintIfNeeded();
     }
 

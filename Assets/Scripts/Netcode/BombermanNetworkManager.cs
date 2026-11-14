@@ -199,6 +199,7 @@ namespace Assets.Scripts.Netcode
             base.OnStartClient();
             InitializeChatClient();
             InitializeBattleStartClient();
+            if (NetworkServer.active) InitializeCoopClient();
             if (!NetworkServer.active)
             {
                 NetSync.Mode = NetSync.NetMode.Client;

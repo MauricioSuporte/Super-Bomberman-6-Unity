@@ -62,8 +62,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         get
         {
             EnsureTargets();
-            Vector3 value = (hasExternalBase ? externalBaseLocalPos : initialVisualLocalPosition) + runtimeBaseOffset;
-            if (runtimeLockX) value.x = runtimeLockedLocalX;
+            Vector3 value = (hasExternalBase ? externalBaseLocalPos : initialVisualLocalPosition) +
+                (hasExternalBase && externalBaseOverridesRuntimeOffset ? Vector3.zero : runtimeBaseOffset);
+            if (runtimeLockX && !(hasExternalBase && externalBaseOverridesRuntimeOffset)) value.x = runtimeLockedLocalX;
             return value;
         }
     }
@@ -336,6 +337,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public void SetExternalBaseLocalPosition(Vector3 baseLocalPos)
     {
         hasExternalBase = true;
+        externalBaseOverridesRuntimeOffset = false;
         externalBaseLocalPos = baseLocalPos;
         ApplyFrame();
     }
@@ -433,7 +435,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (!canMoveVisualLocal || visualTransform == null) return;
 
         Vector3 basePos = hasExternalBase ? externalBaseLocalPos : initialVisualLocalPosition;
-        Vector3 pos = basePos + runtimeBaseOffset;
+        Vector3 pos = basePos + (hasExternalBase && externalBaseOverridesRuntimeOffset ? Vector3.zero : runtimeBaseOffset);
 
         if (frameOffsets != null && frameOffsets.Length > 0)
         {
@@ -446,7 +448,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             pos += (Vector3)offset;
         }
 
-        if (runtimeLockX)
+        if (runtimeLockX && !(hasExternalBase && externalBaseOverridesRuntimeOffset))
             pos.x = runtimeLockedLocalX;
 
         visualTransform.localPosition = pos;
@@ -458,9 +460,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (!canMoveVisualLocal) return;
 
         Vector3 basePos = hasExternalBase ? externalBaseLocalPos : initialVisualLocalPosition;
-        Vector3 pos = basePos + runtimeBaseOffset;
+        Vector3 pos = basePos + (hasExternalBase && externalBaseOverridesRuntimeOffset ? Vector3.zero : runtimeBaseOffset);
 
-        if (runtimeLockX)
+        if (runtimeLockX && !(hasExternalBase && externalBaseOverridesRuntimeOffset))
             pos.x = runtimeLockedLocalX;
 
         visualTransform.localPosition = pos;
@@ -577,11 +579,14 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         frameTimer = 0f;
     }
 
-    public void SetExternalBaseOffsetFromInitial(Vector3 offsetFromInitial)
+    bool externalBaseOverridesRuntimeOffset;
+
+    public void SetExternalBaseOffsetFromInitial(Vector3 offsetFromInitial, bool overrideRuntimeOffset = false)
     {
         EnsureTargets();
 
         hasExternalBase = true;
+        externalBaseOverridesRuntimeOffset = overrideRuntimeOffset;
         externalBaseLocalPos = initialVisualLocalPosition + offsetFromInitial;
 
         if (runtimeLockX)
@@ -602,6 +607,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public void ClearExternalBase()
     {
         hasExternalBase = false;
+        externalBaseOverridesRuntimeOffset = false;
         externalBaseLocalPos = Vector3.zero;
 
         if (hasSavedRuntimeLockXState)

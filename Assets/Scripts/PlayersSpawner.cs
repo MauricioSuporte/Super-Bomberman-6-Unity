@@ -184,8 +184,7 @@ public sealed class PlayersSpawner : MonoBehaviour
 
             go.transform.SetParent(playersParent, true);
 
-            if (IsWorld3WaterStage() && go.GetComponent<PlayerWaterSubmersionEffect>() == null)
-                go.AddComponent<PlayerWaterSubmersionEffect>();
+            EnsureWorld3PlayerWaterEffect(go);
 
             if (IsWorld3WaterStage() && go.GetComponent<StageAssets.World3WaterRippleTrail>() == null)
                 go.AddComponent<StageAssets.World3WaterRippleTrail>();
@@ -360,6 +359,12 @@ public sealed class PlayersSpawner : MonoBehaviour
     {
         string sceneName = SceneManager.GetActiveScene().name;
         return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static void EnsureWorld3PlayerWaterEffect(GameObject player)
+    {
+        if (player != null && IsWorld3WaterStage() && !player.TryGetComponent<PlayerWaterSubmersionEffect>(out _))
+            player.AddComponent<PlayerWaterSubmersionEffect>();
     }
 
     static bool IsWorld3WaterStage()

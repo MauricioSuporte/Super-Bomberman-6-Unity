@@ -58,6 +58,9 @@ public static class GameAudioSettings
     public static void PlaySfx(AudioSource source, AudioClip clip, float volume = 1f, bool exclusiveExplosion = false)
     {
         if (clip == null) return;
+#if UNITY_EDITOR || DEBUG
+        Assets.Scripts.Netcode.LocalPredictionSmoke.RecordNativeSound(source, clip);
+#endif
         Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, volume, source != null ? source.pitch : 1f, exclusiveExplosion: exclusiveExplosion);
         if (source == null) return;
         source.PlayOneShot(clip, ApplySfxVolume(volume));

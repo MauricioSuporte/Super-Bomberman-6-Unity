@@ -75,7 +75,7 @@ namespace Assets.Scripts.Netcode
             var state = GamePauseController.Instance.CaptureOnlinePause();
             if (hasPauseView && state.Equals(lastPauseView)) return;
             lastPauseView = state; hasPauseView = true;
-            Mirror.NetworkServer.SendToReady(new OnlinePauseMessage { state = state });
+            SendPresentationToRemoteReady(new OnlinePauseMessage { state = state });
         }
     }
 }

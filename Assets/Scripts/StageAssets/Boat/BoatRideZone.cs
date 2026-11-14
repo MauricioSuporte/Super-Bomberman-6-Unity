@@ -439,7 +439,7 @@ public sealed partial class BoatRideZone : MonoBehaviour
     private void ApplyHeadExternalBase(AnimatedSpriteRenderer r, Vector2 offset)
     {
         if (r == null) return;
-        r.SetExternalBaseOffsetFromInitial((Vector3)offset);
+        r.SetExternalBaseOffsetFromInitial((Vector3)offset, overrideRuntimeOffset: true);
     }
 
     private void ResetHeadOnlyExternalBases()

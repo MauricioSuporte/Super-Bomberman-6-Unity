@@ -34,10 +34,22 @@ public sealed class PowderIgniterFlame : MonoBehaviour
         {
             r.enabled = true;
             r.RefreshFrame();
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(r.GetComponent<SpriteRenderer>());
         }
 
         StopAllCoroutines();
         StartCoroutine(LifeRoutine());
+    }
+
+    // A Chunk tilemap has one sorting anchor for the whole stage. Sharing its
+    // order can hide flames in the far end even though their renderers are enabled.
+    public void SetGroundSorting(Renderer ground)
+    {
+        if (ground == null) return;
+        int order = Mathf.Min(short.MaxValue, ground.sortingOrder + 1);
+        foreach (var animation in new[] { horizontal, vertical, curveDownLeft, curveDownRight, curveUpLeft, curveUpRight })
+            if (animation != null && animation.TryGetComponent<SpriteRenderer>(out var sprite))
+            { sprite.sortingLayerID = ground.sortingLayerID; sprite.sortingOrder = order; }
     }
 
     private IEnumerator LifeRoutine()

@@ -85,6 +85,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     private AudioSource walkLoopSource;
 
     public bool IsEnabled => enabledPreIntro;
+    public Camera EntrancePresentationCamera => entranceCamera;
+    public Camera ActivePresentationCamera => entranceCamera != null && entranceCamera.isActiveAndEnabled ? entranceCamera : mainCamera;
 
     public bool EntranceEnabled =>
         enabledEntrancePreIntro &&

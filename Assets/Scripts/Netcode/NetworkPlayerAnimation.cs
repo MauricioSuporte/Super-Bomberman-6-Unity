@@ -36,6 +36,7 @@ namespace Assets.Scripts.Netcode
         [SyncVar] byte activeFrame;
         [SyncVar] Vector3 activeOffset;
         [SyncVar] NetworkVisualPose activePose;
+        [SyncVar] Color activeColor = Color.white;
         [SyncVar] int activeSortingLayer, activeSortingOrder;
         [SyncVar(hook = nameof(OnVisualTime))] double visualTime;
 
@@ -46,6 +47,7 @@ namespace Assets.Scripts.Netcode
             public bool idle, flip;
             public Vector3 offset;
             public NetworkVisualPose pose;
+            public Color color;
             public int sortingLayer, sortingOrder;
         }
 
@@ -62,7 +64,7 @@ namespace Assets.Scripts.Netcode
                 adjustment = NetworkClient.sendInterval * (positionSync.sendIntervalMultiplier - 1 +
                     (positionSync.timelineOffset ? positionSync.sendIntervalMultiplier : 0));
             visualFrames.Add(new VisualFrame { time = current + adjustment, index = activeIndex,
-                frame = activeFrame, idle = activeIdle, flip = activeFlip, offset = activeOffset, pose = activePose, sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder });
+                frame = activeFrame, idle = activeIdle, flip = activeFlip, offset = activeOffset, pose = activePose, color = activeColor, sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder });
             if (visualFrames.Count > 64) visualFrames.RemoveAt(0);
         }
 
@@ -388,6 +390,7 @@ namespace Assets.Scripts.Netcode
             if (frame != activeFrame) activeFrame = frame;
             activeOffset = active != null ? active.RuntimeBaseLocalOffset : Vector3.zero;
             activePose = NetworkVisualPose.Capture(transform, active != null ? active.GetComponent<SpriteRenderer>() : null);
+            activeColor = active != null && active.TryGetComponent<SpriteRenderer>(out var coloredSprite) ? coloredSprite.color : Color.white;
             activeSortingLayer = sortingLayer; activeSortingOrder = sortingOrder;
             visualTime = NetworkTime.localTime;
         }
@@ -399,6 +402,7 @@ namespace Assets.Scripts.Netcode
             bool activeIdle = this.activeIdle, activeFlip = this.activeFlip;
             Vector3 activeOffset = this.activeOffset;
             NetworkVisualPose pose = activePose;
+            Color color = activeColor;
             int sortingLayer = activeSortingLayer, sortingOrder = activeSortingOrder;
             if ((!isLocalPlayer || GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true) && visualFrames.Count > 0)
             {
@@ -406,7 +410,7 @@ namespace Assets.Scripts.Netcode
                 var sample = visualFrames[0];
                 activeIndex = sample.index; activeFrame = sample.frame;
                 activeIdle = sample.idle; activeFlip = sample.flip; activeOffset = sample.offset; pose = sample.pose;
-                sortingLayer = sample.sortingLayer; sortingOrder = sample.sortingOrder;
+                sortingLayer = sample.sortingLayer; sortingOrder = sample.sortingOrder; color = sample.color;
                 if (visualFrames.Count > 1)
                 {
                     var next = visualFrames[1]; double interval = next.time - sample.time;
@@ -462,7 +466,7 @@ namespace Assets.Scripts.Netcode
                 return;
 
             if (active.TryGetComponent<SpriteRenderer>(out var orderedSprite))
-            { orderedSprite.sortingLayerID = sortingLayer; orderedSprite.sortingOrder = sortingOrder; }
+            { orderedSprite.sortingLayerID = sortingLayer; orderedSprite.sortingOrder = sortingOrder; orderedSprite.color = color; }
             bool dirty = false;
             if (active.RuntimeBaseLocalOffset != activeOffset) active.SetRuntimeBaseLocalOffset(activeOffset);
 

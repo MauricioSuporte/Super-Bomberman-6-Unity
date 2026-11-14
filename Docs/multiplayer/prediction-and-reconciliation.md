@@ -1949,3 +1949,15 @@ No frame em que um input é substituído, MotionDeferredObservations adia a deci
 - Evidências e limites desta investigação ficam em `Docs/multiplayer/evidencias/normal-game-idle-2026-11-12.md`; tráfego alto pode acumular atraso no canal confiável em um enlace limitado, mas estabilidade em loopback não certifica WAN.
 
 - Causa confirmada na sala real: o build Linux com `dedicatedServerOptimizations: 1` remove shaders usados pela captura CPU de materiais. A sala de um jogador em Stage_1-3 reteve mais de 141 mil avisos `Trying to access a shader...`, teve frames de até 6,7 s e terminou desconectada. Manter `dedicatedServerOptimizations: 0`: o servidor continua `-nographics`/subtarget Server, mas conserva os dados de apresentação consultados pelo stream. Não usar apenas um Windows Player com `-server` para validar este problema; ele não aplica a remoção do subtarget dedicado.
+
+
+### Playtest Normal Game cooperativo de 12/11/2026 — em andamento
+
+O [checkpoint NG01–NG39](correcoes-playtest-normal-game-2026-11-12.md) preserva os relatos, prioridades e gates por correção. NG03 remove a exclusão online do respawn Fácil e reutiliza o retorno confirmado sem arco: vida positiva sozinha não limpa morte, posição e histórico de inputs do cliente. A autoridade publica o reset completo; clientes não executam a coroutine nativa de morte/respawn. Implementação e teste EditMode não substituem a validação com dedicado/owner/observador, ainda pendente no checkpoint.
+
+
+### Co-op: limites de tilemap e troca de presenter de luz (13/11/2026)
+
+- NG08/10: tiles ocupados não definem sozinhos a apresentação do Tilemap Chunk. O cliente encolhia origin/size após ClearAllTiles; isso mudava renderer.bounds.center e a ordenação CustomAxisY, cobrindo barcos/molas mesmo com sprite/alpha/pose corretos. CoopTiles preserva origin/size aprovados; B09 mostrou os objetos nos2 clientes, com bounds iguais offline. Guardar limites também em deltas e snapshots tardios; evitar setters redundantes.
+- NG02: ao passar de fade simples para holofote com material inicializado, retirar a amostra de fade anterior. Caso contrário PresentCoopFades desativa/zera alpha a cada frame após a atualização correta do spotlight. Regressão cobre essa borda; PNGs B09 dos2 papéis mostram o foco; reload/pausa do fixture ainda em revisão no checkpoint.
+- Fonte atual usa protocolo74 para os limites novos de CoopTiles; cliente/supervisor alinhados. Builds antigos72/73 são apenas evidência anterior, não misturar. Estado/limites completos permanecem no checkpoint NG01–NG39.

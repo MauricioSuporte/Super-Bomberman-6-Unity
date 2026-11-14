@@ -1,0 +1,152 @@
+{
+  "status": "completed",
+  "scope": "Own private test archives only; production, player folders, evidence, saves and active caches retained",
+  "files": [
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b11/linux.tar.gz",
+      "bytes": 182566956,
+      "sha256": "a3f10c69280052aac451b8f2109c32ce0e3ee3cfaa2a54fd89b902d93d4d425a",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch11\\linux.tar.gz",
+      "localSha256": "a3f10c69280052aac451b8f2109c32ce0e3ee3cfaa2a54fd89b902d93d4d425a",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b12/linux.tar.gz",
+      "bytes": 182567603,
+      "sha256": "8601ad7a622062285cfddc17f25702b01620c38964561fc9d51ff37d84bd8218",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch12\\linux.tar.gz",
+      "localSha256": "8601ad7a622062285cfddc17f25702b01620c38964561fc9d51ff37d84bd8218",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b13/linux.tar.gz",
+      "bytes": 182575720,
+      "sha256": "ff04c0355df3fffd0e3b1c8f199fcf494fcd5042c2b65603b34251d0bb34b888",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch13\\linux.tar.gz",
+      "localSha256": "ff04c0355df3fffd0e3b1c8f199fcf494fcd5042c2b65603b34251d0bb34b888",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b15/linux.tar.gz",
+      "bytes": 182593617,
+      "sha256": "3b0c6fdb116403ab96dbc3ba42da3d2ae732b59b8e9a399674c0bbe612ff820d",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch15\\linux.tar.gz",
+      "localSha256": "3b0c6fdb116403ab96dbc3ba42da3d2ae732b59b8e9a399674c0bbe612ff820d",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b16/linux.tar.gz",
+      "bytes": 182594306,
+      "sha256": "5bf6a7bffd8959692db80c9a4ca591fe58ace03c90bd84359e816102e6fab458",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch16\\linux.tar.gz",
+      "localSha256": "5bf6a7bffd8959692db80c9a4ca591fe58ace03c90bd84359e816102e6fab458",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b17/linux.tar.gz",
+      "bytes": 182594715,
+      "sha256": "c4734e10a2195b2b3495468a050845dd316b8954f01bc7a2f675ff0a9f12cf50",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch17\\linux.tar.gz",
+      "localSha256": "c4734e10a2195b2b3495468a050845dd316b8954f01bc7a2f675ff0a9f12cf50",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b18/linux.tar.gz",
+      "bytes": 182614153,
+      "sha256": "b31b917f3cce94593528c2a07e2f0c16c3056ba46ae9aca07a1a2b2a52c65222",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch18\\linux.tar.gz",
+      "localSha256": "b31b917f3cce94593528c2a07e2f0c16c3056ba46ae9aca07a1a2b2a52c65222",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b19/linux.tar.gz",
+      "bytes": 182614675,
+      "sha256": "bf9bb435b8fe62cbacbdc035f174ca95b0044704b9d3248c0ce5fe8f242845a8",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch19\\linux.tar.gz",
+      "localSha256": "bf9bb435b8fe62cbacbdc035f174ca95b0044704b9d3248c0ce5fe8f242845a8",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b20/linux.tar.gz",
+      "bytes": 182611507,
+      "sha256": "f01b4813c018dbe0cc63435a7c323ad5ccb978406768fe254586b2e9cefdd49d",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch20\\linux.tar.gz",
+      "localSha256": "f01b4813c018dbe0cc63435a7c323ad5ccb978406768fe254586b2e9cefdd49d",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b21/linux.tar.gz",
+      "bytes": 182608233,
+      "sha256": "32e07bf0b14bd744a62ec64384da95ba8f1a0c6fad2505b2566b01fb2692d370",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch21\\linux.tar.gz",
+      "localSha256": "32e07bf0b14bd744a62ec64384da95ba8f1a0c6fad2505b2566b01fb2692d370",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    },
+    {
+      "path": "/home/mauricio/sb6-tests/normal-playtest-20261113-b23/linux.tar.gz",
+      "bytes": 182607476,
+      "sha256": "bec1d6194fba31aab2a6419f54e3c160b5ce88cf65f72e2a2f4631c627a5ec82",
+      "localArchive": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch23\\linux.tar.gz",
+      "localSha256": "bec1d6194fba31aab2a6419f54e3c160b5ce88cf65f72e2a2f4631c627a5ec82",
+      "action": "remove only this redundant remote compressed file; retain local exact archive and remote player/logs"
+    }
+  ],
+  "totalBytes": 2008548961,
+  "removed": [
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b11/linux.tar.gz",
+      "bytes": 182566956,
+      "verifiedSha256": "a3f10c69280052aac451b8f2109c32ce0e3ee3cfaa2a54fd89b902d93d4d425a"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b12/linux.tar.gz",
+      "bytes": 182567603,
+      "verifiedSha256": "8601ad7a622062285cfddc17f25702b01620c38964561fc9d51ff37d84bd8218"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b13/linux.tar.gz",
+      "bytes": 182575720,
+      "verifiedSha256": "ff04c0355df3fffd0e3b1c8f199fcf494fcd5042c2b65603b34251d0bb34b888"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b15/linux.tar.gz",
+      "bytes": 182593617,
+      "verifiedSha256": "3b0c6fdb116403ab96dbc3ba42da3d2ae732b59b8e9a399674c0bbe612ff820d"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b16/linux.tar.gz",
+      "bytes": 182594306,
+      "verifiedSha256": "5bf6a7bffd8959692db80c9a4ca591fe58ace03c90bd84359e816102e6fab458"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b17/linux.tar.gz",
+      "bytes": 182594715,
+      "verifiedSha256": "c4734e10a2195b2b3495468a050845dd316b8954f01bc7a2f675ff0a9f12cf50"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b18/linux.tar.gz",
+      "bytes": 182614153,
+      "verifiedSha256": "b31b917f3cce94593528c2a07e2f0c16c3056ba46ae9aca07a1a2b2a52c65222"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b19/linux.tar.gz",
+      "bytes": 182614675,
+      "verifiedSha256": "bf9bb435b8fe62cbacbdc035f174ca95b0044704b9d3248c0ce5fe8f242845a8"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b20/linux.tar.gz",
+      "bytes": 182611507,
+      "verifiedSha256": "f01b4813c018dbe0cc63435a7c323ad5ccb978406768fe254586b2e9cefdd49d"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b21/linux.tar.gz",
+      "bytes": 182608233,
+      "verifiedSha256": "32e07bf0b14bd744a62ec64384da95ba8f1a0c6fad2505b2566b01fb2692d370"
+    },
+    {
+      "removed": "/home/mauricio/sb6-tests/normal-playtest-20261113-b23/linux.tar.gz",
+      "bytes": 182607476,
+      "verifiedSha256": "bec1d6194fba31aab2a6419f54e3c160b5ce88cf65f72e2a2f4631c627a5ec82"
+    }
+  ]
+}

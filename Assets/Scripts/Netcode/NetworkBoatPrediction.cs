@@ -161,7 +161,7 @@ namespace Assets.Scripts.Netcode
             {
                 int index = System.Array.IndexOf(ownerBoatHeads, head);
                 Vector2 offset = index == 1 ? ownerBoatState.headUp : index == 2 ? ownerBoatState.headLeft : index == 3 ? ownerBoatState.headRight : ownerBoatState.headDown;
-                if (ownerBoatState.headOffsets) head.SetExternalBaseOffsetFromInitial(offset);
+                if (ownerBoatState.headOffsets) head.SetExternalBaseOffsetFromInitial(offset, overrideRuntimeOffset: true);
                 AdvanceBoatAnimation(head, idle, deltaTime, unscaledDeltaTime);
             }
         }

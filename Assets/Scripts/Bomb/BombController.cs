@@ -843,8 +843,16 @@ public partial class BombController : MonoBehaviour
         }
     }
 
+    private readonly List<Collider2D> explosionBarrierHits = new();
+
     private bool HasIndestructibleAt(Vector2 worldPos)
     {
+        var filter = new ContactFilter2D { useTriggers = true, useLayerMask = false };
+        Physics2D.OverlapPoint(worldPos, filter, explosionBarrierHits);
+        foreach (var hit in explosionBarrierHits)
+            if (hit != null && hit.GetComponentInParent<GeyserLauncherBootstrap>() != null)
+                return true;
+
         if (stageBoundsTiles == null)
             return false;
 
@@ -1372,6 +1380,7 @@ public partial class BombController : MonoBehaviour
 
         if (bombGo.TryGetComponent<Bomb>(out var bombComp) && bombComp != null)
         {
+            bombComp.BeginSinkVisual();
             bombComp.LockWorldPosition(sinkWorldPos);
             bombComp.ForceStopExternalMovementAndSnap(sinkWorldPos);
         }
@@ -1478,7 +1487,7 @@ public partial class BombController : MonoBehaviour
             bombScript.enabled = false;
 
         if (bombGo != null)
-            Destroy(bombGo);
+            Assets.Scripts.Netcode.NetSpawn.Despawn(bombGo);
     }
 
     private IEnumerator HoleSinkAndDestroyRoutine(GameObject bombGo, Vector2 sinkWorldPos)

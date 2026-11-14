@@ -129,7 +129,7 @@ namespace Assets.Scripts.Netcode
                 frames.Add(new CoopEnvironmentLoopFrame { id = pair.Key, clip = clip, phase = source.phase,
                     gain = source.gain, looping = source.looping, paused = GamePauseController.IsPaused || Time.timeScale <= 0 });
             }
-            NetworkServer.SendToReady(new CoopEnvironmentLoops { scene = coopScene, time = NetworkTime.localTime,
+            SendPresentationToRemoteReady(new CoopEnvironmentLoops { scene = coopScene, time = NetworkTime.localTime,
                 revision = ++coopLoopRevision, frames = frames.ToArray() });
             TraceEnvironmentLoop("r08_loop_snapshot_native", coopLoopRevision, 0, frames.Count, 0, false, false, false);
             foreach (var frame in frames) TraceEnvironmentLoop("r08_loop_native", coopLoopRevision, frame.id, frames.Count, frame.phase, frame.looping, frame.paused, true);

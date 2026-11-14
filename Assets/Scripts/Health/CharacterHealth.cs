@@ -69,11 +69,24 @@ public class CharacterHealth : MonoBehaviour
         if (spriteRenderers != null)
             return;
 
-        spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        // Carried objectives and nested actors own their own visual lifetime.
+        // Including them here also restores a stale alpha after they detach.
+        spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true)
+            .Where(renderer => renderer.GetComponentInParent<CharacterHealth>(true) == this &&
+                (renderer.GetComponentInParent<AttachedCoreMechanismsController>(true) == null ||
+                 renderer.GetComponentInParent<AttachedCoreMechanismsController>(true).transform == transform))
+            .ToArray();
         originalColors = new Color[spriteRenderers.Length];
 
         for (int i = 0; i < spriteRenderers.Length; i++)
             originalColors[i] = spriteRenderers[i].color;
+    }
+
+    public Color GetOriginalRendererColor(SpriteRenderer renderer)
+    {
+        EnsureRendererCache();
+        int index = Array.IndexOf(spriteRenderers, renderer);
+        return index >= 0 ? originalColors[index] : renderer != null ? renderer.color : Color.white;
     }
 
     public void TakeDamage(int amount)

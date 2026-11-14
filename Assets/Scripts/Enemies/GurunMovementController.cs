@@ -309,7 +309,7 @@ public sealed class GurunMovementController : EnemyMovementController
         animation.idle = false;
         animation.RestartAnimation();
         rocket.GetComponent<SpriteRenderer>().flipX = attackDirection == Vector2.right;
-        rocket.AddComponent<BirdRobotRocket>().Init(attackDirection, gameObject, explosion, tileSize, true);
+        rocket.AddComponent<BirdRobotRocket>().Init(attackDirection, gameObject, explosion, tileSize, true, template.GetComponent<SpriteRenderer>());
         if (rocketSfx != null && TryGetComponent<AudioSource>(out var source)) GameAudioSettings.PlaySfx(source, rocketSfx);
     }
 

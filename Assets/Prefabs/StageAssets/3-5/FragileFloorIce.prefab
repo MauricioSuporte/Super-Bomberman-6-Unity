@@ -95,3 +95,5 @@ MonoBehaviour:
   indestructibleTile: {fileID: 11400000, guid: 7bf64c0df971f4b42be8e70d26fb8aea, type: 2}
   disableTriggerAfterBlocked: 1
   pendingBlockClearanceMultiplier: 1.2
+  crackSfx: {fileID: 8300000, guid: b5434ed8d4b64c70ae88831a72a8f8f8, type: 3}
+  blockSfx: {fileID: 8300000, guid: 9c0f59c029b269c478653c17cd277c33, type: 3}

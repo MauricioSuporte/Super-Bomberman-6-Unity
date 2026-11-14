@@ -27,7 +27,7 @@ namespace Assets.Scripts.Netcode
                 introResource = manager.CoopSoundResource(intro), loopResource = manager.CoopSoundResource(loop),
                 volume = volume, loopVolume = loopVolume, pitch = pitch, looping = looping, stopped = stopped };
             manager.coopHasMusic = true;
-            NetworkServer.SendToReady(manager.coopMusic);
+            SendPresentationToRemoteReady(manager.coopMusic);
         }
 
         CoopSceneCatalog onlineSoundCatalog;

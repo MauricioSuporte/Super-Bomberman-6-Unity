@@ -611,7 +611,7 @@ public static partial class PlayerPersistentStats
             s.CanPassBombs = false;
 
         s.BombAmount = Mathf.Min(s.BombAmount, MaxBombAmount);
-        s.ExplosionRadius = Mathf.Min(s.ExplosionRadius, MaxExplosionRadius);
+        s.ExplosionRadius = ResolveSceneExplosionRadius(s.ExplosionRadius, SceneManager.GetActiveScene().name, BossRushSession.IsActive);
 
         s.SpeedInternal = ClampSpeedInternal(s.SpeedInternal);
         s.Life = Mathf.Max(1, s.Life);
@@ -1136,6 +1136,13 @@ public static partial class PlayerPersistentStats
             : BomberCharacter.Bomberman;
     }
 
+    static int ResolveSceneExplosionRadius(int radius, string scene, bool bossRush)
+    {
+        bool campaignAfterFirstStage = !bossRush && scene != null &&
+            scene.StartsWith("Stage_", System.StringComparison.Ordinal) && scene != "Stage_1-1";
+        return Mathf.Clamp(radius, campaignAfterFirstStage ? 2 : 1, MaxExplosionRadius);
+    }
+
     public static void BeginStage()
     {
         if (stageActive)
@@ -1145,6 +1152,7 @@ public static partial class PlayerPersistentStats
         {
             var baseState = Get(i);
             var st = _stage[i - 1];
+            baseState.ExplosionRadius = ResolveSceneExplosionRadius(baseState.ExplosionRadius, SceneManager.GetActiveScene().name, BossRushSession.IsActive);
             CopyState(baseState, st);
         }
 

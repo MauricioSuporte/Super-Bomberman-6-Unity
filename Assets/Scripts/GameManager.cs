@@ -816,6 +816,8 @@ public class GameManager : MonoBehaviour
 
     void TryAssignItem(List<Vector3Int> cells, ref int cursor, ItemType type, int amount)
     {
+        if (!IsBattleModeScene() && !BossRushSession.IsActive && type >= ItemType.BlueLouieEgg && type <= ItemType.RedLouieEgg)
+            type = ItemType.RandomLouieEgg;
         ItemPickup prefab = amount > 0 ? AutoItemDatabase.Get(type) : null;
         TryAssignPrefab(cells, ref cursor, prefab != null ? prefab.gameObject : null, amount);
     }
@@ -989,6 +991,9 @@ public class GameManager : MonoBehaviour
         if (!TryReservePendingHiddenItemCell(cell))
             return null;
 
+        // Regenerating soft blocks may occupy this cell again. The assigned
+        // campaign reward belongs to its first successful reveal only.
+        hiddenObjectSpawnsByCell.Remove(cell);
         return prefabGo;
     }
 
@@ -2484,17 +2489,6 @@ public class GameManager : MonoBehaviour
         return AutoItemDatabase.Get(type);
     }
 
-    private static readonly ItemType[] louieEggTypes =
-    {
-        ItemType.BlueLouieEgg,
-        ItemType.BlackLouieEgg,
-        ItemType.PurpleLouieEgg,
-        ItemType.GreenLouieEgg,
-        ItemType.YellowLouieEgg,
-        ItemType.PinkLouieEgg,
-        ItemType.RedLouieEgg
-    };
-
     void TryAssignRandomEggs(List<Vector3Int> cells, ref int cursor, int minimum, int maximum)
     {
         if (maximum <= 0)
@@ -2518,28 +2512,8 @@ public class GameManager : MonoBehaviour
         if (amount <= 0)
             return;
 
-        List<GameObject> eggPrefabs = BuildSb5LouieEggPrefabPool();
-        if (eggPrefabs.Count == 0)
-            return;
-
-        for (int i = 0; i < amount && cursor < cells.Count; i++)
-        {
-            GameObject prefab = eggPrefabs[UnityEngine.Random.Range(0, eggPrefabs.Count)];
-            hiddenObjectSpawnsByCell[cells[cursor++]] = prefab;
-        }
-    }
-
-    List<GameObject> BuildSb5LouieEggPrefabPool()
-    {
-        List<GameObject> results = new(louieEggTypes.Length);
-        for (int i = 0; i < louieEggTypes.Length; i++)
-        {
-            ItemPickup prefab = AutoItemDatabase.Get(louieEggTypes[i]);
-            if (prefab != null)
-                results.Add(prefab.gameObject);
-        }
-
-        return results;
+        var egg = AutoItemDatabase.Get(ItemType.RandomLouieEgg);
+        TryAssignPrefab(cells, ref cursor, egg != null ? egg.gameObject : null, amount);
     }
 
     List<GameObject> BuildConfiguredEggPrefabPool()

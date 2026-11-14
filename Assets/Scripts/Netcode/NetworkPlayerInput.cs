@@ -130,9 +130,9 @@ namespace Assets.Scripts.Netcode
             if (isServer) return;
             ReceiveLaunchState(serverLaunch);
             movement.SetNetworkTickDriven(true);
-            // Only observers interpolate. The owner is placed by reconciliation, including
-            // during authoritative-only movement such as launchers and mounting.
-            if (TryGetComponent<NetworkTransformReliable>(out var sync)) sync.enabled = false;
+            // PlayerNetworkTransform skips owner interpolation without disabling the
+            // decoder: OnDisable would reset its reliable delta-compression origin.
+            // Reconciliation/approved motion continues to own this player's root.
         }
 
         void Update()

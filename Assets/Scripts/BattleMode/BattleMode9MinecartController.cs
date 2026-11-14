@@ -348,6 +348,15 @@ public sealed partial class BattleMode9MinecartController : MonoBehaviour
         SetCartVisible(!cartDestroyedBySuddenDeath && !hideCartWhenIdleAtStation);
     }
 
+    public void CancelForRoomTransition()
+    {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || rideRoutines.Count == 0) return;
+        // Use the same nested-iterator disposal and state restoration as teardown.
+        OnDisable();
+        SetCartVisible(!cartDestroyedBySuddenDeath && !hideCartWhenIdleAtStation);
+        PublishNetworkCart(force: true);
+    }
+
     void OnDisable()
     {
         var running = new List<CartRideRoutine>(rideRoutines.Values);

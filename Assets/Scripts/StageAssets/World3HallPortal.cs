@@ -17,6 +17,8 @@ namespace StageAssets
         private Texture2D beamTexture;
         private Sprite beamSprite;
 
+        public Sprite PaletteMaskSprite => visual != null ? visual.sprite : null;
+
         public bool UnlockedBeforeClear(string stage)
         {
             if (destinationScene == "Stage_3-6")
@@ -64,6 +66,7 @@ namespace StageAssets
             beam.sharedMaterial = visual.sharedMaterial;
             beam.sortingLayerID = visual.sortingLayerID;
             beam.sortingOrder = visual.sortingOrder + 1;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(beam);
             var beamProperties = new MaterialPropertyBlock();
             beamProperties.SetFloat("_BeamMaskEnabled", 1f);
             beamProperties.SetFloat("_RevealMode", 2f);

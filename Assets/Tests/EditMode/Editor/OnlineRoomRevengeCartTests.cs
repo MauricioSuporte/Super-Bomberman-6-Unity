@@ -11,6 +11,57 @@ public sealed partial class OnlineRoomEditModeTests
 {
     const BindingFlags RevengeFields = BindingFlags.Instance | BindingFlags.NonPublic;
 
+    [TestCase(7, 1, true, -8)]
+    [TestCase(-8, -1, true, 7)]
+    [TestCase(4, 1, true, 5)]
+    [TestCase(7, 1, false, 8)]
+    public void RecoveryBounceWrapsInsideItsAuthoredRoomInsteadOfTheMultiroomMap(int x, int direction, bool roomScoped, int expected)
+    {
+        var grid = new GameObject("RecoveryGrid", typeof(Grid));
+        var mapObject = new GameObject("RecoveryGround", typeof(UnityEngine.Tilemaps.Tilemap));
+        var roomObject = new GameObject("RecoveryRoom", typeof(BoxCollider2D));
+        var solidObject = new GameObject("RecoveryWalls", typeof(UnityEngine.Tilemaps.Tilemap));
+        var actor = new GameObject("RecoveryActor"); actor.SetActive(false);
+        var tile = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        try
+        {
+            grid.transform.position = new Vector3(-.5f, -.5f);
+            mapObject.transform.SetParent(grid.transform, false);
+            solidObject.transform.SetParent(grid.transform, false);
+            var map = mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            map.SetTile(new Vector3Int(-7, -6), tile);
+            map.SetTile(new Vector3Int(6, 5), tile);
+            var solid = solidObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            solid.SetTile(new Vector3Int(-8, -7), tile);
+            solid.SetTile(new Vector3Int(7, 6), tile);
+            map.SetTile(new Vector3Int(50, 7), tile);
+            map.SetTile(new Vector3Int(-8, -7), tile);
+            var room = roomObject.GetComponent<BoxCollider2D>(); room.size = new Vector2(16, 14);
+            roomObject.transform.position = new Vector3(-1, -.3f);
+            Physics2D.SyncTransforms();
+            Assert.Greater(room.bounds.size.x, 15, "Native collider bounds must be initialized.");
+            actor.AddComponent<BoxCollider2D>();
+            var resolver = actor.AddComponent<PlayerPushedOutOfInvalidTile>();
+            typeof(PlayerPushedOutOfInvalidTile).GetField("stageBoundsTilemap", RevengeFields).SetValue(resolver, map);
+            Assert.AreEqual(Vector3.zero, map.GetCellCenterWorld(Vector3Int.zero), "Native grid centers must match the stage.");
+            object[] boundsArgs = { map, map, solid, roomScoped ? room : null, default(BoundsInt) };
+            bool hasRoom = (bool)typeof(PlayerPushedOutOfInvalidTile).GetMethod("TryReadRecoveryRoomBounds", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, boundsArgs);
+            Assert.AreEqual(roomScoped, hasRoom);
+            typeof(PlayerPushedOutOfInvalidTile).GetField("_resolveRoomCellBoundsReady", RevengeFields).SetValue(resolver, hasRoom);
+            typeof(PlayerPushedOutOfInvalidTile).GetField("_resolveRoomCellBounds", RevengeFields).SetValue(resolver, boundsArgs[4]);
+            object[] args = { new Vector2(x, -2), Vector2.right * direction, 1f, Vector2.zero, false };
+            Assert.IsTrue((bool)typeof(PlayerPushedOutOfInvalidTile).GetMethod("TryStepWithWrap", RevengeFields).Invoke(resolver, args));
+            Assert.AreEqual(new Vector2(expected, -2), (Vector2)args[3]);
+            Assert.AreEqual(expected != x + direction, (bool)args[4]);
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor); Object.DestroyImmediate(roomObject);
+            Object.DestroyImmediate(grid); Object.DestroyImmediate(tile);
+        }
+    }
+
+
     [TestCase(false, false, false, .25, true)]
     [TestCase(false, true, false, .01, false)]
     [TestCase(true, false, false, .01, false)]
@@ -309,8 +360,9 @@ public sealed partial class OnlineRoomEditModeTests
         finally { Object.DestroyImmediate(actor); NetSync.Mode = old; }
     }
 
-    [Test]
-    public void ConfirmedRevengeReturnKeepsPlayerDeadDuringArcThenRestoresOnlyApprovedStats()
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ConfirmedReturnRestoresOnlyApprovedStatsWithOrWithoutRevengeArc(bool withArc)
     {
         PlayerPersistentStats.EnsureSessionBooted();
         var stageActive = typeof(PlayerPersistentStats).GetField("stageActive", BindingFlags.Static | BindingFlags.NonPublic);
@@ -343,13 +395,16 @@ public sealed partial class OnlineRoomEditModeTests
             movement.isDead = true; health.life = 0; movement.ApplySpeedInternal(PlayerPersistentStats.BaseSpeedNormal + 16); baseStats.BombAmount = 8; runtime.BombAmount = 1;
             var begin = new RevengeReturnState { revision = 1, inputAck = 40, jumping = true, position = new Vector2(20, 20) };
             using (var writer = NetworkWriterPool.Get()) { writer.Write(begin); begin = new NetworkReader(writer.ToArray()).Read<RevengeReturnState>(); }
-            state.ReceiveConfirmedRevengeReturn(begin);
-            Assert.IsTrue(actor.activeSelf); Assert.IsTrue(movement.isDead); Assert.AreEqual(0, health.life);
-            Assert.IsTrue(state.HasApprovedRevengeReturn); Assert.IsFalse(actor.GetComponent<Collider2D>().enabled); Assert.IsFalse(body.simulated);
-            Assert.AreEqual(40u, input.CurrentInputTick);
-            typeof(NetworkPlayerState).GetField("eliminated", RevengeFields).SetValue(state, true);
-            typeof(NetworkPlayerState).GetMethod("OnEliminatedChanged", RevengeFields).Invoke(state, new object[] { false, true });
-            Assert.IsTrue(actor.activeSelf, "The approved jump stays visible while eliminated remains true.");
+            if (withArc)
+            {
+                state.ReceiveConfirmedRevengeReturn(begin);
+                Assert.IsTrue(actor.activeSelf); Assert.IsTrue(movement.isDead); Assert.AreEqual(0, health.life);
+                Assert.IsTrue(state.HasApprovedRevengeReturn); Assert.IsFalse(actor.GetComponent<Collider2D>().enabled); Assert.IsFalse(body.simulated);
+                Assert.AreEqual(40u, input.CurrentInputTick);
+                typeof(NetworkPlayerState).GetField("eliminated", RevengeFields).SetValue(state, true);
+                typeof(NetworkPlayerState).GetMethod("OnEliminatedChanged", RevengeFields).Invoke(state, new object[] { false, true });
+                Assert.IsTrue(actor.activeSelf, "The approved jump stays visible while eliminated remains true.");
+            }
             var end = new RevengeReturnState { revision = 2, inputAck = 41, position = new Vector2(22, 20),
                 life = 1, bombs = 2, radius = 3, speed = PlayerPersistentStats.BaseSpeedNormal };
             state.ReceiveConfirmedRevengeReturn(end);

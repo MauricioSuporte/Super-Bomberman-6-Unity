@@ -17,6 +17,13 @@ for the user's mandatory full Unity/Python and actual-peer validation gates.
 Extend the existing online/prediction paths for new content instead of delivering
 an offline-only feature. Record blocked/inapplicable coverage honestly.
 
+## Active cooperative playtest backlog
+
+For the Normal Game online reports from 12 November 2026, read
+[the persistent correction checkpoint](../../../Docs/multiplayer/correcoes-playtest-normal-game-2026-11-12.md).
+Keep its NG01–NG40 statuses, validation evidence and next steps current; do not
+treat an implemented change as a passed offline/two-client scenario.
+
 ## Establish the live baseline
 
 - Confirm the active checkout/branch and the Editor project root. A source repo,

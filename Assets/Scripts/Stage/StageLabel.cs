@@ -59,56 +59,75 @@ public class StageLabel : MonoBehaviour
     readonly Vector3[] textWorldCorners = new Vector3[4];
     float pauseWindowOptionsWidth = -1f;
 
-    float _lastUiScale = -999f;
-    int _lastBaseScaleInt = -999;
+    enum LabelView { None, Stage, NormalPause, BattlePause, Confirmation }
+    LabelView currentView;
+    int currentWorld, currentStage, currentSelection;
+    bool currentBossRush, currentConfirmationHeader;
+    string currentQuestion;
+    float lastAppliedUiScale = -1f;
+    TMP_Text typographySource;
+    float authoredBaseFontSize;
+
+    float CanvasScale => stageText != null && stageText.canvas != null
+        ? Mathf.Max(.01f, stageText.canvas.scaleFactor) : 1f;
 
     float UiScale
     {
         get
         {
-            float canvasScale = 1f;
-            if (stageText != null && stageText.canvas != null)
-                canvasScale = Mathf.Max(0.01f, stageText.canvas.scaleFactor);
-
-            if (!dynamicScale)
-            {
-                float fallback = 1f / canvasScale;
-
-                _lastBaseScaleInt = -1;
-                _lastUiScale = fallback;
-
-                return fallback;
-            }
-
-            var cam = Camera.main;
-
-            float usedW = cam != null ? cam.pixelRect.width : Screen.width;
-            float usedH = cam != null ? cam.pixelRect.height : Screen.height;
-
-            float sx = usedW / Mathf.Max(1f, referenceWidth);
-            float sy = usedH / Mathf.Max(1f, referenceHeight);
-            float baseScaleRaw = Mathf.Min(sx, sy);
-
-            float baseScaleForUi = useIntegerUpscale ? Mathf.Round(baseScaleRaw) : baseScaleRaw;
-            if (baseScaleForUi < 1f) baseScaleForUi = 1f;
-
-            int baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
-
-            float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
-            float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
-
-            ui /= canvasScale;
-            ui = Mathf.Clamp(ui, minScale, maxScale);
-
-            _lastBaseScaleInt = baseScaleInt;
-            _lastUiScale = ui;
-
-            return ui;
+            if (!dynamicScale) return 1f / CanvasScale;
+            var camera = Camera.main;
+            Rect viewport = camera != null ? PixelPerfectViewport.ResolveFinalPixelRect(camera)
+                : new Rect(0, 0, Screen.width, Screen.height);
+            float raw = Mathf.Min(viewport.width / Mathf.Max(1f, referenceWidth),
+                viewport.height / Mathf.Max(1f, referenceHeight));
+            float pixelScale = useIntegerUpscale ? Mathf.Max(1f, Mathf.Floor(raw + .0001f)) : Mathf.Max(.0001f, raw);
+            return ResolveDesignScale(pixelScale, CanvasScale, designUpscale, extraScaleMultiplier, minScale, maxScale);
         }
     }
 
-    int S(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * UiScale), 10, 500);
+    static float ResolveDesignScale(float pixelScale, float canvasScale, int designScale, float extra, float minimum, float maximum)
+    {
+        // Serialized limits describe the safe-frame multiplier, not local font
+        // units. Clamping after design/canvas compensation locks small windows
+        // to the design-resolution font size.
+        float floor = Mathf.Max(.01f, minimum);
+        float zoom = Mathf.Clamp(pixelScale * Mathf.Max(.01f, extra), floor, Mathf.Max(floor, maximum));
+        return zoom / Mathf.Max(1f, designScale) / Mathf.Max(.01f, canvasScale);
+    }
+
+    string S(int baseSize) => Mathf.Max(.01f, baseSize * UiScale).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
     int Px(int basePx) => Mathf.RoundToInt(basePx * UiScale);
+
+    void ApplyBaseTypographyScale()
+    {
+        if (stageText == null) return;
+        if (typographySource != stageText)
+        {
+            typographySource = stageText;
+            authoredBaseFontSize = Mathf.Max(.01f, stageText.fontSize);
+        }
+        // Spaces between rich-text spans and empty lines use TMP's base size.
+        // Scaling only the <size> spans leaves those gaps at design resolution.
+        stageText.fontSize = authoredBaseFontSize * UiScale;
+    }
+
+    void RememberView(LabelView view, int world, int stage, int selection = 0)
+    {
+        currentView = view; currentWorld = world; currentStage = stage; currentSelection = selection;
+        lastAppliedUiScale = UiScale;
+    }
+
+    void RefreshCurrentView()
+    {
+        switch (currentView)
+        {
+            case LabelView.Stage: SetStage(currentWorld, currentStage); break;
+            case LabelView.NormalPause: SetPauseMenu(currentWorld, currentStage, currentSelection, currentBossRush); break;
+            case LabelView.BattlePause: SetBattleModePauseMenu(currentWorld, currentStage, currentSelection); break;
+            case LabelView.Confirmation: SetPauseConfirmQuestion(currentWorld, currentStage, currentSelection, currentQuestion, currentConfirmationHeader); break;
+        }
+    }
 
     void Awake()
     {
@@ -117,8 +136,7 @@ public class StageLabel : MonoBehaviour
 
     void OnEnable()
     {
-        _lastUiScale = -999f;
-        _lastBaseScaleInt = -999;
+        lastAppliedUiScale = -1f;
         ApplyRectScale("OnEnable");
     }
 
@@ -132,15 +150,18 @@ public class StageLabel : MonoBehaviour
         DestroyPauseWindow();
     }
 
-    void Update()
+    void LateUpdate()
     {
         if (stageText == null) return;
-        ApplyRectScale("Update");
+        ApplyBaseTypographyScale();
+        if (!Mathf.Approximately(lastAppliedUiScale, UiScale)) RefreshCurrentView();
+        ApplyRectScale("LateUpdate");
     }
 
     void EnsureNoWrap()
     {
         if (stageText == null) return;
+        ApplyBaseTypographyScale();
         stageText.textWrappingMode = TextWrappingModes.NoWrap;
         stageText.overflowMode = TextOverflowModes.Overflow;
         stageText.richText = true;
@@ -149,6 +170,7 @@ public class StageLabel : MonoBehaviour
 
     public void SetStage(int world, int stage)
     {
+        RememberView(LabelView.Stage, world, stage);
         EnsureNoWrap();
         pauseWindowOptionsWidth = -1f;
         SetPauseWindowVisible(false);
@@ -165,6 +187,8 @@ public class StageLabel : MonoBehaviour
 
     public void SetPauseMenu(int world, int stage, int selectedIndex, bool isBossRush)
     {
+        currentBossRush = isBossRush;
+        RememberView(LabelView.NormalPause, world, stage, selectedIndex);
         EnsureNoWrap();
 
         string stageNumber = $"{world}-{stage}";
@@ -219,6 +243,8 @@ public class StageLabel : MonoBehaviour
 
     void SetPauseConfirmQuestion(int world, int stage, int selectedIndex, string question, bool showStageHeader)
     {
+        currentQuestion = question; currentConfirmationHeader = showStageHeader;
+        RememberView(LabelView.Confirmation, world, stage, selectedIndex);
         EnsureNoWrap();
 
         string stageNumber = $"{world}-{stage}";
@@ -260,20 +286,11 @@ public class StageLabel : MonoBehaviour
 
     void ApplyRectScale(string tag)
     {
-        if (!autoResizeRectTransform || stageText == null) return;
+        if (!autoResizeRectTransform || !dynamicScale || stageText == null) return;
 
-        var cam = Camera.main;
-        Rect r = cam != null ? cam.pixelRect : new Rect(0, 0, Screen.width, Screen.height);
-
-        _ = UiScale;
-
-        if (_lastBaseScaleInt <= 0) return;
-
-        float rectWGame = baseRectWidthAtDesign / Mathf.Max(1f, designUpscale);
-        float rectHGame = baseRectHeightAtDesign / Mathf.Max(1f, designUpscale);
-
-        float rectW = Mathf.Round(rectWGame * _lastBaseScaleInt);
-        float rectH = Mathf.Round(rectHGame * _lastBaseScaleInt);
+        float scale = UiScale;
+        float rectW = baseRectWidthAtDesign * scale;
+        float rectH = baseRectHeightAtDesign * scale;
 
         var rt = stageText.rectTransform;
 
@@ -285,6 +302,7 @@ public class StageLabel : MonoBehaviour
 
     public void SetBattleModePauseMenu(int world, int stage, int selectedIndex)
     {
+        RememberView(LabelView.BattlePause, world, stage, selectedIndex);
         EnsureNoWrap();
         PauseMenuText text = GameTextDatabase.Pause;
 
@@ -547,10 +565,11 @@ public class StageLabel : MonoBehaviour
             return;
 
         float scale = UiScale;
-        float outer = Mathf.Max(1f, pauseWindowOuterBorderThicknessAtDesign * scale);
-        float gold = Mathf.Max(1f, pauseWindowGoldBorderThicknessAtDesign * scale);
-        float highlight = Mathf.Max(1f, pauseWindowHighlightThicknessAtDesign * scale);
-        float inner = Mathf.Max(1f, pauseWindowInnerBorderThicknessAtDesign * scale);
+        float minimumPixel = 1f / CanvasScale;
+        float outer = Mathf.Max(minimumPixel, pauseWindowOuterBorderThicknessAtDesign * scale);
+        float gold = Mathf.Max(minimumPixel, pauseWindowGoldBorderThicknessAtDesign * scale);
+        float highlight = Mathf.Max(minimumPixel, pauseWindowHighlightThicknessAtDesign * scale);
+        float inner = Mathf.Max(minimumPixel, pauseWindowInnerBorderThicknessAtDesign * scale);
         Vector2 outerSize = pauseWindowRect.sizeDelta;
         Vector2 goldSize = Shrink(outerSize, outer);
         Vector2 highlightSize = Shrink(goldSize, gold);

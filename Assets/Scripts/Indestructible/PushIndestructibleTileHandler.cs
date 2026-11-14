@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -104,6 +104,10 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         GameObject visual = null;
         if (moveVisualPrefab != null)
             visual = Instantiate(moveVisualPrefab, fromPos, Quaternion.identity);
+
+        if (visual != null)
+            foreach (var renderer in visual.GetComponentsInChildren<SpriteRenderer>(true))
+                Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
 
         indestructibleTilemap.SetTile(fromCell, null);
         indestructibleTilemap.RefreshTile(fromCell);

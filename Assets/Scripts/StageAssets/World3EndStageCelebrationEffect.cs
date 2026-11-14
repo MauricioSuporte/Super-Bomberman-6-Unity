@@ -104,6 +104,7 @@ namespace StageAssets
             star.sortingLayerID = sortingLayerId;
             star.sortingOrder = sortingOrder + 2;
             star.color = new Color(0.88f, 0.98f, 1f, 0f);
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(star);
 
             World3EndStageCelebrationStar animation = starObject.AddComponent<World3EndStageCelebrationStar>();
             float startDelay = index * 0.075f;
@@ -128,6 +129,7 @@ namespace StageAssets
             renderer.sprite = sprite;
             renderer.sortingLayerID = sortingLayerId;
             renderer.sortingOrder = order;
+            Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackRenderer(renderer);
             return renderer;
         }
 
@@ -179,7 +181,7 @@ namespace StageAssets
                 }
             }
 
-            texture.Apply(updateMipmaps: false, makeNoLongerReadable: true);
+            texture.Apply(updateMipmaps: false, makeNoLongerReadable: false);
             return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.33f), PixelsPerUnit);
         }
 
@@ -205,7 +207,7 @@ namespace StageAssets
                 }
             }
 
-            texture.Apply(updateMipmaps: false, makeNoLongerReadable: true);
+            texture.Apply(updateMipmaps: false, makeNoLongerReadable: false);
             return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), PixelsPerUnit);
         }
     }

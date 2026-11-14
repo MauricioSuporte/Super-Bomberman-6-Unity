@@ -66,6 +66,8 @@ namespace Assets.Scripts.Explosions
         [SerializeField, Min(0.01f)] private float screenRedFadeOutSeconds = 1f;
         [SerializeField, Range(0f, 1f)] private float screenRedMaxAlpha = 0.4f;
 
+        public Image ScreenRedOverlay => screenRedOverlay;
+
         private AnimatedSpriteRenderer steamRendererA;
         private AnimatedSpriteRenderer steamRendererB;
 
@@ -337,6 +339,7 @@ namespace Assets.Scripts.Explosions
 
             float stepDelay = Mathf.Max(0f, stepDelaySeconds);
             float flameDur = Mathf.Max(0.01f, flameDurationSeconds);
+            var groundRenderer = groundTilemap != null ? groundTilemap.GetComponent<TilemapRenderer>() : null;
 
             for (int i = startIndex; i < count; i++)
             {
@@ -362,7 +365,10 @@ namespace Assets.Scripts.Explosions
 
                 var inst = Instantiate(powderIgniterPrefab, pos, Quaternion.identity);
                 if (inst != null)
+                {
+                    inst.SetGroundSorting(groundRenderer);
                     inst.Play(ToFlameKind(e.kind), flameDur);
+                }
 
                 if (stepDelay > 0f)
                     yield return new WaitForSeconds(stepDelay);

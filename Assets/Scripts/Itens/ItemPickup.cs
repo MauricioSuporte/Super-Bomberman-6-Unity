@@ -100,6 +100,9 @@ public partial class ItemPickup : MonoBehaviour
     void Awake()
     {
         ApplyDefaultsRuntime();
+        if (!BossRushSession.IsActive &&
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal) &&
+            IsLouieEggStatic(type)) type = ItemType.RandomLouieEgg;
 
         spawnTime = Time.time;
         _col = GetComponent<Collider2D>();
@@ -190,7 +193,8 @@ public partial class ItemPickup : MonoBehaviour
             || t == ItemType.GreenLouieEgg
             || t == ItemType.YellowLouieEgg
             || t == ItemType.PinkLouieEgg
-            || t == ItemType.RedLouieEgg;
+            || t == ItemType.RedLouieEgg
+            || t == ItemType.RandomLouieEgg;
     }
 
     static string GetEggSfxResourcesPath(ItemType t)
@@ -461,6 +465,16 @@ public partial class ItemPickup : MonoBehaviour
 
     void OnItemPickup(GameObject player)
     {
+        // Collection is authority-only. Keep the world prefab generic until this
+        // decision; neither observers nor an owner prediction draws mount RNG.
+        if (type == ItemType.RandomLouieEgg)
+        {
+            // A rejected touch is still a world egg, so it cannot choose a Louie.
+            if (PlayerAlreadyMounted(player) &&
+                (PlayerHoldingBombWithPowerGlove(player) || GetOrCreateEggQueue(player).IsFull)) return;
+            type = (ItemType)UnityEngine.Random.Range((int)ItemType.BlueLouieEgg, (int)ItemType.RedLouieEgg + 1);
+            collectSfx = LoadDefaultCollectSfx(type);
+        }
         bool isEgg = IsLouieEgg(type);
         Vector2 mountFacing = ResolveMountFacing(player);
 

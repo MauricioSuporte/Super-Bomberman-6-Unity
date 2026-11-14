@@ -54,6 +54,9 @@ namespace Assets.Scripts.Netcode
         public static bool CanOpenTouch => active != null && active.Available && !active.ModalOpen && !active.departing;
         public static void OpenTouchChat() { if (CanOpenTouch && !active.typing) active.Open(); }
         string draft = "", token = "", publicName = "", publicUrl = "";
+        string measuredDraft;
+        int measuredDraftStart;
+        float measuredDraftWidth;
         bool typing, roomContext, contextInitialized, sending, directoryReady, releaseKeys;
         int consumedFrame = -1, lastId, scroll, previousKeys, publicColorIndex;
         float nextSend, failureUntil;
@@ -68,7 +71,7 @@ namespace Assets.Scripts.Netcode
             OnlineVersionAuthenticator.ValidPlayerName(OnlineVersionAuthenticator.PlayerName));
         List<Line> Lines => roomContext ? roomLines : publicLines;
 
-        public void SetFont(TMP_FontAsset value) => font = value;
+        public void SetFont(TMP_FontAsset value) { font = value; measuredDraft = null; }
 
         void Start()
         {
@@ -142,7 +145,13 @@ namespace Assets.Scripts.Netcode
                 contextInitialized = true;
                 scroll = 0;
             }
-            if (!Available || ModalOpen || (!Application.isFocused && !Application.isBatchMode)) Close();
+            bool focused = Application.isFocused;
+#if UNITY_EDITOR || DEBUG
+            // The isolated rendered InputSystem reproduction owns a virtual keyboard;
+            // it validates layout/transport, not desktop focus handling.
+            focused |= LocalPredictionSmoke.ChatInputReproduction;
+#endif
+            if (!Available || ModalOpen || (!focused && !Application.isBatchMode)) Close();
             else if (keyboard != null)
             {
                 if (!typing && (pressed & 1) != 0)
@@ -478,7 +487,7 @@ namespace Assets.Scripts.Netcode
             text.text = "";
             text.fontStyle = FontStyles.Bold;
             text.outlineWidth = 0.2f; text.outlineColor = Color.black;
-            text.fontSize = size; text.color = Color.white; text.richText = false; text.raycastTarget = false;
+            text.fontSize = Mathf.Max(6, size == 6 ? 7 : size); text.color = Color.white; text.richText = false; text.raycastTarget = false;
             text.textWrappingMode = TextWrappingModes.Normal; text.overflowMode = TextOverflowModes.Truncate;
             LocalizedTmpFontFallback.Apply(text, true);
             return text;
@@ -516,7 +525,26 @@ namespace Assets.Scripts.Netcode
             contrastNames.text = contrast;
             LocalizedTmpFontFallback.Apply(history);
             LocalizedTmpFontFallback.Apply(entry);
+            AlignNameContrast(history, contrastNames);
             UpdateTextBackgrounds();
+        }
+
+        // Transparent body glyphs can change TMP's visible-descender alignment.
+        // Place the name outline at the actual history glyph origins, including wraps.
+        internal static void AlignNameContrast(TMP_Text body, TMP_Text names)
+        {
+            body.ForceMeshUpdate(); names.ForceMeshUpdate();
+            int count = Mathf.Min(body.textInfo.characterCount, names.textInfo.characterCount);
+            for (int i = 0; i < count; i++)
+            {
+                var source = body.textInfo.characterInfo[i];
+                var target = names.textInfo.characterInfo[i];
+                if (!target.isVisible || source.character != target.character) continue;
+                Vector3 offset = new(source.origin - target.origin, source.baseLine - target.baseLine, 0);
+                var vertices = names.textInfo.meshInfo[target.materialReferenceIndex].vertices;
+                for (int corner = 0; corner < 4; corner++) vertices[target.vertexIndex + corner] += offset;
+            }
+            names.UpdateVertexData(TMP_VertexDataUpdateFlags.Vertices);
         }
 
         void UpdateTextBackgrounds()
@@ -558,9 +586,22 @@ namespace Assets.Scripts.Netcode
         {
             if (entry == null) return;
             entry.gameObject.SetActive(typing);
-            int start = Mathf.Max(0, draft.Length - 52);
-            if (start > 0 && char.IsLowSurrogate(draft[start])) start++;
-            entry.text = typing ? "> " + draft[start..] + (Mathf.Repeat(Time.unscaledTime, 1) < 0.5f ? "_" : "") : "";
+            float width = Mathf.Max(1f, entry.rectTransform.rect.width);
+            if (measuredDraft != draft || measuredDraftWidth != width)
+            {
+                measuredDraft = draft; measuredDraftWidth = width;
+                measuredDraftStart = Mathf.Max(0, draft.Length - 52);
+                if (measuredDraftStart > 0 && char.IsLowSurrogate(draft[measuredDraftStart])) measuredDraftStart++;
+                // Fit the actual glyph advances, including Japanese fallback and
+                // the cursor, rather than assuming a fixed character count.
+                while (measuredDraftStart < draft.Length &&
+                    entry.GetPreferredValues("> " + draft[measuredDraftStart..] + "_", float.PositiveInfinity, float.PositiveInfinity).x > width)
+                {
+                    measuredDraftStart++;
+                    if (measuredDraftStart < draft.Length && char.IsLowSurrogate(draft[measuredDraftStart])) measuredDraftStart++;
+                }
+            }
+            entry.text = typing ? "> " + draft[measuredDraftStart..] + (Mathf.Repeat(Time.unscaledTime, 1) < 0.5f ? "_" : "") : "";
         }
 
         void OnDisable()

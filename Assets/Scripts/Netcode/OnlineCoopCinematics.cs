@@ -42,6 +42,7 @@ namespace Assets.Scripts.Netcode
 
         void PresentCoopFades()
         {
+            PresentCoopCamera();
             foreach (var pair in coopFadeSamples)
             {
                 var image = pair.Key;
@@ -56,11 +57,18 @@ namespace Assets.Scripts.Netcode
         Image coopSpotlightImage;
         readonly Dictionary<string, Camera> coopClientCameras = new();
         string coopApprovedCamera;
+        StagePreIntroPlayersWalk coopPreIntro;
+        Camera coopPoseCamera;
+        Vector3 coopCameraFrom, coopCameraTo;
+        float coopCameraStarted;
+        bool coopCameraScripted;
 
         void InitializeCoopCinematics()
         {
+            coopPreIntro = FindAnyObjectByType<StagePreIntroPlayersWalk>(FindObjectsInactive.Include);
             foreach (var camera in FindObjectsByType<Camera>(FindObjectsInactive.Include))
-                if (camera.gameObject.scene.name == coopScene && camera.CompareTag("MainCamera"))
+                if (camera.gameObject.scene.name == coopScene && (camera.CompareTag("MainCamera") ||
+                    (coopPreIntro != null && camera == coopPreIntro.EntrancePresentationCamera)))
                     coopClientCameras[CoopPath(camera.transform)] = camera;
             foreach (var image in FindObjectsByType<Image>(FindObjectsInactive.Include))
                 if (image.gameObject.scene.name == coopScene) coopClientImages[CoopPath(image.transform)] = image;
@@ -69,11 +77,14 @@ namespace Assets.Scripts.Netcode
             var clown = FindAnyObjectByType<StageIntroClownMaskBoss>(FindObjectsInactive.Include);
             coopSpotlightImage = clown != null ? clown.spotlightImage : null;
             AddCoopCinematic(coopSpotlightImage);
+            foreach (var boiler in FindObjectsByType<Assets.Scripts.Explosions.BoilerPowderTrailIgniterPrefab>(FindObjectsInactive.Include))
+                if (boiler.gameObject.scene.name == coopScene) AddCoopCinematic(boiler.ScreenRedOverlay);
         }
 
         string CaptureCoopCameraSelection()
         {
-            var camera=Camera.main;
+            var camera = coopPreIntro != null ? coopPreIntro.ActivePresentationCamera : null;
+            if (camera == null) camera = Camera.main;
             return camera!=null&&camera.gameObject.scene.name==coopScene?CoopPath(camera.transform):null;
         }
 
@@ -88,6 +99,26 @@ namespace Assets.Scripts.Netcode
                 }
             coopApprovedCamera=path;
             if(selected.TryGetComponent<CameraFollowClamp2D>(out var follow))follow.ForceSnapNow(refreshPlayersNow:true);
+        }
+
+        void ApplyCoopCameraPose(string path, Vector3 position, float size, bool scripted, bool follows)
+        {
+            if (!float.IsFinite(position.x) || !float.IsFinite(position.y) || !float.IsFinite(position.z) ||
+                !float.IsFinite(size) || size <= 0 || !coopClientCameras.TryGetValue(path ?? "", out var camera) || camera == null) return;
+            bool changed = coopPoseCamera != camera;
+            bool wasScripted = coopCameraScripted;
+            coopPoseCamera = camera; coopCameraScripted = scripted;
+            if (camera.TryGetComponent<CameraFollowClamp2D>(out var follow)) follow.enabled = follows && !scripted;
+            camera.orthographicSize = size;
+            if (changed || wasScripted && !scripted) camera.transform.position = position;
+            coopCameraFrom = camera.transform.position; coopCameraTo = position; coopCameraStarted = Time.unscaledTime;
+        }
+
+        void PresentCoopCamera()
+        {
+            if (!coopCameraScripted || coopPoseCamera == null || GamePauseController.IsPaused) return;
+            coopPoseCamera.transform.position = Vector3.Lerp(coopCameraFrom, coopCameraTo,
+                Mathf.Clamp01((Time.unscaledTime - coopCameraStarted) / .1f));
         }
 
         void AddCoopCinematic(Image image)
@@ -128,6 +159,11 @@ namespace Assets.Scripts.Netcode
                     ApplyCoopFade(image, frame.color, frame.visible);
                     continue;
                 }
+                // Before the native intro material is initialized this image can
+                // arrive as a plain hidden fade. Its old fade must not keep hiding
+                // the subsequently approved spotlight every presentation frame.
+                coopFadeSamples.Remove(image);
+                image.enabled = true;
                 image.gameObject.SetActive(frame.visible); image.color = frame.color;
                 if (!frame.spotlight || image.material == null || !image.material.HasProperty("_EllipseX")) continue;
                 var material = image.material;

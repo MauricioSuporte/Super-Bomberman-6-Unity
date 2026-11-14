@@ -5,6 +5,7 @@ using UnityEngine;
 public static partial class SaveSystem
 {
     static SaveData coopOfflineData;
+    static bool receivedRoomProgress;
     public static bool HasOnlineCoopSettings => coopOfflineData != null;
 
     public static void BeginOnlineCoopSettings()
@@ -59,6 +60,9 @@ public static partial class SaveSystem
         incoming.controls = data.controls; incoming.touchControls = data.touchControls;
         incoming.videoSettings = data.videoSettings; incoming.language = data.language;
         NormalizeData(incoming);
+        SaveData previous = data;
+        bool notifyUnlocks = receivedRoomProgress && Assets.Scripts.Netcode.NetSync.Mode == Assets.Scripts.Netcode.NetSync.NetMode.Client;
+        receivedRoomProgress = true;
         data = incoming;
         onlineBattleData = data;
         if (persistOwner)
@@ -74,11 +78,13 @@ public static partial class SaveSystem
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Debug.LogWarning("[SaveSystem] Online owner save failed: " + error.Message); }
         }
+        if (notifyUnlocks) UnlockProgress.NotifyRoomUnlocks(previous, incoming);
         return true;
     }
 
     public static void EndOnlineCoopSettings()
     {
+        receivedRoomProgress = false;
         if (coopOfflineData == null) return;
         data = coopOfflineData;
         coopOfflineData = null;

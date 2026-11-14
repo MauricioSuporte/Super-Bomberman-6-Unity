@@ -104,7 +104,7 @@ namespace Assets.Scripts.Netcode
             float remaining = BombermanNetworkManager.RoomTimeoutSeconds;
             bool inLobby = SceneManager.GetActiveScene().name == NetworkLobby.SceneName;
             timeoutRoot.SetActive(inRoom && (inLobby || remaining <= 60));
-            timeoutLabel.fontSize = inLobby ? 5 : 7;
+            timeoutLabel.fontSize = inLobby ? 6 : 7;
             timeoutLabel.text = string.Format(inLobby ? GameTextDatabase.Online.LobbyTimeout : GameTextDatabase.Online.IdleTimeout,
                 System.TimeSpan.FromSeconds(Mathf.CeilToInt(remaining)).ToString(@"mm\:ss"));
 
@@ -292,13 +292,13 @@ namespace Assets.Scripts.Netcode
             browserRoot = new GameObject("RoomBrowser", typeof(RectTransform));
             browserRoot.transform.SetParent(parent, false);
             Position(browserRoot.GetComponent<RectTransform>(), 0, 0, 256, 224);
-            browserName = Label(browserRoot.transform, "PlayerName", 0, 73, 212, 12, 6);
+            browserName = Label(browserRoot.transform, "PlayerName", 0, 78, 212, 12, 6);
             browserName.richText = false;
-            browserStatus = Label(browserRoot.transform, "BrowserStatus", 0, 63, 212, 10, 4);
+            browserStatus = Label(browserRoot.transform, "BrowserStatus", 0, 62, 212, 18, 6);
             browserStatus.textWrappingMode = TextWrappingModes.Normal;
             var viewport = new GameObject("RoomList", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
             viewport.transform.SetParent(browserRoot.transform, false);
-            Position(viewport.GetComponent<RectTransform>(), 0, 0, 212, 92);
+            Position(viewport.GetComponent<RectTransform>(), 0, -4, 212, 86);
             viewport.GetComponent<Image>().color = Ink;
             var listEdge = viewport.AddComponent<Outline>();
             listEdge.effectColor = new Color32(105, 87, 151, 255);
@@ -322,12 +322,12 @@ namespace Assets.Scripts.Netcode
             CreateRoomTableHeader(browserRoot.transform);
             nameButton = MakeButton(browserRoot.transform, "EditName", 0, -80, OpenName);
             Position(nameButton.GetComponent<RectTransform>(), 0, -80, 74, 16);
-            nameButton.GetComponentInChildren<TextMeshProUGUI>(true).fontSize = 5;
+            nameButton.GetComponentInChildren<TextMeshProUGUI>(true).fontSize = 6;
             Position(nameButton.GetComponentInChildren<TextMeshProUGUI>(true).rectTransform, 0, 0, 94, 14);
             discordButton = MakeButton(browserRoot.transform, "Discord", 76, -80, GameUpdateController.OpenDiscord);
             Position(discordButton.GetComponent<RectTransform>(), 76, -80, 54, 16);
             Position(discordButton.GetComponentInChildren<TextMeshProUGUI>(true).rectTransform, 0, 0, 50, 14);
-            discordButton.GetComponentInChildren<TextMeshProUGUI>(true).fontSize = 5;
+            discordButton.GetComponentInChildren<TextMeshProUGUI>(true).fontSize = 6;
             discordButton.GetComponentInChildren<TextMeshProUGUI>(true).text = "DISCORD";
             updateButton = MakeButton(browserRoot.transform, "UpdateGame", 0, 28, RunUpdater);
             updateButton.gameObject.SetActive(false);
@@ -372,7 +372,7 @@ namespace Assets.Scripts.Netcode
                 var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
                 label.richText = false;
                 label.overflowMode = TextOverflowModes.Ellipsis;
-                label.fontSize = 5;
+                label.fontSize = 6;
                 label.textWrappingMode = TextWrappingModes.Normal;
                 roomButtons.Add(button);
                 visibleRooms.Add(null);
@@ -564,9 +564,9 @@ namespace Assets.Scripts.Netcode
             string padded = editedName.PadRight(NameLength);
             for (int i = 0; i < NameLength; i++)
                 display.Append(i == nameCursor ? "<color=#C080FF><u>" + (padded[i] == ' ' ? '_' : padded[i]) + "</u></color>" : padded[i].ToString());
-            nameText.fontSize = editingRoomName ? 5 : 8;
+            nameText.fontSize = editingRoomName ? 6 : 8;
             nameText.text = display.ToString();
-            nameHints.text = GameTextDatabase.Online.NameHint;
+            nameHints.text = "<line-height=10px>" + GameTextDatabase.Online.NameHint + "</line-height>";
             if (TextCancel) { CloseName(); PlayLobbySound(returnSfx); return; }
             if (!TextConfirm) return;
             if (!(editingRoomName ? ValidRoomName(editedName) : OnlineVersionAuthenticator.ValidPlayerName(editedName))) { invalidName = true; return; }
@@ -599,7 +599,7 @@ namespace Assets.Scripts.Netcode
                 digits.Append(i == passwordDigit ? "<color=#C080FF>[" + passwordDigits[i] + "]</color>" : " * ");
             passwordTitle.text = GameTextDatabase.Online.Password;
             passwordText.text = digits.ToString();
-            passwordHints.text = GameTextDatabase.Online.PasswordHint;
+            passwordHints.text = "<line-height=10px>" + GameTextDatabase.Online.PasswordHint + "</line-height>";
             if (TextCancel)
             {
                 CloseTouchKeyboard();
@@ -666,7 +666,7 @@ namespace Assets.Scripts.Netcode
             text.font = lobbyFont != null ? lobbyFont : TMP_Settings.defaultFontAsset;
             text.color = new Color32(248, 240, 208, 255);
             text.textWrappingMode = TextWrappingModes.NoWrap;
-            text.fontSize = size;
+            text.fontSize = Mathf.Max(6, size);
             text.alignment = TextAlignmentOptions.Center;
             text.raycastTarget = false;
             LocalizedTmpFontFallback.Apply(text);

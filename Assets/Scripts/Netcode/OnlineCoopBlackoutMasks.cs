@@ -15,6 +15,22 @@ namespace Assets.Scripts.Netcode
             (parameters.w == 0 || parameters.w == 1);
     }
 
+    // Bounded recipe for the authored Hall portal shader, never arbitrary client material state.
+    public sealed class CoopPortalPalette : IEquatable<CoopPortalPalette>
+    {
+        public int mode, maskSprite;
+        public bool beamMask;
+        public float revealY, baseHeight;
+        public Vector4 portalWorld, portalUv, renderWorld, renderUv;
+        public bool Equals(CoopPortalPalette other) => other != null && mode == other.mode && maskSprite == other.maskSprite &&
+            beamMask == other.beamMask && revealY == other.revealY && baseHeight == other.baseHeight &&
+            portalWorld == other.portalWorld && portalUv == other.portalUv && renderWorld == other.renderWorld && renderUv == other.renderUv;
+        static bool Finite(Vector4 value) => float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z) && float.IsFinite(value.w);
+        public bool IsValid() => (mode == 1 || mode == 2) && maskSprite >= 0 && float.IsFinite(revealY) &&
+            float.IsFinite(baseHeight) && baseHeight >= 0 && Finite(portalWorld) && Finite(portalUv) && Finite(renderWorld) && Finite(renderUv) &&
+            portalWorld.z > 0 && portalWorld.w > 0 && renderWorld.z > 0 && renderWorld.w > 0;
+    }
+
     // Optional approved material recipe; ordinary sprite frames carry only null.
     public sealed class CoopBlackoutMask : IEquatable<CoopBlackoutMask>
     {
@@ -54,6 +70,48 @@ namespace Assets.Scripts.Netcode
 
     public partial class BombermanNetworkManager
     {
+        MaterialPropertyBlock coopPortalProperties;
+        readonly HashSet<SpriteRenderer> coopPortalViews = new();
+        CoopPortalPalette CaptureCoopPortal(SpriteRenderer renderer)
+        {
+            if (renderer.sharedMaterial == null || renderer.sharedMaterial.shader == null ||
+                renderer.sharedMaterial.shader.name != "SuperBomberman/World3 Hall Portal Palette") return null;
+            coopPortalProperties ??= new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(coopPortalProperties);
+            int mode = Mathf.RoundToInt(coopPortalProperties.GetFloat("_RevealMode"));
+            if (mode == 0) return null;
+            var portal = renderer.GetComponentInParent<global::StageAssets.World3HallPortal>(true);
+            if (portal == null) return null;
+            return new CoopPortalPalette { mode = mode, maskSprite = CoopSpriteId(portal.PaletteMaskSprite),
+                beamMask = coopPortalProperties.GetFloat("_BeamMaskEnabled") > .5f,
+                revealY = coopPortalProperties.GetFloat("_RevealY"), baseHeight = coopPortalProperties.GetFloat("_PortalBaseMaskHeight"),
+                portalWorld = coopPortalProperties.GetVector("_PortalWorldRect"), portalUv = coopPortalProperties.GetVector("_PortalUVRect"),
+                renderWorld = coopPortalProperties.GetVector("_RenderWorldRect"), renderUv = coopPortalProperties.GetVector("_RenderUVRect") };
+        }
+        bool ApplyCoopPortal(SpriteRenderer view, CoopPortalPalette portal)
+        {
+            if (!portal.IsValid() || view.sharedMaterial == null || view.sharedMaterial.shader == null ||
+                view.sharedMaterial.shader.name != "SuperBomberman/World3 Hall Portal Palette") return false;
+            var mask = CoopSpriteAt(portal.maskSprite);
+            if (mask == null) return false;
+            coopPortalProperties ??= new MaterialPropertyBlock(); coopPortalProperties.Clear();
+            coopPortalProperties.SetFloat("_RevealMode", portal.mode);
+            coopPortalProperties.SetFloat("_RevealY", portal.revealY);
+            coopPortalProperties.SetFloat("_BeamMaskEnabled", portal.beamMask ? 1 : 0);
+            coopPortalProperties.SetFloat("_PortalBaseMaskHeight", portal.baseHeight);
+            coopPortalProperties.SetTexture("_PortalMaskTex", mask.texture);
+            coopPortalProperties.SetVector("_PortalWorldRect", portal.portalWorld);
+            coopPortalProperties.SetVector("_PortalUVRect", portal.portalUv);
+            coopPortalProperties.SetVector("_RenderWorldRect", portal.renderWorld);
+            coopPortalProperties.SetVector("_RenderUVRect", portal.renderUv);
+            view.SetPropertyBlock(coopPortalProperties); coopPortalViews.Add(view);
+            return true;
+        }
+        void ReleaseCoopPortal(SpriteRenderer view)
+        {
+            if (coopPortalViews.Remove(view) && view != null) view.SetPropertyBlock(null);
+        }
+
         MaterialPropertyBlock coopWaterProperties;
         Material coopWaterTemplate;
         readonly Dictionary<SpriteRenderer, Vector4> coopWaterViewStates = new();
@@ -197,6 +255,7 @@ namespace Assets.Scripts.Netcode
             coopViewMaskMaterials.Clear(); coopBlackoutMasks.Clear(); coopDefaultSpriteMaterial = null;
             coopWaterTemplate = null; coopWaterProperties = null;
             coopWaterViewStates.Clear(); coopViewMaterialIds.Clear();
+            coopPortalViews.Clear(); coopPortalProperties = null;
         }
     }
 }

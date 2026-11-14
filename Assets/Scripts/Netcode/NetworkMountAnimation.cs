@@ -282,7 +282,7 @@ namespace Assets.Scripts.Netcode
                 foreach (var behaviour in mount.GetComponentsInChildren<MonoBehaviour>(true))
                 {
                     behaviour.StopAllCoroutines();
-                    behaviour.enabled = false;
+                    behaviour.enabled = behaviour is PlayerWaterSubmersionEffect;
                 }
             if (isLocalPlayer && GetComponent<NetworkPlayerInput>()?.OwnerUsesAuthorityPresentation == true)
                 ownerVisualBaseline = NetworkVisualPose.CaptureBaseline(renderers, transform);

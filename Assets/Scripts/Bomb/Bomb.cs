@@ -1936,6 +1936,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         StopKickAndSnapToGrid(tileSize, hitWorldPos);
     }
 
+    public bool SinkVisualActive { get; private set; }
+    public void BeginSinkVisual() => SinkVisualActive = true;
+
     public void MarkAsExploded()
     {
         HasExploded = true;

@@ -4909,9 +4909,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4947014498081102474}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ff3ba0becae47b8b9381191598957c8, type: 3}
+  m_Script: {fileID: 11500000, guid: 186e050eb80646e0a0460eaf20d33317, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformReliable
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.PlayerNetworkTransform
   syncMethod: 0
   syncDirection: 0
   syncMode: 0

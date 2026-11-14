@@ -73,9 +73,10 @@ namespace Assets.Scripts.Netcode
             if (!NetworkServer.active) return true;
             if (target == "END_SCREEN")
             {
-                if (target == "END_SCREEN") RoomCompleted = true;
+                RoomCompleted = true;
                 BossRushSession.CancelRun();
-                RouteOnlineMenuScene(target);
+                if (StageIntroTransition.Instance != null && !StageIntroTransition.Instance.EndingRunning)
+                    StageIntroTransition.Instance.StartEndingScreenSequence();
             }
             else if (target is "TitleScreen" or "BossRush" or "WorldMap" or "SkinSelect" or "SaveFileMenu")
                 RouteOnlineMenuScene(target);
@@ -125,6 +126,8 @@ namespace Assets.Scripts.Netcode
                     global::StageAssets.World3HallChipAssemblyController.PrepareReturn(current, !cleared);
                     RouteCoopScene(global::StageAssets.World3HallPortalSelectionController.SceneName);
                 }
+                else if (string.IsNullOrEmpty(nextStage) || nextStage == "END_SCREEN")
+                    RouteCoopScene("END_SCREEN");
                 else if (cleared || game.IsCompletedWorldBoss(current))
                 {
                     if (game.IsCompletedWorldBoss(current)) WorldMapController.FocusStageOnNextLoad(nextStage);

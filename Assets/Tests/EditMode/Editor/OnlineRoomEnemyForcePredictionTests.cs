@@ -67,6 +67,8 @@ public sealed partial class OnlineRoomEditModeTests
     public void PendingEnemyMovePositionDoesNotPublishUnexecutedLargeDisplacement(NetworkEnemyForceKind kind)
     {
         using var fixture = new EnemyForceFixture(kind); Vector2 before = fixture.player.body.position;
+        if (kind == NetworkEnemyForceKind.Hurricane)
+            typeof(HurricaneMovementController).GetField("pullSpeedTilesPerSecond", PusherFlags).SetValue(fixture.enemy, 20f);
         fixture.NativeStep(); Assert.AreEqual(before, fixture.player.body.position);
         Assert.AreEqual(0, fixture.player.movement.CaptureNetworkMovementState().enemyForce.sourceId);
         fixture.player.AdvancePhysics(); Assert.IsTrue(fixture.player.movement.CaptureNetworkMovementState().enemyForce.IsValid);
@@ -328,6 +330,20 @@ public sealed partial class OnlineRoomEditModeTests
         Assert.AreEqual(NetworkEnemyForceKind.None, fixture.player.movement.CaptureNetworkMovementState().enemyForce.kind);
     }
 
+    [Test]
+    public void HurricaneNativePullSurvivesAnIdleNetworkMotorTickBeforePhysics()
+    {
+        using var fixture = new EnemyForceFixture(NetworkEnemyForceKind.Hurricane);
+        Vector2 before = fixture.player.body.position;
+        fixture.NativeStep();
+        Assert.Greater(Vector2.Distance(before, fixture.player.body.position), .001f,
+            "An approved pull must exist before the next immediate motor tick.");
+        Vector2 pulled = fixture.player.body.position;
+        fixture.player.movement.SimulateNetworkMovementTick(0);
+        Assert.That(Vector2.Distance(pulled, fixture.player.body.position), Is.LessThan(.00001f));
+        Assert.IsTrue(fixture.player.movement.CaptureNetworkMovementState().enemyForce.IsValid);
+    }
+
     sealed class EnemyForceFixture : System.IDisposable
     {
         public readonly PusherFixture player = new(circle: true);
@@ -399,6 +415,120 @@ public sealed partial class OnlineRoomEditModeTests
         {
             (bubble as System.IDisposable)?.Dispose(); Object.DestroyImmediate(enemy.gameObject); player.Dispose();
         }
+    }
+
+    [Test]
+    public void OwnerReliableDecoderRetainsItsSpawnOriginWhenNativeInputStarts()
+    {
+        var actor = new GameObject("OwnerReliableDecoder"); actor.SetActive(false);
+        var source = new GameObject("ServerReliableDecoder"); source.SetActive(false);
+        var fields = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            actor.AddComponent<BoxCollider2D>(); actor.AddComponent<MovementController>();
+            var input = actor.AddComponent<NetworkPlayerInput>();
+            var movement = actor.GetComponent<MovementController>();
+            typeof(MovementController).GetProperty(nameof(MovementController.Rigidbody)).SetValue(movement, actor.GetComponent<Rigidbody2D>());
+            typeof(NetworkPlayerInput).GetMethod("Awake", fields).Invoke(input, null);
+            var decoder = actor.AddComponent<PlayerNetworkTransform>(); decoder.target = actor.transform;
+            source.AddComponent<NetworkIdentity>();
+            var encoder = source.AddComponent<NetworkTransformReliable>(); encoder.target = source.transform;
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", fields).Invoke(actor.GetComponent<NetworkIdentity>(), null);
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", fields).Invoke(source.GetComponent<NetworkIdentity>(), null);
+            encoder.syncRotation = decoder.syncRotation = false; encoder.syncScale = decoder.syncScale = false;
+            encoder.positionPrecision = decoder.positionPrecision = .01f;
+            source.transform.position = new Vector3(-7, 4, 0);
+            using (var initial = NetworkWriterPool.Get())
+            {
+                encoder.OnSerialize(initial, true);
+                decoder.OnDeserialize(new NetworkReader(initial.ToArray()), true);
+            }
+            input.OnStartLocalPlayer();
+            Assert.IsTrue(decoder.enabled, "Disabling the decoder resets the reliable spawn origin");
+            source.transform.position = new Vector3(39.25f, 2, 0);
+            using (var delta = NetworkWriterPool.Get())
+            {
+                encoder.OnSerialize(delta, false);
+                decoder.OnDeserialize(new NetworkReader(delta.ToArray()), false);
+            }
+            var quantized = (Vector3Long)typeof(NetworkTransformReliable).GetField("lastDeserializedPosition", fields).GetValue(decoder);
+            Assert.That(Compression.ScaleToFloat(quantized, decoder.positionPrecision), Is.EqualTo(source.transform.position));
+        }
+        finally { Object.DestroyImmediate(actor); Object.DestroyImmediate(source); }
+    }
+
+    [Test]
+    public void PlayerTransformLeavesTheOwnerRootToItsMotorAndKeepsObserverInterpolation()
+    {
+        var actor = new GameObject("OwnerVsObserverTransform"); actor.SetActive(false);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            var identity = actor.AddComponent<NetworkIdentity>();
+            var sync = actor.AddComponent<PlayerNetworkTransform>(); sync.target = actor.transform;
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", flags).Invoke(identity, null);
+            double now = NetworkTime.time;
+            sync.clientSnapshots.Add(now - .2, new TransformSnapshot(now - .2, now - .2, Vector3.right * 10, Quaternion.identity, Vector3.one));
+            sync.clientSnapshots.Add(now - .1, new TransformSnapshot(now - .1, now - .1, Vector3.right * 11, Quaternion.identity, Vector3.one));
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, true);
+            typeof(PlayerNetworkTransform).GetMethod("UpdateClient", flags).Invoke(sync, null);
+            Assert.AreEqual(Vector3.zero, actor.transform.position);
+            Assert.AreEqual(2, sync.clientSnapshots.Count, "Owner interpolation must not consume the decoder history");
+            typeof(NetworkIdentity).GetProperty("isLocalPlayer").SetValue(identity, false);
+            typeof(PlayerNetworkTransform).GetMethod("UpdateClient", flags).Invoke(sync, null);
+            Assert.That(actor.transform.position.x, Is.GreaterThanOrEqualTo(10));
+        }
+        finally { Object.DestroyImmediate(actor); }
+    }
+
+    [Test]
+    public void PlayerPrefabKeepsTheReliableDecoderAliveForOwnerAuthorityMotion()
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player.prefab");
+        Assert.IsNotNull(prefab.GetComponent<PlayerNetworkTransform>());
+        Assert.AreEqual(1, prefab.GetComponents<NetworkTransformReliable>().Length);
+    }
+
+    [Test]
+    public void RenderedDevelopmentSaveOverrideResolvesBeforeLoadingAnyUserData()
+    {
+        string previous = System.Environment.GetEnvironmentVariable("SB6_SAVE_DIRECTORY");
+        string sandbox = System.IO.Path.GetFullPath(System.IO.Path.Combine("Temp", "RenderedSaveIsolation"));
+        try
+        {
+            System.Environment.SetEnvironmentVariable("SB6_SAVE_DIRECTORY", sandbox);
+            Assert.AreEqual(sandbox, global::SaveSystem.SaveDirectoryPath);
+            System.Environment.SetEnvironmentVariable("SB6_SAVE_DIRECTORY", null);
+            Assert.AreEqual(System.IO.Path.Combine(Application.persistentDataPath, "SaveData"), global::SaveSystem.SaveDirectoryPath);
+        }
+        finally { System.Environment.SetEnvironmentVariable("SB6_SAVE_DIRECTORY", previous); }
+    }
+
+    [Test]
+    public void DelayedHostRoomCutLoopbackDoesNotResetTheAlreadyResumedEncoder()
+    {
+        var actor = new GameObject("HostRoomCutEncoder"); actor.SetActive(false);
+        var fields = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            var identity = actor.AddComponent<NetworkIdentity>();
+            var sync = actor.AddComponent<PlayerNetworkTransform>(); sync.target = actor.transform;
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours", fields).Invoke(identity, null);
+            typeof(NetworkIdentity).GetProperty("isServer").SetValue(identity, true);
+            typeof(NetworkIdentity).GetProperty("isClient").SetValue(identity, true);
+            Vector3 destination = new(39, 2, 0); Quaternion rotation = Quaternion.identity;
+            typeof(PlayerNetworkTransform).GetMethod("PrepareServerRoomCut", fields).Invoke(sync, new object[] { destination, rotation });
+            var compressed = typeof(NetworkTransformReliable).GetField("lastSerializedPosition", fields);
+            var afterFirstSend = new Vector3Long(3900, 200, 0);
+            compressed.SetValue(sync, afterFirstSend);
+            var loopback = typeof(PlayerNetworkTransform).GetMethod("OnTeleport", fields, null, new[] { typeof(Vector3), typeof(Quaternion) }, null);
+            loopback.Invoke(sync, new object[] { destination, rotation });
+            Assert.AreEqual(afterFirstSend, (Vector3Long)compressed.GetValue(sync));
+            // The suppression is one-use; a later genuine cut still resets normally.
+            loopback.Invoke(sync, new object[] { destination + Vector3.right, rotation });
+            Assert.AreEqual(Vector3Long.zero, (Vector3Long)compressed.GetValue(sync));
+        }
+        finally { Object.DestroyImmediate(actor); }
     }
 }
 #endif

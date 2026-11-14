@@ -616,7 +616,8 @@ public class MechaBossSequence : MonoBehaviour
                 continue;
 
             ItemPickup prefab = itemPrefabs[UnityEngine.Random.Range(0, itemPrefabs.Length)];
-            Instantiate(prefab, worldPos, Quaternion.identity);
+            var item = Instantiate(prefab, worldPos, Quaternion.identity);
+            Assets.Scripts.Netcode.NetSpawn.Server(item.gameObject);
             return;
         }
     }
@@ -816,7 +817,8 @@ public class MechaBossSequence : MonoBehaviour
         if (prefab == null)
             return;
 
-        Instantiate(prefab, worldPos, Quaternion.identity);
+        var item = Instantiate(prefab, worldPos, Quaternion.identity);
+        Assets.Scripts.Netcode.NetSpawn.Server(item.gameObject);
     }
 
     void EnsurePlayersRefs()

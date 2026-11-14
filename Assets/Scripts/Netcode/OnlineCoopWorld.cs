@@ -22,12 +22,14 @@ namespace Assets.Scripts.Netcode
         public CoopBlackoutMask blackout;
         public CoopWaterSurface water;
         public CoopAbsorptionLight absorption;
+        public CoopPortalPalette portal;
         public bool Matches(CoopSpriteFrame other) => animation == 0 && other.animation == 0 && id == other.id && sprite == other.sprite && material == other.material &&
             sortingLayer == other.sortingLayer && order == other.order && position == other.position && scale == other.scale &&
             rotation == other.rotation && color == other.color && flipX == other.flipX && flipY == other.flipY && visible == other.visible && mask == other.mask &&
             enemyStepLimit == other.enemyStepLimit && pauseWithGameplay == other.pauseWithGameplay && (blackout == null ? other.blackout == null : blackout.Equals(other.blackout)) &&
             (water == null ? other.water == null : water.Equals(other.water)) &&
-            (absorption == null ? other.absorption == null : absorption.Equals(other.absorption));
+            (absorption == null ? other.absorption == null : absorption.Equals(other.absorption)) &&
+            (portal == null ? other.portal == null : portal.Equals(other.portal));
     }
     public struct CoopSprites : NetworkMessage { public double time; public string scene; public CoopSpriteFrame[] frames; public int[] removed; }
 
@@ -86,6 +88,7 @@ namespace Assets.Scripts.Netcode
         public string scene, path;
         public bool reset, complete, collisionEnabled;
         public Vector2 collisionOffset;
+        public Vector3Int origin, size;
         public Vector3 position, scale;
         public Quaternion rotation;
         public Color color;
@@ -154,75 +157,81 @@ namespace Assets.Scripts.Netcode
         string coopScene;
         GameObject coopViewRoot;
 
+        // Host consumes shared domain broadcasts without replaying native effects.
+        static void RegisterRemoteWorldHandler<T>(Action<T> handler) where T : struct, NetworkMessage
+        {
+            NetworkClient.RegisterHandler<T>(message => { if (!NetworkServer.active) handler(message); });
+        }
+
         void InitializeCoopClient()
         {
-            NetworkClient.RegisterHandler<CoopWorldBegin>(ApplyCoopBegin);
-            NetworkClient.RegisterHandler<BombAnimations>(ApplyBombAnimations);
-            NetworkClient.RegisterHandler<CoopSprites>(ApplyCoopSprites);
-            NetworkClient.RegisterHandler<CoopMotion>(ApplyCoopMotion);
-            NetworkClient.RegisterHandler<CoopTiles>(ApplyCoopTiles);
-            NetworkClient.RegisterHandler<CoopTileAnimation>(ApplyCoopTileAnimation);
-            NetworkClient.RegisterHandler<CoopSound>(ApplyCoopSound);
-            NetworkClient.RegisterHandler<CoopEnvironmentLoops>(ApplyCoopEnvironmentLoops);
-            NetworkClient.RegisterHandler<BattleFeedback>(ApplyBattleFeedback);
-            NetworkClient.RegisterHandler<SuddenDeathState>(message =>
+            RegisterRemoteWorldHandler<CoopWorldBegin>(ApplyCoopBegin);
+            RegisterRemoteWorldHandler<BombAnimations>(ApplyBombAnimations);
+            RegisterRemoteWorldHandler<CoopSprites>(ApplyCoopSprites);
+            RegisterRemoteWorldHandler<CoopMotion>(ApplyCoopMotion);
+            RegisterRemoteWorldHandler<CoopTiles>(ApplyCoopTiles);
+            RegisterRemoteWorldHandler<CoopTileAnimation>(ApplyCoopTileAnimation);
+            RegisterRemoteWorldHandler<CoopSound>(ApplyCoopSound);
+            RegisterRemoteWorldHandler<CoopEnvironmentLoops>(ApplyCoopEnvironmentLoops);
+            RegisterRemoteWorldHandler<BattleFeedback>(ApplyBattleFeedback);
+            RegisterRemoteWorldHandler<SuddenDeathState>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 var suddenDeath = FindAnyObjectByType<BattleSuddenDeathController>();
                 if (suddenDeath != null) suddenDeath.ReceiveNetworkSuddenDeath(message);
             });
-            NetworkClient.RegisterHandler<ConveyorPhase>(ApplyConveyorPhase);
-            NetworkClient.RegisterHandler<PortalMaskSnapshot>(ApplyPortalMasks);
-            NetworkClient.RegisterHandler<RoofTileState>(message =>
+            RegisterRemoteWorldHandler<ConveyorPhase>(ApplyConveyorPhase);
+            RegisterRemoteWorldHandler<PortalMaskSnapshot>(ApplyPortalMasks);
+            RegisterRemoteWorldHandler<RoofTileState>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode8RoofController>()) controller.ReceiveNetworkRoof(message);
             });
-            NetworkClient.RegisterHandler<RopeTileView>(message =>
+            RegisterRemoteWorldHandler<RopeTileView>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode11ImpulseRopeController>()) controller.ReceiveNetworkRope(message);
             });
-            NetworkClient.RegisterHandler<BlackoutView>(message =>
+            RegisterRemoteWorldHandler<BlackoutView>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var blackout in coopBlackoutSources) if (blackout != null) blackout.ReceiveNetworkBlackout(message);
             });
-            NetworkClient.RegisterHandler<PowderTrailFrame>(message =>
+            RegisterRemoteWorldHandler<PowderTrailFrame>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode3PowderTrailController>()) controller.ReceiveNetworkPowder(message);
             });
-            NetworkClient.RegisterHandler<MagnetFieldPhase>(message =>
+            RegisterRemoteWorldHandler<MagnetFieldPhase>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var handler in FindObjectsByType<MagnetIndestructibleTileHandler>()) handler.ReceiveNetworkField(message);
             });
-            NetworkClient.RegisterHandler<PortalStarView>(message =>
+            RegisterRemoteWorldHandler<PortalStarView>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode9MinecartController>()) controller.ReceiveNetworkStar(message);
                 foreach (var controller in FindObjectsByType<BattleMode7PortalController>()) controller.ReceiveNetworkPortalStar(message);
             });
-            NetworkClient.RegisterHandler<MinecartView>(message =>
+            RegisterRemoteWorldHandler<MinecartView>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode9MinecartController>()) controller.ReceiveNetworkCart(message);
             });
-            NetworkClient.RegisterHandler<FallingBombTarget>(message =>
+            RegisterRemoteWorldHandler<FallingBombTarget>(message =>
             {
                 if (message.scene != SceneManager.GetActiveScene().name) return;
                 foreach (var controller in FindObjectsByType<BattleMode2FallingBombController>())
                     controller.ReceiveNetworkTarget(message);
             });
-            NetworkClient.RegisterHandler<CoopSpriteDefinition>(ApplyCoopSpriteDefinition);
-            NetworkClient.RegisterHandler<CoopAnimationDefinition>(ApplyCoopAnimationDefinition);
+            RegisterRemoteWorldHandler<CoopSpriteDefinition>(ApplyCoopSpriteDefinition);
+            RegisterRemoteWorldHandler<CoopAnimationDefinition>(ApplyCoopAnimationDefinition);
 #if UNITY_EDITOR || DEBUG
             LocalProjectileSmoke.RegisterMessages();
 #endif
-            NetworkClient.RegisterHandler<CoopMusic>(ApplyCoopMusic);
-            NetworkClient.RegisterHandler<CoopStageStatus>(ApplyCoopStageStatus);
-            NetworkClient.RegisterHandler<CoopCollisions>(ApplyCoopCollisions);
+            RegisterRemoteWorldHandler<CoopMusic>(ApplyCoopMusic);
+            RegisterRemoteWorldHandler<CoopStageStatus>(ApplyCoopStageStatus);
+            RegisterRemoteWorldHandler<CoopCollisions>(ApplyCoopCollisions);
         }
 
         void CoopSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -347,6 +356,7 @@ namespace Assets.Scripts.Netcode
             coopFadeSamples.Clear();
             coopCinematicImages.Clear(); coopClientImages.Clear();
             coopClientCameras.Clear(); coopApprovedCamera = null;
+            coopPreIntro = null; coopPoseCamera = null; coopCameraScripted = false;
             coopSpotlightImage = null;
             coopSceneHealth.Clear(); coopServerHealth = Array.Empty<CharacterHealth>(); coopNextStatus = 0;
             coopRenderers = Array.Empty<SpriteRenderer>();
@@ -520,7 +530,7 @@ namespace Assets.Scripts.Netcode
             var frame = new CoopSpriteFrame
             {
                 id = renderer.GetEntityId().GetHashCode(), sprite = CoopSpriteId(renderer.sprite), time = NetworkTime.localTime,
-                material = CatalogId(renderer.sharedMaterial, coopMaterialIds), blackout = CaptureCoopBlackoutMask(renderer.GetEntityId().GetHashCode()), water = CaptureCoopWater(renderer), absorption = CaptureCoopAbsorption(renderer),
+                material = CatalogId(renderer.sharedMaterial, coopMaterialIds), blackout = CaptureCoopBlackoutMask(renderer.GetEntityId().GetHashCode()), water = CaptureCoopWater(renderer), absorption = CaptureCoopAbsorption(renderer), portal = CaptureCoopPortal(renderer),
                 enemyStepLimit = CoopEnemyVisualLimit(renderer), pauseWithGameplay = CoopPauseWithGameplay(renderer),
                 position = renderer.transform.position, rotation = renderer.transform.rotation,
                 scale = renderer.transform.lossyScale, color = renderer.color,
@@ -619,7 +629,7 @@ namespace Assets.Scripts.Netcode
                 if (count > 0) changed.CopyTo(start, chunk, 0, count);
                 var message = new CoopTiles { scene = coopScene, path = path, reset = first && start == 0,
                     position = map.transform.position, rotation = map.transform.rotation, scale = map.transform.lossyScale,
-                    color = map.color, cells = chunk, complete = start + count >= changed.Count,
+                    origin = map.origin, size = map.size, color = map.color, cells = chunk, complete = start + count >= changed.Count,
                     collisionEnabled = pose.enabled, collisionOffset = pose.offset };
                 foreach (var peer in peers) peer.Send(message);
             }
@@ -632,7 +642,7 @@ namespace Assets.Scripts.Netcode
             for (int start = 0; start < Mathf.Max(1, cells.Count); start += batch)
                 peer.Send(new CoopTiles { scene = coopScene, path = path, reset = reset && start == 0,
                     position = map.transform.position, rotation = map.transform.rotation, scale = map.transform.lossyScale,
-                    color = map.color, cells = cells.GetRange(start, Mathf.Min(batch, cells.Count - start)).ToArray(),
+                    origin = map.origin, size = map.size, color = map.color, cells = cells.GetRange(start, Mathf.Min(batch, cells.Count - start)).ToArray(),
                     complete = start + batch >= cells.Count, collisionEnabled = pose.enabled, collisionOffset = pose.offset });
         }
 
@@ -724,6 +734,7 @@ namespace Assets.Scripts.Netcode
             // A held recipe cannot override an explicit native sprite with a null/stale idle frame.
             if (frame.animation != 0 && frame.playback.speed == 0) view.sprite = CoopSpriteAt(frame.sprite);
             bool materialReady = true;
+            if (frame.portal == null) ReleaseCoopPortal(view);
             if (frame.absorption == null) ReleaseCoopAbsorption(view);
             if (frame.absorption != null)
             {
@@ -748,6 +759,7 @@ namespace Assets.Scripts.Netcode
                 }
                 else ApplyCoopRegularMaterial(frame.id, view, frame.material);
             }
+            if (frame.portal != null) materialReady &= ApplyCoopPortal(view, frame.portal);
             bool ownerBoatHidden = coopOwnerBoatSprites.ContainsKey(frame.id);
             if (ownerBoatHidden) coopOwnerBoatVisibility[frame.id] = frame.visible;
             view.enabled = frame.visible && !ownerBoatHidden && materialReady; view.color = frame.color;
@@ -766,7 +778,18 @@ namespace Assets.Scripts.Netcode
             map.transform.localScale = new Vector3(message.scale.x / scale.x, message.scale.y / scale.y, message.scale.z / scale.z);
             map.color = message.color;
             ApplyCoopTileCells(map, message.cells ?? Array.Empty<CoopTileFrame>());
+            ApplyCoopMapBounds(map, message.origin, message.size);
             ApplyCoopCollisionTiles(message);
+        }
+
+        // Empty authored margins affect Chunk renderers' Y sort anchor. Rebuilding
+        // only occupied cells shrinks that anchor and can draw water over scene sprites.
+        internal static void ApplyCoopMapBounds(Tilemap map, Vector3Int origin, Vector3Int size)
+        {
+            if (map == null || size.x < 0 || size.y < 0 || size.z < 0 ||
+                size.x > 1024 || size.y > 1024 || size.z > 16) return;
+            if (map.origin != origin) map.origin = origin;
+            if (map.size != size) map.size = size;
         }
 
         void ApplyCoopTileCells(Tilemap map, CoopTileFrame[] cells)
@@ -789,11 +812,21 @@ namespace Assets.Scripts.Netcode
 
         static T At<T>(T[] values, int index) where T : UnityEngine.Object => index >= 0 && index < values.Length ? values[index] : null;
 
+        // The host already runs native presentation and does not register the pure-client
+        // world handlers. Sending these messages to its local connection disconnects it.
+        static void SendPresentationToRemoteReady<T>(T message) where T : struct, NetworkMessage
+        {
+            if (!NetworkServer.active) return;
+            foreach (var peer in NetworkServer.connections.Values)
+                if (peer != null && peer != NetworkServer.localConnection && peer.isAuthenticated && peer.isReady)
+                    peer.Send(message);
+        }
+
         public static void SendBattleFeedback(byte kind, GameObject target = null, Vector3Int cell = default, float value = 0, Vector2 direction = default, int steps = 0, Vector3Int[] path = null, float duration = 0)
         {
             if (!NetworkServer.active || !NetSync.IsOnline) return;
             uint id = target != null && target.TryGetComponent<NetworkIdentity>(out var identity) ? identity.netId : 0;
-            NetworkServer.SendToReady(new BattleFeedback { scene = SceneManager.GetActiveScene().name, kind = kind, netId = id, cell = cell, value = value, direction = direction, steps = steps, path = path, duration = duration });
+            SendPresentationToRemoteReady(new BattleFeedback { scene = SceneManager.GetActiveScene().name, kind = kind, netId = id, cell = cell, value = value, direction = direction, steps = steps, path = path, duration = duration });
         }
 
         void ApplyBattleFeedback(BattleFeedback message)
@@ -825,7 +858,7 @@ namespace Assets.Scripts.Netcode
             if (!IsCoopStage && GameManager.Instance != null && GameManager.Instance.OnlineRoundPresentationActive) return;
             int id = manager.CoopSoundId(clip);
             string resource = manager.CoopSoundResource(clip);
-            if (id >= 0 || resource != null) NetworkServer.SendToReady(new CoopSound { scene = SceneManager.GetActiveScene().name, clip = id, resource = resource, volume = volume, pitch = pitch, voice = voice, exclusiveExplosion = exclusiveExplosion });
+            if (id >= 0 || resource != null) SendPresentationToRemoteReady(new CoopSound { scene = SceneManager.GetActiveScene().name, clip = id, resource = resource, volume = volume, pitch = pitch, voice = voice, exclusiveExplosion = exclusiveExplosion });
         }
 
         void ApplyCoopSound(CoopSound message)

@@ -150,6 +150,13 @@ public class PinkLouieShadowController : MonoBehaviour
         SyncAnimatorState();
     }
 
+    public void PresentNetworkGrounded(float deltaTime)
+    {
+        jumping = false; hasJumpGroundPos = false;
+        LateUpdate();
+        if (!GamePauseController.IsPaused) animator?.AdvanceWalkClock(deltaTime);
+    }
+
     public void EndJump()
     {
         jumping = false;

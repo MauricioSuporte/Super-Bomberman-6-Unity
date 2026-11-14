@@ -57,6 +57,15 @@ namespace Assets.Scripts.Netcode
         {
             if (NetworkManager.singleton is BombermanNetworkManager manager && manager.IsDedicatedServer)
             { enabled = false; return; }
+#if UNITY_EDITOR || DEBUG
+            // Offline UI/local host fixture: no directory requests or room allocation. The
+            // production mismatch gate below remains unchanged.
+            if (Debug.isDebugBuild && (LocalPredictionSmoke.UiPreview || LocalPredictionSmoke.LocalHostPlaytest))
+            {
+                directoryUrl = ""; CompatibilityChecked = true;
+                return;
+            }
+#endif
             var config = Resources.Load<TextAsset>("OnlineRoomDirectory");
             var settings = config != null ? JsonUtility.FromJson<OnlineDirectorySettings>(config.text) : new();
             directoryUrl = OnlineRoomRules.DirectoryUrl(settings.directoryUrl);

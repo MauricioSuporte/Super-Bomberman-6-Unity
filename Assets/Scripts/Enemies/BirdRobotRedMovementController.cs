@@ -136,7 +136,7 @@ public sealed class BirdRobotRedMovementController : JunctionTurningPersecutingE
         SpriteRenderer renderer = rocket.GetComponent<SpriteRenderer>();
         renderer.flipX = attackDirection == Vector2.right;
         renderer.flipY = attackDirection == Vector2.up;
-        rocket.AddComponent<BirdRobotRocket>().Init(attackDirection, gameObject, explosion, tileSize);
+        rocket.AddComponent<BirdRobotRocket>().Init(attackDirection, gameObject, explosion, tileSize, visualSource: template.GetComponent<SpriteRenderer>());
     }
 
     private void HideAttackSprites()

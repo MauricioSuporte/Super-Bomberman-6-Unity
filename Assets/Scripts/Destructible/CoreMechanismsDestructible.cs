@@ -198,6 +198,7 @@ public sealed class CoreMechanismsDestructible : Destructible
         if (source == null || clip == null)
             return;
 
+        Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlaySound(clip, volume);
         source.PlayOneShot(clip, GetBoostedSfxVolume(volume));
     }
 

@@ -14,7 +14,7 @@ namespace Assets.Scripts.Netcode
     {
         const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
         static T Read<T>(object source, string name) => (T)source.GetType().GetField(name, Fields).GetValue(source);
-        static void PlacePlayers(Collider2D room, Vector3? near = null)
+        internal static void PlacePlayers(Collider2D room, Vector3? near = null)
         {
             if (room == null) throw new InvalidOperationException("R08 missing authored room");
             Vector3 target = near ?? room.bounds.center;
@@ -27,7 +27,11 @@ namespace Assets.Scripts.Netcode
                 Vector2 position = (Vector2)target + Vector2.right * index++;
                 mover.Rigidbody.position = position; mover.transform.position = position;
                 NetworkPlayerInput.SyncAuthorityMotionTransform(mover);
-                if (Mirror.NetworkServer.active && mover.TryGetComponent<NetworkPlayerInput>(out var input) && input.isServer) input.ServerReconcileMovementNow();
+                if (Mirror.NetworkServer.active && mover.TryGetComponent<NetworkPlayerInput>(out var input) && input.isServer)
+                {
+                    if (mover.TryGetComponent<PlayerNetworkTransform>(out var sync)) sync.ServerRoomCut(mover.transform.position, mover.transform.rotation);
+                    input.ServerReconcileMovementNow();
+                }
                 if (mover.TryGetComponent<CharacterHealth>(out var health)) { health.life = 200; health.SetExternalInvulnerability(true); }
             }
             Camera selected = null; float nearest = float.PositiveInfinity;

@@ -14,11 +14,17 @@ public sealed class BirdRobotRocket : MonoBehaviour
     private bool singleImpact;
     private float impactRemaining;
 
-    public void Init(Vector2 travelDirection, GameObject shotOwner, AnimatedSpriteRenderer explosion, float gridSize, bool useSingleImpact = false)
+    public void Init(Vector2 travelDirection, GameObject shotOwner, AnimatedSpriteRenderer explosion, float gridSize, bool useSingleImpact = false, SpriteRenderer visualSource = null)
     {
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
             Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(BirdRobotRocket));
+        var health = shotOwner != null ? shotOwner.GetComponent<CharacterHealth>() : null;
+        if (TryGetComponent<SpriteRenderer>(out var projectileSprite))
+        {
+            projectileSprite.color = health != null && visualSource != null ? health.GetOriginalRendererColor(visualSource) : Color.white;
+            projectileSprite.enabled = true; projectileSprite.forceRenderingOff = false;
+        }
         singleImpact = useSingleImpact;
         direction = travelDirection;
         owner = shotOwner;
@@ -26,6 +32,8 @@ public sealed class BirdRobotRocket : MonoBehaviour
         // Keep a detached template so rockets still explode after their owner dies.
         impactTemplate = Instantiate(explosion.gameObject);
         impactTemplate.SetActive(false);
+        if (impactTemplate.TryGetComponent<SpriteRenderer>(out var impactSprite))
+            impactSprite.color = health != null ? health.GetOriginalRendererColor(explosion.GetComponent<SpriteRenderer>()) : Color.white;
         if (singleImpact)
             foreach (var renderer in impactTemplate.GetComponentsInChildren<SpriteRenderer>(true))
                 Assets.Scripts.Netcode.BombermanNetworkManager.CoopTrackProjectile(renderer, nameof(BirdRobotRocketImpact));

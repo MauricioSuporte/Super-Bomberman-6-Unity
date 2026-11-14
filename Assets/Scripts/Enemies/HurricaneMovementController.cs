@@ -194,7 +194,17 @@ public sealed partial class HurricaneMovementController : JunctionTurningEnemyMo
             if (IsPullDestinationBlocked(nextPosition))
                 continue;
 
-            playerBody.MovePosition(nextPosition);
+            // Network ticks position the motor immediately. A pending MovePosition
+            // can be discarded by a later input tick before the physics solver runs.
+            float immediateLimit = Mathf.Max(.0001f, tileSize * .25f);
+            if (NetSync.IsServer && playerMovement != null && playerMovement.NetworkTickDriven &&
+                (nextPosition - playerBody.position).sqrMagnitude <= immediateLimit * immediateLimit)
+            {
+                playerBody.linearVelocity = Vector2.zero;
+                playerBody.position = nextPosition;
+                NetworkPlayerInput.SyncAuthorityMotionTransform(playerMovement);
+            }
+            else playerBody.MovePosition(nextPosition);
             playerMovement?.RegisterNetworkEnemyForce(this, NetworkEnemyForceKind.Hurricane, nextPosition,
                 pullSpeedTilesPerSecond * tileSize, Vector2.zero);
         }

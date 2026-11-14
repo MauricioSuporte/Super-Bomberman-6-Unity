@@ -28,5 +28,6 @@ public enum ItemType
     Skull = 25,
     OneUp = 26,
     LineBomb = 27,
-    SearchBomb = 28
+    SearchBomb = 28,
+    RandomLouieEgg = 29
 }

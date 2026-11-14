@@ -50,6 +50,8 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     private bool _usingPusherBounceVisual;
     private bool _stageBoundsReady;
     private BoundsInt _stageCellBounds;
+    private BoundsInt _resolveRoomCellBounds;
+    private bool _resolveRoomCellBoundsReady;
 
     private static readonly WaitForFixedUpdate _waitFixed = new();
 
@@ -90,6 +92,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             ResetResolveState();
         }
 
+        _resolveRoomCellBoundsReady = false;
         _resolveRoutine = StartCoroutine(ResolveIfStuckRoutine(pushDir));
     }
 
@@ -100,6 +103,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
     private void ResetResolveState()
     {
+        _resolveRoomCellBoundsReady = false;
         _resolveRoutine = null;
         EmitNetworkBounce(transform.position, transform.position, 0, 0, false);
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
@@ -164,6 +168,14 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             _resolveRoutine = null;
             yield break;
         }
+
+        EnsureStageBounds();
+        var game = GameManager.Instance;
+        _resolveRoomCellBoundsReady = TryReadRecoveryRoomBounds(stageBoundsTilemap,
+            game != null ? game.groundTilemap : stageBoundsTilemap,
+            game != null ? game.indestructibleTilemap : null,
+            StageAssets.World3RoomProgressionController.FindRoomBoundsContaining(_rb.position),
+            out _resolveRoomCellBounds);
 
         bool prevColliderEnabled = _col.enabled;
 
@@ -585,6 +597,32 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         _stageBoundsReady = true;
     }
 
+    private static bool TryReadRecoveryRoomBounds(Tilemap reference, Tilemap ground, Tilemap solid, Collider2D room, out BoundsInt result)
+    {
+        result = default;
+        if (reference == null || room == null) return false;
+        int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
+        // Presence/camera colliders include a margin around the board. Restrict
+        // recovery to the painted terrain inside this room, including its walls;
+        // otherwise a bounce can stop in the empty gap between World 3 rooms.
+        foreach (var map in new[] { ground, solid })
+        {
+            if (map == null) continue;
+            foreach (var cell in map.cellBounds.allPositionsWithin)
+            {
+                if (!map.HasTile(cell)) continue;
+                Vector3 center = map.GetCellCenterWorld(cell);
+                if (!room.OverlapPoint(center)) continue;
+                Vector3Int local = reference.WorldToCell(center);
+                minX = Mathf.Min(minX, local.x); maxX = Mathf.Max(maxX, local.x);
+                minY = Mathf.Min(minY, local.y); maxY = Mathf.Max(maxY, local.y);
+            }
+        }
+        if (minX > maxX || minY > maxY) return false;
+        result = new BoundsInt(minX, minY, 0, maxX - minX + 1, maxY - minY + 1, 1);
+        return true;
+    }
+
     private bool TryStepWithWrap(Vector2 from, Vector2 direction, float tileSize, out Vector2 next, out bool didWrap)
     {
         EnsureStageBounds();
@@ -614,6 +652,14 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         int maxX = _stageCellBounds.xMax - 1;
         int minY = _stageCellBounds.yMin;
         int maxY = _stageCellBounds.yMax - 1;
+
+        if (_resolveRoomCellBoundsReady)
+        {
+            minX = Mathf.Max(minX, _resolveRoomCellBounds.xMin);
+            maxX = Mathf.Min(maxX, _resolveRoomCellBounds.xMax - 1);
+            minY = Mathf.Max(minY, _resolveRoomCellBounds.yMin);
+            maxY = Mathf.Min(maxY, _resolveRoomCellBounds.yMax - 1);
+        }
 
         if (cell.x < minX)
         {

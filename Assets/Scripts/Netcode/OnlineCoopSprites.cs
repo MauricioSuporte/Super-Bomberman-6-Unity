@@ -58,7 +58,7 @@ namespace Assets.Scripts.Netcode
             }
             coopDynamicVersions[sprite] = texture.updateCount;
             coopDefinitions[id] = definition;
-            NetworkServer.SendToReady(definition);
+            SendPresentationToRemoteReady(definition);
             return id;
         }
 
@@ -153,6 +153,9 @@ namespace Assets.Scripts.Netcode
         public double time;
         public float animationTime;
         public AnimatedSpriteRenderer.PlaybackState playback;
+        public bool sinking;
+        public Vector3 position, scale;
+        public Color color;
     }
 
     public struct BombAnimations : NetworkMessage
@@ -199,7 +202,7 @@ namespace Assets.Scripts.Netcode
             for (int i = 0; i < sprites.Length; i++) definition.sprites[i] = CoopSpriteId(sprites[i]);
             coopAnimationClips[key] = (signature, id);
             coopAnimationDefinitions[id] = definition;
-            NetworkServer.SendToReady(definition);
+            SendPresentationToRemoteReady(definition);
             return id;
         }
 
@@ -656,7 +659,7 @@ namespace Assets.Scripts.Netcode
                         coopViewMaterialIds.Remove(id);
                         if (coopViews.Remove(id, out var view) && view != null)
                         {
-                            ReleaseCoopAbsorption(view); ReleaseCoopWater(view);
+                            ReleaseCoopPortal(view); ReleaseCoopAbsorption(view); ReleaseCoopWater(view);
                             Destroy(view.gameObject);
                         }
                         coopViewSpriteIds.Remove(id); coopViewClips.Remove(id);
@@ -717,6 +720,20 @@ namespace Assets.Scripts.Netcode
                 animation.SetManualAnimationUpdate(true);
                 animation.animationTime = frame.animationTime;
                 animation.PresentPlayback(frame.playback, (float)System.Math.Max(0, bombClock - frame.time));
+                if (frame.sinking && !GamePauseController.IsPaused)
+                {
+                    if (identity.TryGetComponent<Bomb>(out var bomb) && !bomb.HasExploded) bomb.MarkAsExploded();
+                    if (identity.TryGetComponent<Rigidbody2D>(out var body)) body.simulated = false;
+                    if (identity.TryGetComponent<Collider2D>(out var collider)) collider.enabled = false;
+                    Vector3 scale = frame.scale; Color color = frame.color;
+                    if (samples.Count > 1 && samples[1].sinking && samples[1].time > frame.time)
+                    {
+                        float phase = Mathf.Clamp01((float)((bombClock - frame.time) / (samples[1].time - frame.time)));
+                        scale = Vector3.Lerp(scale, samples[1].scale, phase); color = Color.Lerp(color, samples[1].color, phase);
+                    }
+                    identity.transform.position = frame.position; identity.transform.localScale = scale;
+                    if (identity.TryGetComponent<SpriteRenderer>(out var sprite)) sprite.color = color;
+                }
             }
             foreach (uint id in expiredBombViews) bombVisualSamples.Remove(id);
         }
@@ -780,9 +797,11 @@ namespace Assets.Scripts.Netcode
                 if (bomb == null || !bomb.TryGetComponent<NetworkIdentity>(out var identity) || identity.netId == 0 ||
                     !bomb.TryGetComponent<AnimatedSpriteRenderer>(out var animation)) continue;
                 frames.Add(new BombAnimationFrame { id = identity.netId, time = NetworkTime.localTime,
-                    animationTime = animation.animationTime, playback = animation.CapturePlayback() });
+                    animationTime = animation.animationTime, playback = animation.CapturePlayback(),
+                    sinking = bomb.SinkVisualActive, position = bomb.transform.position, scale = bomb.transform.localScale,
+                    color = bomb.TryGetComponent<SpriteRenderer>(out var sprite) ? sprite.color : Color.white });
             }
-            if (frames.Count > 0) NetworkServer.SendToReady(new BombAnimations
+            if (frames.Count > 0) SendPresentationToRemoteReady(new BombAnimations
                 { scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, frames = frames.ToArray() });
         }
 

@@ -97,6 +97,7 @@ namespace StageAssets
 
         private IEnumerator TransitionRoutine()
         {
+            foreach (var cart in FindObjectsByType<BattleMode9MinecartController>()) cart.CancelForRoomTransition();
             FreezeGameplay();
             if (cancelFallingBarrelTraps)
                 CancelFallingBarrelTraps();
@@ -241,6 +242,13 @@ namespace StageAssets
                 player.transform.position = position;
                 player.SetNormalGameRespawnPosition(destination);
                 player.ApplyDirectionFromVector(Vector2.zero);
+                if (Mirror.NetworkServer.active && player.TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerInput>(out var input) && input.isServer && input.netId != 0)
+                {
+                    // Room changes are cuts under black, never rail travel across rooms.
+                    if (player.TryGetComponent<Assets.Scripts.Netcode.PlayerNetworkTransform>(out var sync))
+                        sync.ServerRoomCut(position, player.transform.rotation);
+                    input.ServerReconcileMovementNow();
+                }
             }
         }
 

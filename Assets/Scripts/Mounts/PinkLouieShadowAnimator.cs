@@ -39,7 +39,9 @@ public class PinkLouieShadowAnimator : MonoBehaviour
         RestoreDefaultVisualState();
     }
 
-    void Update()
+    void Update() => AdvanceWalkClock(Time.deltaTime);
+
+    public void AdvanceWalkClock(float deltaTime)
     {
         if (active != walkShadow)
             return;
@@ -51,7 +53,7 @@ public class PinkLouieShadowAnimator : MonoBehaviour
             return;
 
         float ft = Mathf.Max(0.01f, walkFrameSeconds);
-        walkTimer += Time.deltaTime;
+        walkTimer += Mathf.Max(0, deltaTime);
 
         int newFrame = (int)(walkTimer / ft) % 4;
         if (newFrame == walkFrameIndex)
@@ -100,10 +102,12 @@ public class PinkLouieShadowAnimator : MonoBehaviour
             return;
         }
 
+        bool changed = active != walkShadow;
         SetExclusive(walkShadow);
-        ApplyIdleSmall();
-        PrepareWalkRenderer();
-        SetMoving(false);
+        if (changed)
+        {
+            ApplyIdleSmall(); PrepareWalkRenderer(); SetMoving(false);
+        }
     }
 
     public void SetMoving(bool isMoving)

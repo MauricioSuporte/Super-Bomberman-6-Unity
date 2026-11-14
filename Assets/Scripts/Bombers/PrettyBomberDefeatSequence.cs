@@ -100,7 +100,8 @@ public sealed class PrettyBomberDefeatSequence : MonoBehaviour
             Vector3 position = rewardPosition;
             if (gameManager != null && gameManager.groundTilemap != null)
                 position = gameManager.groundTilemap.GetCellCenterWorld(gameManager.groundTilemap.WorldToCell(position));
-            Instantiate(reward, position, Quaternion.identity);
+            var item = Instantiate(reward, position, Quaternion.identity);
+            Assets.Scripts.Netcode.NetSpawn.Server(item.gameObject);
         }
         float elapsed = 0f;
         while (elapsed < endStageWaitNoItemsSeconds)

@@ -6,6 +6,442 @@ using UnityEngine;
 public sealed partial class OnlineRoomEditModeTests
 {
     [Test]
+    public void RejectedGenericEggTouchDoesNotChooseLouieOrAdvanceRandom()
+    {
+        var originalRandom = Random.state;
+        var player = new GameObject("FullEggOwner"); player.SetActive(false); player.AddComponent<BoxCollider2D>();
+        var pickupRoot = new GameObject("GenericWorldEgg"); pickupRoot.SetActive(false); pickupRoot.AddComponent<BoxCollider2D>();
+        var worldRoot = new GameObject("FullEggQueueWorld");
+        try
+        {
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            var movement = player.AddComponent<MovementController>();
+            typeof(MovementController).GetField("isMounted", flags).SetValue(movement, true);
+            var queue = player.AddComponent<MountEggQueue>();
+            typeof(MountEggQueue).GetField("maxEggsInQueue", flags).SetValue(queue, 1);
+            typeof(MountEggQueue).GetField("_worldRoot", flags).SetValue(queue, worldRoot.transform);
+            var eggs = (System.Collections.IList)typeof(MountEggQueue).GetField("_eggs", flags).GetValue(queue);
+            eggs.Add(System.Activator.CreateInstance(eggs.GetType().GetGenericArguments()[0]));
+            Assert.IsTrue(queue.IsFull);
+            var pickup = pickupRoot.AddComponent<ItemPickup>(); pickup.type = ItemType.RandomLouieEgg;
+            Random.InitState(112233); var beforeTouch = Random.state;
+            typeof(ItemPickup).GetMethod("OnItemPickup", flags).Invoke(pickup, new object[] { player });
+            Assert.AreEqual(ItemType.RandomLouieEgg, pickup.type);
+            Assert.AreEqual(beforeTouch, Random.state);
+            Assert.AreEqual(1, queue.Count);
+        }
+        finally { Random.state = originalRandom; Object.DestroyImmediate(player); Object.DestroyImmediate(pickupRoot); Object.DestroyImmediate(worldRoot); }
+    }
+
+    [Test]
+    public void SpotlightBecomingReadyReleasesTheEarlierHiddenFade()
+    {
+        var root = new GameObject("SpotlightNetwork"); root.SetActive(false);
+        var imageObject = new GameObject("Spotlight", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+        Material material = null;
+        try
+        {
+            var manager = root.AddComponent<BombermanNetworkManager>();
+            var image = imageObject.GetComponent<UnityEngine.UI.Image>();
+            material = new Material(Shader.Find("UI/SpotlightMask")); image.material = material;
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            var images = (System.Collections.IDictionary)typeof(BombermanNetworkManager).GetField("coopClientImages", flags).GetValue(manager);
+            images["Spotlight"] = image;
+            var apply = typeof(BombermanNetworkManager).GetMethod("ApplyCoopCinematics", flags);
+            apply.Invoke(manager, new object[] { new[] { new CoopCinematicFrame { path = "Spotlight", color = Color.clear, visible = false } } });
+            apply.Invoke(manager, new object[] { new[] { new CoopCinematicFrame { path = "Spotlight", color = Color.white, visible = true,
+                spotlight = true, materialColor = new Color(0, 0, 0, .8f), radius = .2f, softness = .03f, ellipseX = .6f, ellipseY = .6f } } });
+            typeof(BombermanNetworkManager).GetMethod("PresentCoopFades", flags).Invoke(manager, null);
+            Assert.IsTrue(image.gameObject.activeSelf); Assert.IsTrue(image.enabled);
+            Assert.AreEqual(Color.white, image.color);
+            Assert.That(material.GetColor("_Color").a, Is.EqualTo(.8f).Within(.001f));
+            var fades = (System.Collections.IDictionary)typeof(BombermanNetworkManager).GetField("coopFadeSamples", flags).GetValue(manager);
+            Assert.AreEqual(0, fades.Count);
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(imageObject); if (material != null) Object.DestroyImmediate(material); }
+    }
+
+    [Test]
+    public void CoopTileRebuildPreservesEmptyAuthoredMarginsAndSortBounds()
+    {
+        var root = new GameObject("AuthoredMap", typeof(Grid));
+        var mapObject = new GameObject("Ground", typeof(UnityEngine.Tilemaps.Tilemap), typeof(UnityEngine.Tilemaps.TilemapRenderer));
+        mapObject.transform.SetParent(root.transform, false);
+        var tile = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+        try
+        {
+            var map = mapObject.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            Vector3Int origin = new(-7, -7, 0), size = new(29, 24, 1);
+            map.SetTile(Vector3Int.zero, tile); map.origin = origin; map.size = size;
+            Bounds expected = map.localBounds;
+            map.ClearAllTiles(); map.SetTile(Vector3Int.zero, tile);
+            Assert.AreNotEqual(expected, map.localBounds);
+            var apply = typeof(BombermanNetworkManager).GetMethod("ApplyCoopMapBounds", BindingFlags.Static | BindingFlags.NonPublic);
+            apply.Invoke(null, new object[] { map, origin, size });
+            Assert.AreEqual(expected, map.localBounds);
+            apply.Invoke(null, new object[] { map, origin, new Vector3Int(2000, 24, 1) });
+            Assert.AreEqual(expected, map.localBounds, "Malformed bounds cannot grow the client map");
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(tile); }
+    }
+
+    [Test]
+    public void WrappedPresenceNameOutlineUsesTheHistoryGlyphPositions()
+    {
+        var root = new GameObject("WrappedPresence", typeof(RectTransform), typeof(Canvas));
+        try
+        {
+            TMPro.TextMeshProUGUI Create(string name, string text)
+            {
+                var go = new GameObject(name, typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
+                go.transform.SetParent(root.transform, false);
+                var label = go.GetComponent<TMPro.TextMeshProUGUI>();
+                label.font = Resources.Load<TMPro.TMP_FontAsset>("Fonts/Retro Gaming SDF");
+                label.fontSize = 7; label.richText = true;
+                label.verticalAlignment = TMPro.VerticalAlignmentOptions.Bottom;
+                label.rectTransform.sizeDelta = new Vector2(120, 65);
+                label.text = text; return label;
+            }
+            var body = Create("Body", "<color=#000000>IdleRegression2</color> ENTROU NA SALA.\nVOCE ENTROU NA SALA.");
+            var names = Create("Names", "<color=#000000>IdleRegression2</color><color=#FFFFFF00> ENTROU NA SALA.\nVOCE ENTROU NA SALA.</color>");
+            typeof(OnlineChatOverlay).GetMethod("AlignNameContrast", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { body, names });
+            Assert.Greater(body.textInfo.lineCount, 1);
+            Assert.AreEqual(body.textInfo.characterCount, names.textInfo.characterCount);
+            for (int i = 0; i < "IdleRegression2".Length; i++)
+            {
+                var source = body.textInfo.characterInfo[i]; var target = names.textInfo.characterInfo[i];
+                var sourceVertices = body.textInfo.meshInfo[source.materialReferenceIndex].vertices;
+                var targetVertices = names.textInfo.meshInfo[target.materialReferenceIndex].vertices;
+                Assert.That(Vector3.Distance(sourceVertices[source.vertexIndex], targetVertices[target.vertexIndex]), Is.LessThan(.001f), "glyph " + i);
+            }
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void LargerChatEntryFitsActualGlyphsAndPreservesTheFullDraft(bool japanese)
+    {
+        var root = new GameObject("ChatGlyphFit", typeof(RectTransform)); root.SetActive(false);
+        var labelObject = new GameObject("Entry", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
+        labelObject.transform.SetParent(root.transform, false);
+        SaveSystem.BeginOnlineCoopSettings();
+        try
+        {
+            SaveSystem.Data.language = (int)(japanese ? GameLanguage.Japanese : GameLanguage.English);
+            var label = labelObject.GetComponent<TMPro.TextMeshProUGUI>();
+            label.font = Resources.Load<TMPro.TMP_FontAsset>("Fonts/Retro Gaming SDF"); Assert.IsNotNull(label.font);
+            label.fontSize = 7; label.textWrappingMode = TMPro.TextWrappingModes.NoWrap; label.richText = false;
+            LocalizedTmpFontFallback.Apply(label);
+            label.rectTransform.sizeDelta = new Vector2(200, 14);
+            var chat = root.AddComponent<OnlineChatOverlay>();
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            string draft = japanese ? "" : new string('W', 80);
+            if (japanese) for (int i = 0; i < 40; i++) draft += "ルーイ";
+            typeof(OnlineChatOverlay).GetField("entry", flags).SetValue(chat, label);
+            typeof(OnlineChatOverlay).GetField("typing", flags).SetValue(chat, true);
+            typeof(OnlineChatOverlay).GetField("draft", flags).SetValue(chat, draft);
+            var refresh = typeof(OnlineChatOverlay).GetMethod("RefreshEntry", flags);
+            refresh.Invoke(chat, null);
+            Assert.That(label.GetPreferredValues(label.text, float.PositiveInfinity, float.PositiveInfinity).x, Is.LessThanOrEqualTo(200));
+            label.rectTransform.sizeDelta = new Vector2(100, 14); refresh.Invoke(chat, null);
+            Assert.That(label.GetPreferredValues(label.text, float.PositiveInfinity, float.PositiveInfinity).x, Is.LessThanOrEqualTo(100));
+            Assert.AreEqual(draft, typeof(OnlineChatOverlay).GetField("draft", flags).GetValue(chat));
+            StringAssert.StartsWith("> ", label.text);
+        }
+        finally { SaveSystem.EndOnlineCoopSettings(); Object.DestroyImmediate(root); }
+    }
+
+    [TestCase(NetSync.NetMode.Offline, true, false, true)]
+    [TestCase(NetSync.NetMode.Host, true, false, true)]
+    [TestCase(NetSync.NetMode.Client, true, false, false)]
+    [TestCase(NetSync.NetMode.Client, false, true, false)]
+    public void CreditsOnlyApplyApprovedSkipAndFinalPhaseOnObservers(NetSync.NetMode mode, bool skipped, bool finalMessage, bool keepsRolling)
+    {
+        var root = new GameObject("CreditsPhase", typeof(RectTransform)); root.SetActive(false);
+        var labelObject = new GameObject("Credits", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
+        labelObject.transform.SetParent(root.transform, false);
+        var oldMode = NetSync.Mode;
+        try
+        {
+            NetSync.Mode = mode;
+            var ending = root.AddComponent<EndingScreenController>(); ending.messageText = labelObject.GetComponent<TMPro.TMP_Text>();
+            typeof(EndingScreenController).GetProperty(nameof(EndingScreenController.Running)).SetValue(ending, true);
+            ending.ApplyOnlineCreditsPhase(skipped, finalMessage);
+            var roll = (System.Collections.IEnumerator)typeof(EndingScreenController).GetMethod("RollCreditsRoutine", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(ending, new object[] { 100f });
+            Assert.AreEqual(keepsRolling, roll.MoveNext());
+            (roll as System.IDisposable)?.Dispose();
+            Assert.AreEqual(mode == NetSync.NetMode.Client && skipped, ending.CreditsSkipped);
+            ending.ForceHide(); Assert.IsFalse(ending.Running); Assert.IsFalse(ending.CreditsSkipped); Assert.IsFalse(ending.ShowingFinalMessage);
+        }
+        finally { NetSync.Mode = oldMode; Object.DestroyImmediate(root); }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void RegeneratedBlockCannotRevealTheSameHiddenRewardAgain(bool initiallyReserved)
+    {
+        var root = new GameObject("RegeneratingReward"); root.SetActive(false);
+        var ground = new GameObject("RewardGround", typeof(UnityEngine.Tilemaps.Tilemap));
+        var reward = new GameObject("AssignedReward");
+        try
+        {
+            var game = root.AddComponent<GameManager>();
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(GameManager).GetField("totalDestructibleBlocks", flags).SetValue(game, 1);
+            game.groundTilemap = ground.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            var assignments = (System.Collections.Generic.Dictionary<Vector3Int, GameObject>)typeof(GameManager).GetField("hiddenObjectSpawnsByCell", flags).GetValue(game);
+            var cell = new Vector3Int(2, 3, 0); assignments[cell] = reward;
+            if (initiallyReserved)
+            {
+                Assert.IsTrue(game.TryReservePendingHiddenItemCell(cell));
+                Assert.IsNull(game.GetSpawnForDestroyedBlock(cell));
+                Assert.IsTrue(assignments.ContainsKey(cell), "A rejected reveal keeps its assignment.");
+                game.ReleasePendingHiddenItemCell(cell);
+            }
+            Assert.AreSame(reward, game.GetSpawnForDestroyedBlock(cell));
+            game.ReleasePendingHiddenItemCell(cell);
+            Assert.IsNull(game.GetSpawnForDestroyedBlock(cell), "Regrowing and destroying the block must not return its item.");
+        }
+        finally { Object.DestroyImmediate(root); Object.DestroyImmediate(ground); Object.DestroyImmediate(reward); }
+    }
+
+    [Test]
+    public void HallPortalRecipePreservesAuthoredMaskAndClearsItAfterReveal()
+    {
+        var host = new GameObject("PortalRecipeManager"); host.SetActive(false);
+        var source = new GameObject("PortalRecipeSource", typeof(SpriteRenderer)); source.SetActive(false);
+        var view = new GameObject("PortalRecipeView", typeof(SpriteRenderer));
+        var texture = new Texture2D(4, 4);
+        var sprite = Sprite.Create(texture, new Rect(0, 0, 4, 4), Vector2.one * .5f, 16);
+        var catalog = ScriptableObject.CreateInstance<CoopSceneCatalog>();
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        try
+        {
+            var manager = host.AddComponent<BombermanNetworkManager>();
+            catalog.sprites = new[] { sprite };
+            typeof(BombermanNetworkManager).GetField("coopCatalog", flags).SetValue(manager, catalog);
+            ((System.Collections.Generic.Dictionary<Sprite, int>)typeof(BombermanNetworkManager).GetField("coopSpriteIds", flags).GetValue(manager))[sprite] = 0;
+            var portal = source.AddComponent<global::StageAssets.World3HallPortal>();
+            var renderer = source.GetComponent<SpriteRenderer>(); renderer.sprite = sprite;
+            typeof(global::StageAssets.World3HallPortal).GetField("visual", flags).SetValue(portal, renderer);
+            var material = Resources.Load<Material>("Portal/World3HallPortalPalette"); Assert.IsNotNull(material);
+            renderer.sharedMaterial = material; view.GetComponent<SpriteRenderer>().sharedMaterial = material;
+            var properties = new MaterialPropertyBlock();
+            properties.SetFloat("_RevealMode", 2); properties.SetFloat("_RevealY", 5); properties.SetFloat("_BeamMaskEnabled", 1);
+            properties.SetFloat("_PortalBaseMaskHeight", .25f);
+            properties.SetVector("_PortalWorldRect", new Vector4(2, 3, 1, 2));
+            properties.SetVector("_RenderWorldRect", new Vector4(2, 3, 1, 4));
+            properties.SetVector("_PortalUVRect", new Vector4(0, 0, 1, 1));
+            properties.SetVector("_RenderUVRect", new Vector4(0, 0, 1, 1)); renderer.SetPropertyBlock(properties);
+            var recipe = (CoopPortalPalette)typeof(BombermanNetworkManager).GetMethod("CaptureCoopPortal", flags).Invoke(manager, new object[] { renderer });
+            Assert.IsNotNull(recipe); Assert.IsTrue(recipe.IsValid()); Assert.AreEqual(0, recipe.maskSprite); Assert.IsTrue(recipe.beamMask);
+            var target = view.GetComponent<SpriteRenderer>();
+            Assert.IsTrue((bool)typeof(BombermanNetworkManager).GetMethod("ApplyCoopPortal", flags).Invoke(manager, new object[] { target, recipe }));
+            target.GetPropertyBlock(properties); Assert.AreSame(texture, properties.GetTexture("_PortalMaskTex"));
+            Assert.AreEqual(5, properties.GetFloat("_RevealY")); Assert.AreEqual(new Vector4(2, 3, 1, 4), properties.GetVector("_RenderWorldRect"));
+            typeof(BombermanNetworkManager).GetMethod("ReleaseCoopPortal", flags).Invoke(manager, new object[] { target });
+            target.GetPropertyBlock(properties); Assert.IsTrue(properties.isEmpty);
+            recipe.revealY = float.NaN; Assert.IsFalse(recipe.IsValid());
+        }
+        finally
+        {
+            Object.DestroyImmediate(host); Object.DestroyImmediate(source); Object.DestroyImmediate(view);
+            Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); Object.DestroyImmediate(catalog);
+        }
+    }
+
+    [Test]
+    public void RoomUnlockNotificationsIgnoreBaselineAndDuplicatesWithoutChangingOfflineSave()
+    {
+        var offline = SaveSystem.Data;
+        string original = JsonUtility.ToJson(offline);
+        var oldMode = NetSync.Mode;
+        int notifications = 0;
+        System.Action onUnlock = () => notifications++;
+        UnlockProgress.OnBossRushUnlocked += onUnlock;
+        try
+        {
+            NetSync.Mode = NetSync.NetMode.Client;
+            var incoming = JsonUtility.FromJson<SaveData>(original);
+            incoming.bossRushUnlocked = false;
+            Assert.IsTrue(SaveSystem.ApplyRoomProgress(JsonUtility.ToJson(incoming), false));
+            Assert.AreEqual(0, notifications);
+            incoming.bossRushUnlocked = true;
+            string unlocked = JsonUtility.ToJson(incoming);
+            Assert.IsTrue(SaveSystem.ApplyRoomProgress(unlocked, false));
+            Assert.AreEqual(1, notifications);
+            Assert.IsTrue(SaveSystem.ApplyRoomProgress(unlocked, false));
+            Assert.AreEqual(1, notifications);
+            Assert.AreEqual(original, JsonUtility.ToJson(offline));
+        }
+        finally
+        {
+            UnlockProgress.OnBossRushUnlocked -= onUnlock;
+            SaveSystem.EndOnlineBattleSettings(); SaveSystem.EndOnlineCoopSettings(); NetSync.Mode = oldMode;
+        }
+        Assert.AreSame(offline, SaveSystem.Data);
+    }
+
+    [Test]
+    public void GeyserBlocksExplosionOnlyWhileItsColliderIsActive()
+    {
+        var actor = new GameObject("GeyserBombSource"); actor.SetActive(false);
+        var geyser = new GameObject("ExplosionBarrier"); geyser.SetActive(false);
+        geyser.transform.position = new Vector3(75, 75, 0);
+        try
+        {
+            actor.AddComponent<BoxCollider2D>();
+            var bombs = actor.AddComponent<BombController>();
+            var collider = geyser.AddComponent<BoxCollider2D>(); collider.isTrigger = true;
+            geyser.AddComponent<GeyserLauncherBootstrap>();
+            geyser.SetActive(true); Physics2D.SyncTransforms();
+            var query = typeof(BombController).GetMethod("HasIndestructibleAt", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsTrue((bool)query.Invoke(bombs, new object[] { new Vector2(75, 75) }));
+            Assert.IsFalse((bool)query.Invoke(bombs, new object[] { new Vector2(76, 75) }));
+            collider.enabled = false; Physics2D.SyncTransforms();
+            Assert.IsFalse((bool)query.Invoke(bombs, new object[] { new Vector2(75, 75) }));
+        }
+        finally { Object.DestroyImmediate(actor); Object.DestroyImmediate(geyser); }
+    }
+
+    [Test]
+    public void PinkGroundedHandoffReenablesShadowAfterWalkingPoseSuppressedIt()
+    {
+        var mount = new GameObject("PinkShadowHandoff"); mount.SetActive(false);
+        var shadowObject = new GameObject("Shadow"); shadowObject.transform.SetParent(mount.transform);
+        try
+        {
+            var shadow = shadowObject.AddComponent<PinkLouieShadowController>();
+            var animator = shadowObject.AddComponent<PinkLouieShadowAnimator>(); shadow.animator = animator;
+            var walk = new GameObject("Walk", typeof(SpriteRenderer)); walk.transform.SetParent(shadowObject.transform);
+            var jump = new GameObject("Jump", typeof(SpriteRenderer)); jump.transform.SetParent(shadowObject.transform);
+            animator.walkShadow = walk.AddComponent<AnimatedSpriteRenderer>(); animator.jumpShadow = jump.AddComponent<AnimatedSpriteRenderer>();
+            typeof(PinkLouieShadowAnimator).GetMethod("CacheRefs", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(animator, null);
+            shadow.BindToPinkLouieRoot(mount.transform); shadow.BeginJump(Vector2.one); shadow.EndJump();
+            animator.walkShadow.enabled = false; walk.GetComponent<SpriteRenderer>().enabled = false;
+            mount.transform.position = new Vector3(4, 5, 0);
+            shadow.PresentNetworkGrounded(.1f);
+            Assert.IsTrue(walk.GetComponent<SpriteRenderer>().enabled); Assert.IsTrue(animator.walkShadow.enabled);
+            Assert.IsFalse(jump.GetComponent<SpriteRenderer>().enabled);
+            Assert.AreEqual(new Vector3(4, 5 + shadow.localY, shadow.worldZ), shadowObject.transform.position);
+        }
+        finally { Object.DestroyImmediate(mount); }
+    }
+
+    [Test]
+    public void BoatSeatReplacesMountedHeadOffsetAndRestoresItOnRelease()
+    {
+        var parent = new GameObject("BoatHeadRoot"); parent.SetActive(false);
+        var actor = new GameObject("BoatHead", typeof(SpriteRenderer)); actor.transform.SetParent(parent.transform, false);
+        try
+        {
+            actor.transform.localPosition = new Vector3(.25f, .5f, 0);
+            var animation = actor.AddComponent<AnimatedSpriteRenderer>();
+            typeof(AnimatedSpriteRenderer).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(animation, null);
+            animation.idle = true;
+            animation.SetRuntimeBaseLocalY(2f);
+            animation.SetRuntimeBaseLocalX(1f);
+            Vector3 mounted = actor.transform.localPosition;
+            animation.SetExternalBaseOffsetFromInitial(new Vector3(.125f, -.25f, 0), overrideRuntimeOffset: true);
+            Assert.That(Vector3.Distance(actor.transform.localPosition, new Vector3(.375f, .25f, 0)), Is.LessThan(.00001f));
+            Assert.That(Vector3.Distance(animation.RestingLocalPosition, actor.transform.localPosition), Is.LessThan(.00001f), "Ride anchors must use the same boat seat as the rendered head.");
+            animation.ClearExternalBase();
+            Assert.That(Vector3.Distance(actor.transform.localPosition, mounted), Is.LessThan(.00001f));
+        }
+        finally { Object.DestroyImmediate(parent); }
+    }
+
+    [Test]
+    public void GeneratedChipCelebrationSpritesRemainReadableForApprovedDefinitions()
+    {
+        var source = new GameObject("ChipSource");
+        GameObject effect = null;
+        try
+        {
+            global::StageAssets.World3EndStageCelebrationEffect.Play(Vector3.one, source.transform);
+            effect = GameObject.Find("World3EndStageCelebration"); Assert.IsNotNull(effect);
+            var sprites = effect.GetComponentsInChildren<SpriteRenderer>(true);
+            Assert.AreEqual(12, sprites.Length);
+            foreach (var sprite in sprites) { Assert.IsNotNull(sprite.sprite); Assert.IsTrue(sprite.sprite.texture.isReadable); }
+        }
+        finally { if (effect != null) Object.DestroyImmediate(effect); Object.DestroyImmediate(source); }
+    }
+
+    [Test]
+    public void CampaignEggAssignmentsStayGenericWithoutChoosingGameplayRandomEarly()
+    {
+        var originalRandom = Random.state;
+        var actor = new GameObject("GenericEggAssignment"); actor.SetActive(false);
+        try
+        {
+            var manager = actor.AddComponent<GameManager>();
+            var prefab = AutoItemDatabase.Get(ItemType.RandomLouieEgg);
+            Assert.IsNotNull(prefab); Assert.AreEqual(ItemType.RandomLouieEgg, prefab.type);
+            Assert.AreNotEqual(0u, prefab.GetComponent<Mirror.NetworkIdentity>().assetId);
+            var cells = new System.Collections.Generic.List<Vector3Int> { Vector3Int.zero, Vector3Int.right };
+            object[] args = { cells, 0, 2 };
+            typeof(GameManager).GetMethod("TryAssignRandomSb5Eggs", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager, args);
+            Assert.AreEqual(2, args[1]); Assert.AreEqual(originalRandom, Random.state);
+            var spawns = (System.Collections.Generic.Dictionary<Vector3Int, GameObject>)typeof(GameManager)
+                .GetField("hiddenObjectSpawnsByCell", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(manager);
+            foreach (var cell in cells) Assert.AreSame(prefab.gameObject, spawns[cell]);
+            var lobby = UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/OnlineLobby.unity", UnityEditor.SceneManagement.OpenSceneMode.Additive);
+            try
+            {
+                Mirror.NetworkManager network = null;
+                foreach (var root in lobby.GetRootGameObjects()) network ??= root.GetComponentInChildren<Mirror.NetworkManager>(true);
+                Assert.IsNotNull(network); CollectionAssert.Contains(network.spawnPrefabs, prefab.gameObject);
+            }
+            finally { UnityEditor.SceneManagement.EditorSceneManager.CloseScene(lobby, true); }
+        }
+        finally { Object.DestroyImmediate(actor); Random.state = originalRandom; }
+    }
+
+    [Test]
+    public void EnemyInvulnerabilityDoesNotTintCarriedCoreOrDetachedObjective()
+    {
+        var actor = new GameObject("BlinkOwner"); actor.SetActive(false);
+        var core = new GameObject("CarriedCore"); core.transform.SetParent(actor.transform);
+        var nested = new GameObject("NestedActor"); nested.transform.SetParent(actor.transform);
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        try
+        {
+            actor.AddComponent<BoxCollider2D>();
+            var body = actor.AddComponent<SpriteRenderer>();
+            var health = actor.AddComponent<CharacterHealth>();
+            core.AddComponent<AttachedCoreMechanismsController>();
+            var objective = core.AddComponent<SpriteRenderer>(); objective.color = new Color(.4f, .6f, .8f, .7f);
+            Color objectiveColor = objective.color;
+            nested.AddComponent<BoxCollider2D>(); nested.AddComponent<CharacterHealth>();
+            var nestedBody = nested.AddComponent<SpriteRenderer>(); nestedBody.color = Color.green;
+            typeof(CharacterHealth).GetMethod("EnsureRendererCache", flags).Invoke(health, null);
+            var blink = (System.Collections.IEnumerator)typeof(CharacterHealth).GetMethod("TemporaryInvulnerabilityRoutine", flags)
+                .Invoke(health, new object[] { .1f });
+            Assert.IsTrue(blink.MoveNext()); Assert.AreEqual(.2f, body.color.a);
+            Assert.AreEqual(objectiveColor, objective.color); Assert.AreEqual(Color.green, nestedBody.color);
+            core.transform.SetParent(null);
+            while (blink.MoveNext()) { }
+            Assert.AreEqual(Color.white, body.color);
+            Assert.AreEqual(objectiveColor, objective.color, "Finishing enemy blink must not restore a stale color on a released objective.");
+        }
+        finally { Object.DestroyImmediate(core); Object.DestroyImmediate(actor); }
+    }
+
+    [TestCase("Stage_1-1", false, 1, 1)]
+    [TestCase("Stage_1-2", false, 1, 2)]
+    [TestCase("Stage_2-5", false, 1, 2)]
+    [TestCase("Stage_World3Hall", false, 1, 2)]
+    [TestCase("Stage_3-6", false, 5, 5)]
+    [TestCase("Stage_1-2", true, 1, 1)]
+    [TestCase("BattleMode_1", false, 1, 1)]
+    public void CampaignStageLoadPreservesUpgradesAndAppliesMinimumAfterFirstStage(string scene, bool bossRush, int radius, int expected)
+    {
+        var resolve = typeof(PlayerPersistentStats).GetMethod("ResolveSceneExplosionRadius", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.AreEqual(expected, resolve.Invoke(null, new object[] { radius, scene, bossRush }));
+    }
+
+    [Test]
     public void PlainCoopRendererRegistersBeforeDiscoveryWithoutDuplicatingOrOwningGameplay()
     {
         bool oldNetworkScene = NetSync.IsNetworkedScene;

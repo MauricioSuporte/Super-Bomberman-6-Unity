@@ -523,7 +523,7 @@ public partial class MovementController : MonoBehaviour, IKillable
     }
 
     public bool HasEasyNormalGameRespawn => IsPlayer() &&
-        !BossRushSession.IsActive && !Assets.Scripts.Netcode.NetSync.IsOnline &&
+        !BossRushSession.IsActive &&
         UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal) &&
         SaveSystem.GetActiveNormalGameDifficulty() == Assets.Scripts.SaveSystem.NormalGameDifficulty.Easy;
 
@@ -3789,6 +3789,11 @@ public partial class MovementController : MonoBehaviour, IKillable
             bool faceUp = StageMechaIntroController.Instance != null ||
                 (spawner != null && spawner.IsBossStage);
             ForceIdleFacing(faceUp ? Vector2.up : Vector2.down, "EasyNormalGameRespawn");
+            // Easy revival has no Revenge arc/elimination phase, but clients still
+            // need the approved reset of death, loadout, position and input history.
+            if (Assets.Scripts.Netcode.NetSync.IsServer &&
+                TryGetComponent<Assets.Scripts.Netcode.NetworkPlayerState>(out var state) && state.isServer)
+                state.ServerFinishRevengeReturn(forceRespawn: true);
             return;
         }
 

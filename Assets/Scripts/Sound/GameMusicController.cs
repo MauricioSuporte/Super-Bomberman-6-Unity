@@ -167,6 +167,11 @@ public class GameMusicController : MonoBehaviour
     public void PlayMusic(AudioClip clip, float volume = 1f, bool loop = true, float pitch = 1f, bool restart = true)
     {
         Assets.Scripts.Netcode.BombermanNetworkManager.CoopPlayMusic(clip, volume, loop, pitch);
+        PlayMusicLocal(clip, volume, loop, pitch, restart);
+    }
+
+    void PlayMusicLocal(AudioClip clip, float volume, bool loop, float pitch, bool restart)
+    {
         if (clip == null || musicSource == null)
             return;
 
@@ -429,23 +434,30 @@ public class GameMusicController : MonoBehaviour
     {
         // Clients received the complete intro/loop pair and time it on their audio device.
         // A dedicated server has no playing AudioSource; its completion is not an audio clock.
-        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage && Mirror.NetworkServer.active)
+        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage && Mirror.NetworkServer.active &&
+            SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null)
             yield break;
         PreloadAudioData(loopClip);
+        double previousDspTime = AudioSettings.dspTime;
+        double playedClipSeconds = musicSource != null ? musicSource.time : 0;
 
         while (musicSource != null && musicSource.clip == introClip)
         {
+            double dspTime = AudioSettings.dspTime;
+            double dspDelta = System.Math.Max(0, dspTime - previousDspTime);
+            previousDspTime = dspTime;
             if (musicPausedForGamePause)
             {
                 yield return null;
                 continue;
             }
 
-            // Losing application focus can temporarily make an AudioSource report
-            // that it is not playing. Wait for focus before treating that as the
-            // end of the intro, so returning to the game does not start the loop.
-            if (Application.isFocused &&
-                (!musicSource.isPlaying || musicSource.time >= introClip.length))
+            // isPlaying can be false on focus loss, and time resets at completion.
+            // The audio-device clock still identifies the end while minimized.
+            // It freezes with a suspended device; gameplay pause is excluded above.
+            playedClipSeconds += dspDelta * Mathf.Abs(musicSource.pitch);
+            if ((Application.isFocused && !musicSource.isPlaying) ||
+                musicSource.time >= introClip.length || playedClipSeconds >= introClip.length)
                 break;
 
             yield return null;
@@ -467,7 +479,7 @@ public class GameMusicController : MonoBehaviour
         }
 
         musicTransitionRoutine = null;
-        PlayMusic(loopClip, loopVolume, true, pitch, true);
+        PlayMusicLocal(loopClip, loopVolume, true, pitch, true);
     }
 
     void StopMusicTransitionRoutine()

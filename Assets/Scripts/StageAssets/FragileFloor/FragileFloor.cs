@@ -1,5 +1,6 @@
 using Assets.Scripts.StageAssets.FragileFloor;
 using System.Collections;
+using Assets.Scripts.Netcode;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -14,6 +15,10 @@ public sealed class FragileFloor : MonoBehaviour
     [Header("Optional")]
     [SerializeField] private bool disableTriggerAfterBlocked = true;
     [SerializeField, Min(1f)] private float pendingBlockClearanceMultiplier = 1.2f;
+
+    [Header("Sounds")]
+    [SerializeField] private AudioClip crackSfx;
+    [SerializeField] private AudioClip blockSfx;
 
     private Tilemap _groundTilemap;
     private Tilemap _destructiblesTilemap;
@@ -144,7 +149,7 @@ public sealed class FragileFloor : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!IsPlayer(other))
+        if (!NetSync.ShouldSimulateLocally || !IsPlayer(other))
             return;
 
         if (_state == FragileFloorState.Blocked)
@@ -167,6 +172,7 @@ public sealed class FragileFloor : MonoBehaviour
                 _groundTilemap.RefreshTile(_cell);
             }
 
+            GameMusicController.Instance?.PlaySfx(crackSfx);
             _state = FragileFloorState.Cracked;
             return;
         }
@@ -181,7 +187,7 @@ public sealed class FragileFloor : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (!IsPlayer(other))
+        if (!NetSync.ShouldSimulateLocally || !IsPlayer(other))
             return;
 
         if (_state != FragileFloorState.PendingBlock)
@@ -216,6 +222,7 @@ public sealed class FragileFloor : MonoBehaviour
             _indestructiblesTilemap.RefreshTile(_cell);
         }
 
+        GameMusicController.Instance?.PlaySfx(blockSfx);
         MarkBlocked();
     }
 

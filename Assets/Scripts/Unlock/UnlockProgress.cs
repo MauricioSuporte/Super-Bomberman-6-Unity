@@ -11,6 +11,27 @@ public static class UnlockProgress
     public static event Action OnBattleModeStage11Unlocked;
     public static event Action<int> OnBattleModeStageUnlocked;
 
+    // Presentation only: room progress is already approved and applied by SaveSystem.
+    // Do not call Unlock here: observers must never persist another owner's progress.
+    public static void NotifyRoomUnlocks(SaveData previous, SaveData current)
+    {
+        foreach (var name in current.unlockedSkins)
+            if (!previous.unlockedSkins.Contains(name) && Enum.TryParse<BomberSkin>(name, out var skin))
+                OnSkinUnlocked?.Invoke(skin);
+        if (!previous.bossRushUnlocked && current.bossRushUnlocked) OnBossRushUnlocked?.Invoke();
+        if (!previous.hardcoreUnlocked && current.hardcoreUnlocked) OnHardcoreUnlocked?.Invoke();
+        bool[] before = { previous.battleModeStage11Unlocked, previous.battleModeStage12Unlocked,
+            previous.battleModeStage13Unlocked, previous.battleModeStage14Unlocked, previous.battleModeStage15Unlocked };
+        bool[] after = { current.battleModeStage11Unlocked, current.battleModeStage12Unlocked,
+            current.battleModeStage13Unlocked, current.battleModeStage14Unlocked, current.battleModeStage15Unlocked };
+        for (int i = 0; i < after.Length; i++)
+            if (after[i] && !before[i])
+            {
+                if (i == 0) OnBattleModeStage11Unlocked?.Invoke();
+                OnBattleModeStageUnlocked?.Invoke(i + 11);
+            }
+    }
+
     public static string SaveDirectoryPath => SaveSystem.SaveDirectoryPath;
     public static string SaveFilePath => SaveSystem.SaveFilePath;
 

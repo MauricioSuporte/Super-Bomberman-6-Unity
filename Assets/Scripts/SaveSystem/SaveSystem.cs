@@ -58,10 +58,10 @@ public static partial class SaveSystem
     {
         get
         {
-            // CI and standalone batch smoke clients use isolated files. Normal
-            // Editor/player sessions always retain the user's usual save path.
+            // Explicit Development and CI smoke overrides isolate rendered players too.
+            // Ordinary sessions without the override retain the usual save path.
             string sandbox = Environment.GetEnvironmentVariable("SB6_SAVE_DIRECTORY");
-            return Application.isBatchMode && !string.IsNullOrWhiteSpace(sandbox)
+            return (Application.isBatchMode || Debug.isDebugBuild) && !string.IsNullOrWhiteSpace(sandbox)
                 ? Path.GetFullPath(sandbox) : Path.Combine(Application.persistentDataPath, SaveFolderName);
         }
     }

@@ -9,6 +9,130 @@ using Object = UnityEngine.Object;
 public sealed partial class OnlineRoomEditModeTests
 {
     [Test]
+    public void Stage25GateRoofRendersAboveTheIndestructibleChunkInBothStates()
+    {
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenPreviewScene("Assets/Scenes/Stage_2-5.unity");
+        try
+        {
+            UnityEngine.Tilemaps.TilemapRenderer wall = null;
+            EndStageGateAnimated gate = null;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                foreach (var map in root.GetComponentsInChildren<UnityEngine.Tilemaps.TilemapRenderer>(true))
+                    if (map.CompareTag("Indestructibles")) wall = map;
+                gate ??= root.GetComponentInChildren<EndStageGateAnimated>(true);
+            }
+            Assert.IsNotNull(wall); Assert.IsNotNull(gate);
+            foreach (string field in new[] { "closedRoot", "openRoot" })
+            {
+                var visual = (GameObject)typeof(EndStageGateAnimated).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(gate);
+                Assert.IsNotNull(visual);
+                var renderer = visual.GetComponent<SpriteRenderer>();
+                Assert.IsNotNull(renderer);
+                Assert.AreEqual(wall.sortingLayerID, renderer.sortingLayerID);
+                Assert.Greater(renderer.sortingOrder, wall.sortingOrder, "A chunk's Y anchor must not cover the opaque gate roof.");
+            }
+        }
+        finally { UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene); }
+    }
+
+    [Test]
+    public void EveryPowderFlameKindRendersAboveChunkGroundWithoutRaisingSteam()
+    {
+        var groundObject = new GameObject("ChunkPowderGround", typeof(UnityEngine.Tilemaps.Tilemap), typeof(UnityEngine.Tilemaps.TilemapRenderer));
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Explosions/PowderIgniter.prefab");
+        Assert.IsNotNull(prefab);
+        var instance = Object.Instantiate(prefab);
+        try
+        {
+            var ground = groundObject.GetComponent<UnityEngine.Tilemaps.TilemapRenderer>(); ground.sortingOrder = 12;
+            var flame = instance.GetComponent<PowderIgniterFlame>();
+            var steam = instance.transform.Find("Steam").GetComponent<SpriteRenderer>();
+            int steamOrder = steam.sortingOrder;
+            flame.SetGroundSorting(ground);
+            foreach (var animation in new[] { flame.horizontal, flame.vertical, flame.curveDownLeft, flame.curveDownRight, flame.curveUpLeft, flame.curveUpRight })
+            {
+                Assert.IsNotNull(animation, "Every authored path orientation must use the same ground sorting rule.");
+                var sprite = animation.GetComponent<SpriteRenderer>();
+                Assert.AreEqual(ground.sortingLayerID, sprite.sortingLayerID);
+                Assert.AreEqual(13, sprite.sortingOrder, "The flame must stay above the entire ground chunk, including the final path cells.");
+            }
+            Assert.AreEqual(steamOrder, steam.sortingOrder, "Steam keeps its authored relationship with the boiler/bridge.");
+        }
+        finally { Object.DestroyImmediate(instance); Object.DestroyImmediate(groundObject); }
+    }
+
+    [Test]
+    public void HostConsumesSharedWorldMessagesWithoutReplayingTheirEffects()
+    {
+        var handlers = (System.Collections.IDictionary)typeof(NetworkClient).GetField("handlers", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+        ushort messageId = NetworkMessages.GetId<CoopStageStatus>();
+        bool existed = handlers.Contains(messageId); object previous = handlers[messageId];
+        bool previousServer = NetworkServer.active; int applied = 0;
+        Action<CoopStageStatus> effect = _ => applied++;
+        try
+        {
+            typeof(BombermanNetworkManager).GetMethod("RegisterRemoteWorldHandler", BindingFlags.Static | BindingFlags.NonPublic)
+                .MakeGenericMethod(typeof(CoopStageStatus)).Invoke(null, new object[] { effect });
+            var connection = new NetworkConnectionToServer { isAuthenticated = true };
+            void Receive()
+            {
+                using var writer = NetworkWriterPool.Get(); writer.Write(new CoopStageStatus { scene = "Stage_2-5" });
+                using var reader = NetworkReaderPool.Get(writer.ToArraySegment());
+                ((Delegate)handlers[messageId]).DynamicInvoke(connection, reader, Channels.Reliable);
+            }
+            typeof(NetworkServer).GetProperty("active").SetValue(null, true);
+            Receive(); Assert.AreEqual(0, applied, "The host already presented the authoritative world effect.");
+            typeof(NetworkServer).GetProperty("active").SetValue(null, false);
+            Receive(); Assert.AreEqual(1, applied, "The observing client still needs the approved effect.");
+        }
+        finally
+        {
+            if (existed) handlers[messageId] = previous; else handlers.Remove(messageId);
+            typeof(NetworkServer).GetProperty("active").SetValue(null, previousServer);
+        }
+    }
+
+    [Test]
+    public void NativeHostDoesNotReceivePureClientWorldPresentationMessages()
+    {
+        const int remoteId = int.MaxValue - 246;
+        var previousLocal = NetworkServer.localConnection;
+        bool previousActive = NetworkServer.active;
+        var previousTransport = Transport.active;
+        var transportObject = new GameObject("HostPresentationTransport"); transportObject.SetActive(false);
+        var local = new LocalConnectionToClient { isAuthenticated = true, isReady = true };
+        var remote = new NetworkConnectionToClient(remoteId) { isAuthenticated = true, isReady = true };
+        Assert.IsFalse(NetworkServer.connections.ContainsKey(0));
+        Assert.IsFalse(NetworkServer.connections.ContainsKey(remoteId));
+        int sent = 0;
+        Action<NetworkDiagnostics.MessageInfo> count = info => { if (info.message is CoopStageStatus) sent++; };
+        try
+        {
+            Transport.active = transportObject.AddComponent<TelepathyTransport>();
+            typeof(NetworkServer).GetProperty("active").SetValue(null, true);
+            typeof(NetworkServer).GetProperty("localConnection").SetValue(null, local);
+            NetworkServer.connections[0] = local; NetworkServer.connections[remoteId] = remote;
+            NetworkDiagnostics.OutMessageEvent += count;
+            var send = typeof(BombermanNetworkManager).GetMethod("SendPresentationToRemoteReady", BindingFlags.Static | BindingFlags.NonPublic)
+                .MakeGenericMethod(typeof(CoopStageStatus));
+            void Publish() => send.Invoke(null, new object[] { new CoopStageStatus { scene = "Stage_1-1" } });
+            Publish(); Assert.AreEqual(1, sent, "Only the real remote client needs the approved world message.");
+            remote.isReady = false; Publish(); Assert.AreEqual(1, sent);
+            remote.isReady = true; remote.isAuthenticated = false; Publish(); Assert.AreEqual(1, sent);
+            remote.isAuthenticated = true; Publish(); Assert.AreEqual(2, sent);
+        }
+        finally
+        {
+            NetworkDiagnostics.OutMessageEvent -= count;
+            NetworkServer.connections.Remove(0); NetworkServer.connections.Remove(remoteId);
+            typeof(NetworkServer).GetProperty("localConnection").SetValue(null, previousLocal);
+            typeof(NetworkServer).GetProperty("active").SetValue(null, previousActive);
+            Transport.active = previousTransport; Object.DestroyImmediate(transportObject);
+        }
+    }
+
+    [Test]
     public void ForgettingASharedBombDoesNotCancelAnUnrelatedOwnedPunchPose()
     {
         using var fixture = new WorldBombFixture(true);

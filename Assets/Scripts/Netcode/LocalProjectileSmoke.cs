@@ -28,7 +28,7 @@ namespace Assets.Scripts.Netcode
         static double lastObservedClock;
         static float captureFrom = -1, captureNext;
         static int captureFrame;
-        static bool Enabled => Array.IndexOf(Environment.GetCommandLineArgs(), "-r05-projectiles") >= 0;
+        static bool Enabled => Array.IndexOf(Environment.GetCommandLineArgs(), "-r05-projectiles") >= 0 || LocalPredictionSmoke.NormalGamePlaytest && LocalPredictionSmoke.NormalCase == "blink";
         static bool Measuring => GameplayLatencyDiagnostics.Enabled && Enabled;
         const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
         static readonly CultureInfo CI = CultureInfo.InvariantCulture;
@@ -102,7 +102,7 @@ namespace Assets.Scripts.Netcode
         {
             if (!Measuring || !views.TryGetValue(frame.id, out string family) || view == null) return;
             viewCases.TryGetValue(frame.id, out string label);
-            if (captureFrom < 0 && label != null && label.StartsWith(SceneManager.GetActiveScene().name + "/0/", StringComparison.Ordinal) && view.enabled)
+            if (captureFrom < 0 && view.enabled && (LocalPredictionSmoke.NormalGamePlaytest && LocalPredictionSmoke.NormalCase == "blink" && family == "BlinkRocket" || label != null && label.StartsWith(SceneManager.GetActiveScene().name + "/0/", StringComparison.Ordinal)))
                 captureFrom = Time.unscaledTime;
             bool animating = frame.animation != 0 && frame.playback.speed > 0 && !frame.playback.idle && !frame.playback.frozen;
             Sample("r05_view", frame.id, family, time, view, label, stateTime, newest, animating);
@@ -163,7 +163,7 @@ namespace Assets.Scripts.Netcode
                 ";state=" + (double.IsNaN(stateTime) ? time : stateTime).ToString("R", CI) +
                 ";stateMeasured=" + (!double.IsNaN(stateTime) ? 1 : 0) +
                 ";newest=" + (double.IsNaN(newest) ? time : newest).ToString("R", CI) + ";animating=" + (animating ? 1 : 0) +
-                ";paused=" + (GamePauseController.IsPaused ? 1 : 0));
+                ";paused=" + (GamePauseController.IsPaused ? 1 : 0) + ";alpha=" + renderer.color.a.ToString("R", CI));
             row.position = renderer.transform.position;
             GameplayLatencyDiagnostics.Write(row);
         }

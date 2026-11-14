@@ -94,6 +94,12 @@ namespace Assets.Scripts.Netcode
                     if (scene != null && (!scene.StartsWith("Stage_", StringComparison.Ordinal) ||
                         SceneUtility.GetBuildIndexByScenePath("Assets/Scenes/" + scene + ".unity") < 0))
                         throw new ArgumentException("Load-test scene must be an enabled stage.");
+                    if (LocalPredictionSmoke.NormalGamePlaytest)
+                    {
+                        global::SaveSystem.Data.activeSlotIndex = 0;
+                        global::SaveSystem.Data.slots[0].started = true;
+                        global::SaveSystem.Data.slots[0].difficulty = (int)Assets.Scripts.SaveSystem.NormalGameDifficulty.Easy;
+                    }
                     ServerStartCoop(scene);
                 }
                 else
@@ -109,7 +115,7 @@ namespace Assets.Scripts.Netcode
                         fillCom ? BattleModePlayerControlMode.Com : BattleModePlayerControlMode.Off;
                     global::SaveSystem.SetBattleModePlayerControlModes(modes);
                     GameSession.Instance?.SetActivePlayerIds(RoomPlayers);
-                    ServerLaunchConfiguredBattle(HasArg("-load-test-mechanisms") ? LoadTestMechanismScene() : loadTestLauncherKind == "portal7" ? "BattleMode_7" : loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
+                    ServerLaunchConfiguredBattle(LocalPredictionSmoke.NormalGamePlaytest && LocalPredictionSmoke.NormalCase == "uiscale" ? "BattleMode_15" : HasArg("-load-test-mechanisms") ? LoadTestMechanismScene() : loadTestLauncherKind == "portal7" ? "BattleMode_7" : loadTestLauncherKind == "cart9" ? "BattleMode_9" : loadTestLauncherKind == "cart12" ? "BattleMode_12" : loadTestLauncherKind == "arena" ? "BattleMode_4" : loadTestLauncherKind == "rope" ? "BattleMode_11" : "BattleMode_15");
                 }
             }
             // Keep combat running rather than measuring an empty arena after bot deaths.
@@ -117,7 +123,7 @@ namespace Assets.Scripts.Netcode
             {
                 loadTestNextHealth = Time.unscaledTime + 1;
                 foreach (var health in FindObjectsByType<CharacterHealth>())
-                    if (!health.IsDead) health.life = 200;
+                    if (!health.IsDead && !(LocalPredictionSmoke.NormalGamePlaytest && health.CompareTag("Player"))) health.life = 200;
                 if (!loadTestSpawnsChecked && !HasArg("-load-test-bomb-abilities") && HasArg("-load-test-spawns") && !IsCoopRoom && Time.timeSinceLevelLoad > 3)
                 {
                     loadTestSpawnsChecked = true;
@@ -144,6 +150,11 @@ namespace Assets.Scripts.Netcode
                 {
                     loadTestMechanismChecked = true; StartCoroutine(CheckLoadTestMechanism());
                 }
+                if (!loadTestCoopWorldChecked && LocalPredictionSmoke.NormalGamePlaytest && LocalPredictionSmoke.NormalCase == "uiscale" && !IsCoopRoom && Time.timeSinceLevelLoad > 12 && OnlineRoundPlayersReady)
+                {
+                    loadTestCoopWorldChecked = true;
+                    StartCoroutine(LocalPredictionSmoke.Run());
+                }
                 if (!loadTestCoopWorldChecked && HasArg("-load-test-coop-world") && IsCoopRoom && Time.timeSinceLevelLoad > 12 &&
                     OnlineCoopPlayersReady && NetworkServer.connections.Count >= loadTestPlayers)
                 {
@@ -165,12 +176,18 @@ namespace Assets.Scripts.Netcode
         System.Collections.IEnumerator CheckLoadTestCoopWorld()
         {
             string scene = SceneManager.GetActiveScene().name;
+            bool hallMenu = LocalPredictionSmoke.NormalGamePlaytest && LocalPredictionSmoke.NormalCase == "hall" &&
+                scene == global::StageAssets.World3HallPortalSelectionController.SceneName;
             static string U() => " u=" + (DateTime.UtcNow.Ticks / 10000 - 63900000000000L).ToString(System.Globalization.CultureInfo.InvariantCulture);
             Debug.Log("[LoadTest] coop-world started scene=" + scene + U());
             if (HasArg("-load-test-enemies")) yield return CheckLoadTestEnemyTransitions();
             if (HasArg("-r06-bosses")) yield return LocalBossSmoke.Run();
             if (HasArg("-r08-environment")) yield return LocalEnvironmentSmoke.Run();
-            if (HasArg("-p0-prediction")) yield return LocalPredictionSmoke.Run();
+            if (HasArg("-p0-prediction") || LocalPredictionSmoke.NormalGamePlaytest) yield return LocalPredictionSmoke.Run();
+            if (LocalPredictionSmoke.NormalGamePlaytest && LocalPredictionSmoke.NormalCase == "credits")
+            { Debug.Log("[LoadTest] coop-world credits completed" + U()); yield break; }
+            if (LocalPredictionSmoke.NormalGamePlaytest && LocalPredictionSmoke.NormalCase is "portal" or "chip" or "bossitems")
+            { Debug.Log("[LoadTest] coop-world completed scene=" + scene + " transition=" + LocalPredictionSmoke.NormalCase + U()); yield break; }
             if (HasArg("-r05-projectiles")) yield return LocalProjectileSmoke.Run();
             // 30 s of steady native world first: the pre-registered cost window ends at the first pause.
             // R02 controlled reproduction: "-load-test-hitch-ms N" blocks the server main thread N ms every 2.5 s (12 times)
@@ -187,9 +204,12 @@ namespace Assets.Scripts.Netcode
                     Debug.Log("[LoadTest] coop-world hitch index=" + hitch + " ms=" + hitchMs + U());
                     System.Threading.Thread.Sleep(Mathf.Clamp(hitchMs, 1, 1000));
                 }
-            ToggleNativePause(true); Debug.Log("[LoadTest] coop-world paused index=1" + U());
+            if (hallMenu) CheckNormalHallPauseRejected();
+            else { ToggleNativePause(true); Debug.Log("[LoadTest] coop-world paused index=1" + U()); }
+            Debug.Log("[LoadTest] coop-world pause check index=1 allowed=" + !hallMenu + U());
             yield return new WaitForSecondsRealtime(2f);
-            ToggleNativePause(false); Debug.Log("[LoadTest] coop-world resumed index=1" + U());
+            if (!hallMenu) ToggleNativePause(false);
+            Debug.Log("[LoadTest] coop-world resumed index=1" + U());
             yield return new WaitForSecondsRealtime(10f);
             Debug.Log("[LoadTest] coop-world reload scene=" + scene + U());
             ServerChangeScene(scene);
@@ -201,11 +221,41 @@ namespace Assets.Scripts.Netcode
             Debug.Log("[LoadTest] coop-world reloaded scene=" + scene + U());
             if (HasArg("-r05-projectiles") || HasArg("-r06-bosses")) yield return LocalProjectileSmoke.EnsureEncounter();
             yield return new WaitForSecondsRealtime(3f);
-            ToggleNativePause(true); Debug.Log("[LoadTest] coop-world paused index=2" + U());
+            if (LocalPredictionSmoke.NormalGamePlaytest && !hallMenu) yield return WaitForNormalPlaytestPauseReady();
+            if (hallMenu) CheckNormalHallPauseRejected();
+            else { ToggleNativePause(true); Debug.Log("[LoadTest] coop-world paused index=2" + U()); }
+            Debug.Log("[LoadTest] coop-world pause check index=2 allowed=" + !hallMenu + U());
             yield return new WaitForSecondsRealtime(2f);
-            ToggleNativePause(false); Debug.Log("[LoadTest] coop-world resumed index=2" + U());
+            if (!hallMenu) ToggleNativePause(false);
+            Debug.Log("[LoadTest] coop-world resumed index=2" + U());
             yield return new WaitForSecondsRealtime(5f);
             Debug.Log("[LoadTest] coop-world completed scene=" + scene + U());
+        }
+
+        static void CheckNormalHallPauseRejected()
+        {
+            var pause = GamePauseController.Instance;
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var allowed = typeof(GamePauseController).GetMethod("IsPauseAllowedInCurrentScene", flags);
+            if (pause == null || allowed == null || (bool)allowed.Invoke(pause, null))
+                throw new InvalidOperationException("Hall menu fixture expected native pause to be forbidden outside the duel");
+            typeof(GamePauseController).GetMethod("TogglePause", flags).Invoke(pause, null);
+            if (GamePauseController.IsPaused) throw new InvalidOperationException("Hall menu unexpectedly accepted pause");
+            Debug.Log("[NormalPlaytest] native Hall menu pause correctly rejected");
+        }
+
+        static System.Collections.IEnumerator WaitForNormalPlaytestPauseReady()
+        {
+            var pause = GamePauseController.Instance;
+            var blocked = typeof(GamePauseController).GetMethod("IsPauseBlockedByGameplayState", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (pause == null || blocked == null) throw new InvalidOperationException("Normal pause fixture missing native state query");
+            double deadline = Time.realtimeSinceStartupAsDouble + 45;
+            while ((bool)blocked.Invoke(pause, null) && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+            if ((bool)blocked.Invoke(pause, null)) throw new InvalidOperationException("Normal reload never reached a pause-eligible native state");
+            if (LocalPredictionSmoke.NormalCase != "easy")
+                foreach (var actor in FindObjectsByType<MovementController>())
+                    if (actor.CompareTag("Player") && !actor.isDead) actor.GetComponent<CharacterHealth>().ResetForRespawn(200);
+            Debug.Log("[NormalPlaytest] reload reached native pause-eligible state");
         }
 
         // R03: exercise the real scene enemies, not a client-side clone or an invented path.
@@ -1461,6 +1511,9 @@ namespace Assets.Scripts.Netcode
                 }
             }
             var camera = Camera.main;
+            if (camera == null && LocalBossSmoke.CaptureBackbuffer)
+                foreach (var candidate in FindObjectsByType<Camera>())
+                    if (candidate.isActiveAndEnabled) { camera = candidate; break; }
             if (camera == null) return;
             if (LocalBossSmoke.TryCapture(out string bossFrame))
             {
@@ -1472,7 +1525,7 @@ namespace Assets.Scripts.Netcode
                 CaptureMountFrame(camera, projectileFrame);
                 return;
             }
-            if (!captureWarmed && (SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal) || SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal)) && Time.timeSinceLevelLoad > 1)
+            if (!captureWarmed && (SceneManager.GetActiveScene().name.StartsWith("BattleMode_", StringComparison.Ordinal) || SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal)) && (Time.timeSinceLevelLoad > 1 || LocalBossSmoke.CaptureBackbuffer))
             {
                 CaptureMountFrame(camera, "warmup.png"); captureWarmed = true;
                 return;
@@ -1682,9 +1735,13 @@ namespace Assets.Scripts.Netcode
                 lastScene = scene;
                 Debug.Log("[OwnerFlowSmoke] scene=" + scene + " player=" + BombermanNetworkManager.LocalRoomPlayerId);
             }
-            if (observedStage && scene == "TitleScreen")
+            // Explicit departure returns the initiator to Title; recipients of
+            // the dedicated room close follow OnClientDisconnect to the browser.
+            if (observedStage && !NetworkClient.active &&
+                (configured ? scene == NetworkLobby.SceneName : scene == "TitleScreen"))
             {
-                Debug.Log("[OwnerFlowSmoke] returned to title disconnected=" + !NetworkClient.active);
+                Debug.Log("[OwnerFlowSmoke] native return destination=" + scene + " disconnected=True");
+                if (Array.IndexOf(Environment.GetCommandLineArgs(), "-load-test-owner-flow-quit") >= 0) StartCoroutine(QuitAfterNativeReturn());
                 enabled = false; return;
             }
             if (!NetworkClient.isConnected || !NetworkClient.connection.isAuthenticated) return;
@@ -1702,8 +1759,12 @@ namespace Assets.Scripts.Netcode
                         " boss=" + BossRushSession.IsActive + " bossDifficulty=" + BossRushSession.CurrentDifficulty);
                 }
                 // The non-owner exercises closing the entire room as requested.
-                if (!left && !BombermanNetworkManager.IsRoomAdmin && Time.unscaledTime - stageAt > 8)
-                { left = true; BombermanNetworkManager.LeaveRoom(); }
+                bool unlockCase = LocalPredictionSmoke.NormalGamePlaytest && LocalPredictionSmoke.NormalCase == "unlock";
+                if (!left && !BombermanNetworkManager.IsRoomAdmin && Time.unscaledTime - stageAt > (unlockCase ? 45 : 8))
+                {
+                    if (unlockCase && !LocalPredictionSmoke.UnlockToastWasObserved) throw new InvalidOperationException("Configured observer never rendered the approved unlock toast");
+                    left = true; BombermanNetworkManager.LeaveRoom();
+                }
                 return;
             }
             if (Time.unscaledTime < nextInput) return;
@@ -1735,6 +1796,13 @@ namespace Assets.Scripts.Netcode
                 var view = JsonUtility.FromJson<View>(BombermanNetworkManager.FlowView);
                 Press(view.index == (int)BossRushDifficulty.HARD ? PlayerAction.ActionA : PlayerAction.MoveDown, scene);
             }
+        }
+
+        static System.Collections.IEnumerator QuitAfterNativeReturn()
+        {
+            yield return new WaitForSecondsRealtime(2);
+            Debug.Log("[OwnerFlowSmoke] native quit after return destination=" + SceneManager.GetActiveScene().name);
+            Application.Quit();
         }
 
         static void Press(PlayerAction action, string scene)

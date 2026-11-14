@@ -64,7 +64,7 @@ namespace Assets.Scripts.Netcode
             }
             if (!force && portalMaskSend.Count == 0 && !portalMasksWereActive) return;
             portalMasksWereActive = portalMaskSend.Count > 0;
-            NetworkServer.SendToReady(new PortalMaskSnapshot { scene = scene.name, revision = ++portalMaskServerRevision,
+            SendPresentationToRemoteReady(new PortalMaskSnapshot { scene = scene.name, revision = ++portalMaskServerRevision,
                 time = NetworkTime.localTime, masks = portalMaskSend.ToArray() });
         }
 

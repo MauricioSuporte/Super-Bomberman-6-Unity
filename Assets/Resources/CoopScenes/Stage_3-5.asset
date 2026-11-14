@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f04696a3eb3a17448b9c53d2f0dafad7, type: 3}
   m_Name: Stage_3-5
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.CoopSceneCatalog
-  contentHash: 9B0DAD0F9E70EE7E4949947783BF01A51D7056E60246261FC16F284926CA70ED
+  contentHash: BA0527DDFC29B05ED77C232A360EE0D90D2159E5193FEDC57DA703D15627F854
   sprites:
   - {fileID: 21300000, guid: 0071492598ef6b242b83c5d0e2f81927, type: 3}
   - {fileID: 21300000, guid: 0470aa82b7190214ca2b349c8eaee9ec, type: 3}
@@ -3662,6 +3662,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 982bf6370a168ad46a4c3f893bc7510c, type: 3}
   - {fileID: 8300000, guid: 987bcdcebc4a99144a3121e4d420ea4f, type: 3}
   - {fileID: 8300000, guid: 9b01f1328346569418d33afffd8094da, type: 3}
+  - {fileID: 8300000, guid: 9c0f59c029b269c478653c17cd277c33, type: 3}
   - {fileID: 8300000, guid: 9e7958ec8101f5841916a2fb81eec5e4, type: 3}
   - {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
   - {fileID: 8300000, guid: 9fd40e48d7f1ba6429b2957eb9cc7a4e, type: 3}
@@ -3670,6 +3671,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a82d05bbc1996a24ab9aefeb77b94757, type: 3}
   - {fileID: 8300000, guid: afdf2759f29ed294a97d92348294f718, type: 3}
   - {fileID: 8300000, guid: b3620cfe6b7947938a7a61faec89e7b0, type: 3}
+  - {fileID: 8300000, guid: b5434ed8d4b64c70ae88831a72a8f8f8, type: 3}
   - {fileID: 8300000, guid: b8cdb8ec346f0ca48a24a0741cc9f596, type: 3}
   - {fileID: 8300000, guid: bce0a0ce6d519a945aebabc5896d5189, type: 3}
   - {fileID: 8300000, guid: bda9314b286895e4fb5b5e6c838a8bc4, type: 3}

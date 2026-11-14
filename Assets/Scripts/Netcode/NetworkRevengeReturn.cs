@@ -29,9 +29,9 @@ namespace Assets.Scripts.Netcode
         }
 
         [Server]
-        public void ServerFinishRevengeReturn()
+        public void ServerFinishRevengeReturn(bool forceRespawn = false)
         {
-            if (!revengeReturning && !eliminated) return;
+            if (!forceRespawn && !revengeReturning && !eliminated) return;
             revengeReturning = false; eliminated = false;
             ServerSample();
             var input = GetComponent<NetworkPlayerInput>();

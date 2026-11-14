@@ -212,7 +212,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         pos += dropOffset;
 
-        Instantiate(escapeDropItemPrefab, pos, Quaternion.identity);
+        var item = Instantiate(escapeDropItemPrefab, pos, Quaternion.identity);
+        Assets.Scripts.Netcode.NetSpawn.Server(item);
         droppedItem = true;
     }
 

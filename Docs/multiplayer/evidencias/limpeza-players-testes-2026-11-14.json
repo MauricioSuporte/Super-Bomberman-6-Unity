@@ -1,0 +1,66 @@
+{
+  "status": "completed",
+  "fullManifest": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\private-player-cleanup-20261114.json",
+  "plannedManifestSha256": "9e87a602a28e4e83068bb6d0fd68bce15f56e5b70953d8e10916d6d9ab224801",
+  "totalBytes": 2079179915,
+  "scope": "Only six closed private test player directories, exact local frozen Linux copies preserved; remote logs/saves/captures/production/rollbacks/caches untouched.",
+  "targets": [
+    {
+      "remote": "/home/mauricio/sb6-tests/normal-playtest-20261113-b11/player",
+      "localPreserved": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch11\\linux",
+      "fileCount": 423,
+      "totalBytes": 346496536,
+      "fileTableSha256": "ed145fdd428f53d02e325e13c81384f2d65a9c742170203c9be8e7372fd52ccb"
+    },
+    {
+      "remote": "/home/mauricio/sb6-tests/normal-playtest-20261113-b12/player",
+      "localPreserved": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch12\\linux",
+      "fileCount": 423,
+      "totalBytes": 346497448,
+      "fileTableSha256": "dedbac368fde49b7f0eaa6590d099557c63979078e067f2f0b247dfee5a2d670"
+    },
+    {
+      "remote": "/home/mauricio/sb6-tests/normal-playtest-20261113-b13/player",
+      "localPreserved": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch13\\linux",
+      "fileCount": 423,
+      "totalBytes": 346509364,
+      "fileTableSha256": "e96383b34c40600809b77c68e94e6964f41f0500bf9f1d6fc4c3c5141c5e57a0"
+    },
+    {
+      "remote": "/home/mauricio/sb6-tests/normal-playtest-20261113-b15/player",
+      "localPreserved": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch15\\linux",
+      "fileCount": 423,
+      "totalBytes": 346556592,
+      "fileTableSha256": "daf064ff2c7ab66494cab83614f0ef20395c183896f343971bf081a8c6b83b62"
+    },
+    {
+      "remote": "/home/mauricio/sb6-tests/normal-playtest-20261113-b16/player",
+      "localPreserved": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch16\\linux",
+      "fileCount": 423,
+      "totalBytes": 346559219,
+      "fileTableSha256": "9113178eaf77c44ae8a005b04098ead2126eeece4c2e257bb60da2ac0269697d"
+    },
+    {
+      "remote": "/home/mauricio/sb6-tests/normal-playtest-20261113-b17/player",
+      "localPreserved": "C:\\Users\\mauri\\source\\repos\\Super-Bomberman-6-Unity\\Build\\NormalPlaytest\\Batch17\\linux",
+      "fileCount": 423,
+      "totalBytes": 346560756,
+      "fileTableSha256": "45d274df89e72b02b2eb2bdc34ad4444fbfae62bea6f0bdf0aa1936187140c9a"
+    }
+  ],
+  "result": {
+    "status": "completed",
+    "removed": [
+      "/home/mauricio/sb6-tests/normal-playtest-20261113-b11/player",
+      "/home/mauricio/sb6-tests/normal-playtest-20261113-b12/player",
+      "/home/mauricio/sb6-tests/normal-playtest-20261113-b13/player",
+      "/home/mauricio/sb6-tests/normal-playtest-20261113-b15/player",
+      "/home/mauricio/sb6-tests/normal-playtest-20261113-b16/player",
+      "/home/mauricio/sb6-tests/normal-playtest-20261113-b17/player"
+    ],
+    "freeBytesBefore": 1276014592,
+    "freeBytesAfter": 3360788480,
+    "localCopiesPreserved": true,
+    "remoteLogsSavesCapturesProductionAndCachesRetained": true
+  }
+}
