@@ -35,6 +35,7 @@ public class MiniHogeraMovementController : JunctionTurningEnemyMovementControll
 
         UpdateSpriteDirection(direction);
         DecideNextTile();
+        ClockStageStunEffect.ApplyActiveEffectToSpawnedEnemy(this);
     }
 
     protected override void OnTriggerEnter2D(Collider2D other)

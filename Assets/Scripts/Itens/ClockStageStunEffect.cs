@@ -12,6 +12,10 @@ public sealed class ClockStageStunEffect : MonoBehaviour
     [SerializeField, Min(0.01f)] private float endBlinkInterval = 0.12f;
     [SerializeField, Range(0.05f, 1f)] private float blinkAlpha = 0.25f;
 
+    private readonly List<Target> targets = new();
+    private Collider2D affectedRoomBounds;
+    private float effectEndTime;
+
     private sealed class Target
     {
         public EnemyMovementController move;
@@ -30,6 +34,7 @@ public sealed class ClockStageStunEffect : MonoBehaviour
 
     public static void Trigger(float seconds, Vector2 collectorPosition)
     {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
         var go = new GameObject("ClockStageStunEffect");
         var fx = go.AddComponent<ClockStageStunEffect>();
         fx.Begin(collectorPosition);
@@ -38,82 +43,16 @@ public sealed class ClockStageStunEffect : MonoBehaviour
     private void Begin(Vector2 collectorPosition)
     {
         Collider2D roomBounds = StageAssets.World3RoomProgressionController.FindRoomBoundsContaining(collectorPosition);
-        StartCoroutine(Routine(roomBounds));
+        affectedRoomBounds = roomBounds;
+        effectEndTime = Time.time + durationSeconds;
+        StartCoroutine(Routine());
     }
 
-    private IEnumerator Routine(Collider2D roomBounds)
+    private IEnumerator Routine()
     {
-        int enemyLayer = LayerMask.NameToLayer(enemyLayerName);
-
         var enemies = FindObjectsByType<EnemyMovementController>();
-
-        var targets = new List<Target>(enemies != null ? enemies.Length : 0);
-
-        if (enemies != null)
-        {
-            for (int i = 0; i < enemies.Length; i++)
-            {
-                var e = enemies[i];
-                if (e == null) continue;
-
-                if (roomBounds != null && !roomBounds.OverlapPoint(e.transform.position))
-                    continue;
-
-                if (enemyLayer >= 0 && e.gameObject.layer != enemyLayer)
-                    continue;
-
-                var t = new Target
-                {
-                    move = e,
-                    moveWasEnabled = e.enabled,
-                    rb = e.GetComponent<Rigidbody2D>(),
-                    stun = e.GetComponent<StunReceiver>(),
-
-                    srs = e.GetComponentsInChildren<SpriteRenderer>(true)
-                };
-                t.srs ??= new SpriteRenderer[0];
-
-                t.colors = new Color[t.srs.Length];
-                for (int s = 0; s < t.srs.Length; s++)
-                    t.colors[s] = t.srs[s] != null ? t.srs[s].color : Color.white;
-
-                if (t.stun != null)
-                {
-                    t.stunHadUseAnimated = GetPrivateBool(t.stun, "useAnimatedStunRenderer");
-                    t.stunHadShake = t.stun.shakeWhileStunned;
-                    t.stunHadFreeze = t.stun.freezeAnimatedSprites;
-
-                    SetPrivateBool(t.stun, "useAnimatedStunRenderer", false);
-                    t.stun.shakeWhileStunned = false;
-                    t.stun.freezeAnimatedSprites = true;
-
-                    t.stun.Stun(durationSeconds);
-                }
-                else
-                {
-                    var anims = e.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-                    if (anims != null)
-                    {
-                        for (int a = 0; a < anims.Length; a++)
-                        {
-                            var ar = anims[a];
-                            if (ar == null) continue;
-                            ar.idle = true;
-                            ar.RefreshFrame();
-                            ar.SetFrozen(true);
-                        }
-                    }
-
-                    if (t.rb != null)
-                        t.rb.linearVelocity = Vector2.zero;
-
-                    if (e.enabled)
-                        e.enabled = false;
-                }
-
-                targets.Add(t);
-            }
-        }
+        foreach (var enemy in enemies)
+            AddTarget(enemy);
 
         float nonBlink = Mathf.Max(0f, durationSeconds - Mathf.Max(0f, endBlinkSeconds));
         if (nonBlink > 0f)
@@ -187,6 +126,83 @@ public sealed class ClockStageStunEffect : MonoBehaviour
         }
 
         Destroy(gameObject);
+    }
+
+    // Spawned mini enemies join the existing effect, including its final blink
+    // and restoration, without restarting the stage clock.
+    public static void ApplyActiveEffectToSpawnedEnemy(EnemyMovementController enemy)
+    {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally || enemy == null)
+            return;
+
+        foreach (var effect in FindObjectsByType<ClockStageStunEffect>())
+            effect.AddTarget(enemy);
+    }
+
+    private void AddTarget(EnemyMovementController e)
+    {
+        float remainingSeconds = effectEndTime - Time.time;
+        if (e == null || remainingSeconds <= 0f || e.gameObject.scene != gameObject.scene)
+            return;
+        if (affectedRoomBounds != null && !affectedRoomBounds.OverlapPoint(e.transform.position))
+            return;
+        int enemyLayer = LayerMask.NameToLayer(enemyLayerName);
+        if (enemyLayer >= 0 && e.gameObject.layer != enemyLayer)
+            return;
+        foreach (var existing in targets)
+            if (existing.move == e)
+                return;
+
+        var t = new Target
+        {
+            move = e,
+            moveWasEnabled = e.enabled,
+            rb = e.GetComponent<Rigidbody2D>(),
+            stun = e.GetComponent<StunReceiver>(),
+
+            srs = e.GetComponentsInChildren<SpriteRenderer>(true)
+        };
+        t.srs ??= new SpriteRenderer[0];
+
+        t.colors = new Color[t.srs.Length];
+        for (int s = 0; s < t.srs.Length; s++)
+            t.colors[s] = t.srs[s] != null ? t.srs[s].color : Color.white;
+
+        if (t.stun != null)
+        {
+            t.stunHadUseAnimated = GetPrivateBool(t.stun, "useAnimatedStunRenderer");
+            t.stunHadShake = t.stun.shakeWhileStunned;
+            t.stunHadFreeze = t.stun.freezeAnimatedSprites;
+
+            SetPrivateBool(t.stun, "useAnimatedStunRenderer", false);
+            t.stun.shakeWhileStunned = false;
+            t.stun.freezeAnimatedSprites = true;
+
+            t.stun.Stun(remainingSeconds);
+        }
+        else
+        {
+            var anims = e.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            if (anims != null)
+            {
+                for (int a = 0; a < anims.Length; a++)
+                {
+                    var ar = anims[a];
+                    if (ar == null) continue;
+                    ar.idle = true;
+                    ar.RefreshFrame();
+                    ar.SetFrozen(true);
+                }
+            }
+
+            if (t.rb != null)
+                t.rb.linearVelocity = Vector2.zero;
+
+            if (e.enabled)
+                e.enabled = false;
+        }
+
+        targets.Add(t);
     }
 
     private static void SetPrivateBool(object obj, string fieldName, bool value)

@@ -5,7 +5,7 @@ public sealed class HeliMovementController : FlyMovimentController
 {
     [Header("Heli Shot")]
     [SerializeField, Min(0.1f)] private float shotCooldownSeconds = 2f;
-    [SerializeField, Min(1)] private int visionTiles = 8;
+    [SerializeField, Min(1)] private int visionTiles = 5;
     [SerializeField] private Sprite projectileSprite;
     [SerializeField] private Sprite projectileImpactSprite;
     [SerializeField] private Sprite projectileImpactEndSprite;
@@ -15,7 +15,9 @@ public sealed class HeliMovementController : FlyMovimentController
     private void Update()
     {
         if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
-        if (isDead || Time.time < nextShotTime || !TryGetPlayerDirection(out Vector2 shotDirection))
+        if (isDead || GamePauseController.IsPaused || isInDamagedLoop ||
+            (TryGetComponent<StunReceiver>(out var stun) && stun.IsStunned) ||
+            Time.time < nextShotTime || !TryGetPlayerDirection(out Vector2 shotDirection))
             return;
 
         HeliProjectile.Create(rb.position + shotDirection * tileSize, shotDirection, gameObject, projectileSprite, projectileImpactSprite, projectileImpactEndSprite);
@@ -24,6 +26,8 @@ public sealed class HeliMovementController : FlyMovimentController
 
     private bool TryGetPlayerDirection(out Vector2 targetDirection)
     {
+        float maximumDistance = visionTiles * tileSize;
+        float maximumDistanceSquared = maximumDistance * maximumDistance;
         Vector2[] directions = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
         for (int directionIndex = 0; directionIndex < directions.Length; directionIndex++)
         {
@@ -37,7 +41,18 @@ public sealed class HeliMovementController : FlyMovimentController
                 {
                     Collider2D hit = hits[hitIndex];
                     if (hit == null || hit.transform.IsChildOf(transform)) continue;
-                    if (hit.GetComponentInParent<PlayerIdentity>() != null) { targetDirection = scanDirection; return true; }
+                    PlayerIdentity player = hit.GetComponentInParent<PlayerIdentity>();
+                    if (player != null && player.TryGetComponent<CharacterHealth>(out var health) && health.life > 0)
+                    {
+                        Vector2 playerPosition = hit.attachedRigidbody != null
+                            ? hit.attachedRigidbody.position
+                            : (Vector2)player.transform.position;
+                        if ((playerPosition - rb.position).sqrMagnitude <= maximumDistanceSquared)
+                        {
+                            targetDirection = scanDirection;
+                            return true;
+                        }
+                    }
                     if (hit.GetComponentInParent<Bomb>() != null || (hit.gameObject.layer == LayerMask.NameToLayer("Stage") && !IsDestructible(hit))) blocked = true;
                 }
                 if (blocked) break;

@@ -291,7 +291,7 @@ MonoBehaviour:
   shadowScale: {x: 0.9, y: 0.9}
   shadowOffset: {x: 0, y: 0}
   shotCooldownSeconds: 2
-  visionTiles: 8
+  visionTiles: 5
   projectileSprite: {fileID: -2879398741025456522, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   projectileImpactSprite: {fileID: -514608583, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}
   projectileImpactEndSprite: {fileID: -1295677706, guid: 8fd09909350511044b9026b0bdb496b6, type: 3}

@@ -155,9 +155,6 @@ public static class BomberCharacterSelectPortraitGenerator
             }
 
             int skinCount = Mathf.Min(palette.width - 1, skins.Length);
-            if (skinCount < skins.Length)
-                Warn($"A paleta tem {palette.width - 1} coluna(s) de variação, mas existem " +
-                     $"{skins.Length} skins cadastradas. Apenas {skinCount} serão processadas.");
 
             foreach (string sourcePath in characters)
                 GenerateCharacter(sourcePath, palette, skinCount, report);
@@ -188,6 +185,20 @@ public static class BomberCharacterSelectPortraitGenerator
                     throw new InvalidDataException($"Invalid selection palette: {sharedPalettePath}");
                 palette = characterPalette;
                 skinCount = Mathf.Min(palette.width - 1, BomberSkinResourceCatalog.BombermanSkins.Length);
+            }
+
+            // The global catalog includes palettes authored only for some characters.
+            // Warn only when this character has a generated skin without a portrait palette.
+            for (int i = skinCount; i < BomberSkinResourceCatalog.BombermanSkins.Length; i++)
+            {
+                string sheetName = BomberSkinResourceCatalog.GetSheetName(
+                    character, BomberSkinResourceCatalog.BombermanSkins[i]);
+                string sheetPath = $"Assets/Resources/Sprites/Bombers/{character}/Generated/{character}/{sheetName}.png";
+                if (!File.Exists(sheetPath))
+                    continue;
+
+                Warn($"'{character}': a skin '{sheetName}' existe, mas a paleta de seleção " +
+                     $"tem apenas {skinCount} variações. O retrato dessa skin não será gerado.");
             }
 
             source = BomberSkinSheetGenerator.LoadTexture(sourcePath);

@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// A destructible-block-piercing junction turner that steers toward the
-/// nearest player and intermittently gains a short 50% speed increase.
+/// nearest player within five tiles and intermittently gains a short 50% speed increase.
 /// </summary>
 public sealed class RobofaceMovementController : JunctionTurningEnemyMovementController
 {
@@ -83,21 +83,27 @@ public sealed class RobofaceMovementController : JunctionTurningEnemyMovementCon
     private bool TryGetClosestPlayerDirection(out Vector2 directionToPlayer)
     {
         directionToPlayer = Vector2.zero;
-        Collider2D[] players = Physics2D.OverlapCircleAll(rb.position, 1000f, playerLayerMask);
+        float pursuitRadius = 5f * tileSize;
+        float pursuitRadiusSquared = pursuitRadius * pursuitRadius;
+        Collider2D[] players = Physics2D.OverlapCircleAll(rb.position, pursuitRadius, playerLayerMask);
         float closestDistanceSquared = float.PositiveInfinity;
         Vector2 closestPosition = Vector2.zero;
 
         for (int index = 0; index < players.Length; index++)
         {
             Collider2D player = players[index];
-            if (player == null)
+            if (player == null || !player.gameObject.activeInHierarchy)
+                continue;
+
+            CharacterHealth playerHealth = player.GetComponentInParent<CharacterHealth>();
+            if (playerHealth == null || playerHealth.life <= 0)
                 continue;
 
             Vector2 playerPosition = player.attachedRigidbody != null
                 ? player.attachedRigidbody.position
                 : (Vector2)player.transform.position;
             float distanceSquared = (playerPosition - rb.position).sqrMagnitude;
-            if (distanceSquared >= closestDistanceSquared)
+            if (distanceSquared > pursuitRadiusSquared || distanceSquared >= closestDistanceSquared)
                 continue;
 
             closestDistanceSquared = distanceSquared;
