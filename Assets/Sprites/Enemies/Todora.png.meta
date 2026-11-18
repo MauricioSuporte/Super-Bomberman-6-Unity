@@ -53,27 +53,6 @@ TextureImporter:
   - first:
       213: 4971046191918385826
     second: Todora_16
-  - first:
-      213: -559074482325181345
-    second: Todora_17
-  - first:
-      213: 1352984794107826853
-    second: Todora_18
-  - first:
-      213: 6296673032805551779
-    second: Todora_19
-  - first:
-      213: 7055662880148567001
-    second: Todora_20
-  - first:
-      213: -8581806841925368275
-    second: Todora_21
-  - first:
-      213: -7030278997376851817
-    second: Todora_22
-  - first:
-      213: 5472405853494519414
-    second: Todora_23
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -188,9 +167,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 77
-        width: 22
-        height: 20
+        y: 104
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -209,10 +188,10 @@ TextureImporter:
       name: Todora_1
       rect:
         serializedVersion: 2
-        x: 23
-        y: 77
-        width: 22
-        height: 20
+        x: 32
+        y: 104
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -231,10 +210,10 @@ TextureImporter:
       name: Todora_2
       rect:
         serializedVersion: 2
-        x: 45
-        y: 77
-        width: 22
-        height: 20
+        x: 64
+        y: 104
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -250,13 +229,57 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
+      name: Todora_3
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 104
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92052d9196c422fa0800000000000000
+      internalID: -5827010953575509975
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Todora_4
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 104
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c4f0a8c6537760b0800000000000000
+      internalID: -5735488783862663996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
       name: Todora_5
       rect:
         serializedVersion: 2
-        x: 116
-        y: 57
-        width: 20
-        height: 42
+        x: 0
+        y: 72
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -275,10 +298,10 @@ TextureImporter:
       name: Todora_6
       rect:
         serializedVersion: 2
-        x: 1
-        y: 53
-        width: 22
-        height: 20
+        x: 32
+        y: 72
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -297,10 +320,10 @@ TextureImporter:
       name: Todora_7
       rect:
         serializedVersion: 2
-        x: 23
-        y: 53
-        width: 22
-        height: 20
+        x: 64
+        y: 72
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -319,10 +342,10 @@ TextureImporter:
       name: Todora_8
       rect:
         serializedVersion: 2
-        x: 45
-        y: 53
-        width: 22
-        height: 20
+        x: 96
+        y: 72
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -341,10 +364,10 @@ TextureImporter:
       name: Todora_9
       rect:
         serializedVersion: 2
-        x: 69
-        y: 52
-        width: 22
-        height: 20
+        x: 0
+        y: 40
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -363,10 +386,10 @@ TextureImporter:
       name: Todora_10
       rect:
         serializedVersion: 2
-        x: 96
-        y: 57
-        width: 20
-        height: 42
+        x: 32
+        y: 40
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -385,10 +408,10 @@ TextureImporter:
       name: Todora_11
       rect:
         serializedVersion: 2
-        x: 136
-        y: 57
-        width: 20
-        height: 42
+        x: 64
+        y: 40
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -407,10 +430,10 @@ TextureImporter:
       name: Todora_12
       rect:
         serializedVersion: 2
-        x: 159
-        y: 15
-        width: 20
-        height: 42
+        x: 96
+        y: 40
+        width: 32
+        height: 32
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -426,13 +449,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Todora_13
+      name: Ice_1
       rect:
         serializedVersion: 2
-        x: 181
-        y: 15
-        width: 20
-        height: 42
+        x: 0
+        y: 20
+        width: 24
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -448,13 +471,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Todora_14
+      name: Ice_2
       rect:
         serializedVersion: 2
-        x: 203
-        y: 15
-        width: 20
-        height: 42
+        x: 24
+        y: 20
+        width: 24
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -470,13 +493,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Todora_15
+      name: Ice_3
       rect:
         serializedVersion: 2
-        x: 2
-        y: 34
-        width: 18
-        height: 18
+        x: 48
+        y: 20
+        width: 24
+        height: 20
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -492,111 +515,111 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Todora_16
+      name: Ice_4
       rect:
         serializedVersion: 2
-        x: 25
-        y: 34
-        width: 18
-        height: 18
+        x: 72
+        y: 20
+        width: 24
+        height: 20
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 2aa8a5f7c24bcf440800000000000000
-      internalID: 4971046191918385826
+      spriteID: 5b05c83aef52f65488fcf8b903946dfc
+      internalID: 561431615
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Todora_17
+      name: Ice_5
       rect:
         serializedVersion: 2
-        x: 47
-        y: 34
-        width: 18
-        height: 18
+        x: 0
+        y: 0
+        width: 24
+        height: 20
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f5ca50e68b4cd38f0800000000000000
-      internalID: -559074482325181345
+      spriteID: 86b21398082e64d4d83e0578bac9227a
+      internalID: 1513511498
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Todora_18
+      name: Ice_6
       rect:
         serializedVersion: 2
-        x: 105
-        y: 35
-        width: 40
-        height: 18
+        x: 24
+        y: 0
+        width: 24
+        height: 20
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 5a25d477084c6c210800000000000000
-      internalID: 1352984794107826853
+      spriteID: a16cdc26cef3c194894d0830d7ef4f48
+      internalID: -219112101
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Todora_21
+      name: Ice_7
       rect:
         serializedVersion: 2
-        x: 105
-        y: 18
-        width: 40
-        height: 18
+        x: 48
+        y: 0
+        width: 24
+        height: 20
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d268508452c47e880800000000000000
-      internalID: -8581806841925368275
+      spriteID: edffc7f7f99a0f645987f4ad93ed5ca6
+      internalID: -240747287
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Todora_22
+      name: Ice_8
       rect:
         serializedVersion: 2
-        x: 105
-        y: 1
-        width: 40
-        height: 18
+        x: 72
+        y: 0
+        width: 24
+        height: 20
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 790a679ff7e6f6e90800000000000000
-      internalID: -7030278997376851817
+      spriteID: de2d077258d46c449999e89c6ea7587f
+      internalID: -1787072473
       vertices: []
       indices: 
       edges: []
@@ -605,7 +628,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 6beb48c132cbe3f4a8a528d0b50d69a3
+    spriteID: aa5af9193e5057e48bf90f4e77ac539c
     internalID: 0
     vertices: []
     indices: 
@@ -613,25 +636,24 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
+      Ice_1: -1877997735213169107
+      Ice_2: 6391610261258068540
+      Ice_3: -8844247791320765784
+      Ice_4: 561431615
+      Ice_5: 1513511498
+      Ice_6: -219112101
+      Ice_7: -240747287
+      Ice_8: -1787072473
       Todora_0: -5088561059245045197
       Todora_1: 44041257794298653
       Todora_10: -8169127718662629975
       Todora_11: -3304461997545867926
       Todora_12: 954406821875415308
-      Todora_13: -1877997735213169107
-      Todora_14: 6391610261258068540
-      Todora_15: -8844247791320765784
-      Todora_16: 4971046191918385826
-      Todora_17: -559074482325181345
-      Todora_18: 1352984794107826853
-      Todora_19: 6296673032805551779
       Todora_2: -4488291719851047833
-      Todora_20: 7055662880148567001
-      Todora_21: -8581806841925368275
-      Todora_22: -7030278997376851817
-      Todora_23: 5472405853494519414
       Todora_3: -5827010953575509975
       Todora_4: -5735488783862663996
       Todora_5: -4956851592434489854
