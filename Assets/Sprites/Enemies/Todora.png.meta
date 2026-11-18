@@ -530,8 +530,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5b05c83aef52f65488fcf8b903946dfc
-      internalID: 561431615
+      spriteID: a44a90db7b1ae0b468d2bdc3e857090f
+      internalID: -35926651
       vertices: []
       indices: 
       edges: []
@@ -552,8 +552,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 86b21398082e64d4d83e0578bac9227a
-      internalID: 1513511498
+      spriteID: 26e8d59e93f9ed942b27565643923a8e
+      internalID: 1757889893
       vertices: []
       indices: 
       edges: []
@@ -574,8 +574,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a16cdc26cef3c194894d0830d7ef4f48
-      internalID: -219112101
+      spriteID: f032edf3fb97b514ea8df1846ea39883
+      internalID: 2016814620
       vertices: []
       indices: 
       edges: []
@@ -596,8 +596,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: edffc7f7f99a0f645987f4ad93ed5ca6
-      internalID: -240747287
+      spriteID: 21f0f4012cd77da4e8c3dab8e840d7d0
+      internalID: 399814720
       vertices: []
       indices: 
       edges: []
@@ -618,8 +618,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: de2d077258d46c449999e89c6ea7587f
-      internalID: -1787072473
+      spriteID: 0ceb636367e85f84aa4e376186dbc54d
+      internalID: 1372533228
       vertices: []
       indices: 
       edges: []
@@ -628,7 +628,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: aa5af9193e5057e48bf90f4e77ac539c
+    spriteID: a14562a83a491c746b301d9da08311c0
     internalID: 0
     vertices: []
     indices: 
@@ -643,11 +643,11 @@ TextureImporter:
       Ice_1: -1877997735213169107
       Ice_2: 6391610261258068540
       Ice_3: -8844247791320765784
-      Ice_4: 561431615
-      Ice_5: 1513511498
-      Ice_6: -219112101
-      Ice_7: -240747287
-      Ice_8: -1787072473
+      Ice_4: -35926651
+      Ice_5: 1757889893
+      Ice_6: 2016814620
+      Ice_7: 399814720
+      Ice_8: 1372533228
       Todora_0: -5088561059245045197
       Todora_1: 44041257794298653
       Todora_10: -8169127718662629975
