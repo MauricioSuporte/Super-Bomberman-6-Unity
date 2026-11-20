@@ -13,7 +13,8 @@ public static partial class PlayerPersistentStats
         {
             var character = BomberSkinResourceCatalog.IsAvailableCharacter((BomberCharacter)characters[id - 1])
                 ? (BomberCharacter)characters[id - 1] : BomberCharacter.Bomberman;
-            var skin = Enum.IsDefined(typeof(BomberSkin), skins[id - 1])
+            var skin = Enum.IsDefined(typeof(BomberSkin), skins[id - 1]) ||
+                       BomberSkinResourceCatalog.IsGeneratedSkin(character, (BomberSkin)skins[id - 1])
                 ? (BomberSkin)skins[id - 1] : GetDefaultSkinForPlayer(id);
             skin = BomberSkinResourceCatalog.NormalizeGeneratedSkin(character, skin);
             var state = Get(id);

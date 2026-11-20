@@ -764,7 +764,8 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
         selectableSkins ??= new List<BomberSkin>();
         selectableSkins.Clear();
-        selectableSkins.AddRange(BomberSkinResourceCatalog.BombermanSkins);
+        for (int id = 1; id <= 2 * BomberSkinResourceCatalog.CossackPalettesPerForm; id++)
+            selectableSkins.Add((BomberSkin)id);
     }
 
     void ResetRandomSkinCandidateCache()
@@ -895,7 +896,6 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         if (cursor == null || selectableSkins == null || selectableSkins.Count == 0)
             return false;
 
-        int count = selectableSkins.Count;
         int next = FindAvailablePaletteIndex(GetCharacterAtSlot(cursor.index), cursor.selectedPaletteIndex + direction, direction);
 
         if (next == cursor.selectedPaletteIndex)

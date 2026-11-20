@@ -171,7 +171,8 @@ public static partial class PlayerPersistentStats
             _ => (int)GetDefaultSkinForPlayer(playerId)
         };
 
-        if (!System.Enum.IsDefined(typeof(BomberSkin), raw))
+        if (!System.Enum.IsDefined(typeof(BomberSkin), raw) &&
+            !BomberSkinResourceCatalog.IsGeneratedSkin(s.Character, (BomberSkin)raw))
             raw = (int)GetDefaultSkinForPlayer(playerId);
 
         s.Skin = (BomberSkin)raw;

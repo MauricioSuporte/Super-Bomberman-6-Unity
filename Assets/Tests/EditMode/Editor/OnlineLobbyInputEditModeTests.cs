@@ -15,6 +15,38 @@ using UnityEngine.TestTools;
 public sealed class OnlineLobbyInputEditModeTests
 {
     [Test]
+    public void CossackPaletteCycleCrossesFormsInBothDirections()
+    {
+        var character = System.Array.Find(BomberSkinResourceCatalog.GetAvailableCharacters(),
+            candidate => BomberSkinResourceCatalog.GetCharacterFolderName(candidate) == "CossackBomber");
+        Assert.AreEqual("CossackBomber", BomberSkinResourceCatalog.GetCharacterFolderName(character));
+        var root = new GameObject("Cossack selection test");
+        root.SetActive(false);
+        try
+        {
+            var menu = root.AddComponent<BomberSkinSelectMenu>();
+            Call(menu, "EnsureSelectableCharacters");
+            var next = typeof(BomberSkinSelectMenu).GetMethod("FindAvailablePaletteIndex", Private);
+            int count = BomberSkinResourceCatalog.CossackPalettesPerForm;
+            foreach (int current in new[] { 0, count - 1, count, 2 * count - 1 })
+            {
+                foreach (int direction in new[] { -1, 1 })
+                {
+                    int index = (int)next.Invoke(menu, new object[] { character, current + direction, direction });
+                    Assert.AreEqual((current + direction + 2 * count) % (2 * count), index);
+                    var skin = (BomberSkin)(index + 1);
+                    Assert.AreEqual(skin, BomberSkinResourceCatalog.NormalizeGeneratedSkin(character, skin));
+                    Assert.IsNotNull(HudCharacterPortraitCatalog.LoadSelection(character, skin, 0));
+                }
+            }
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    [Test]
     public void CreationModePickerSkipsLockedBossRushInBothDirections()
     {
         var method = typeof(OnlineLobbyMenu).GetMethod("NextCreationMode", BindingFlags.NonPublic | BindingFlags.Static);

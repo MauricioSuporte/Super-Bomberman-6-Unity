@@ -5,6 +5,7 @@ using UnityEngine;
 public static class BomberSkinResourceCatalog
 {
     const string BombersResourcesPath = "Sprites/Bombers";
+    public const int CossackPalettesPerForm = 51;
     const int DynamicCharacterIdOffset = 1000;
     public const string MetadataResourcePath = "BomberSkinCatalog";
     public const string MetadataHeader = "SB6-SKIN-CATALOG-1";
@@ -113,13 +114,16 @@ public static class BomberSkinResourceCatalog
 
     public static string GetSheetName(string characterFolderName, BomberSkin skin)
     {
-        return characterFolderName + GetPaletteNumber(skin);
+        return characterFolderName + Mathf.Max(1, (int)skin);
     }
 
     public static int GetPaletteNumber(BomberSkin skin)
     {
         int value = (int)skin;
-        return value >= 1 ? value : 1;
+        if (value > CossackPalettesPerForm && value <= 2 * CossackPalettesPerForm)
+            return value - CossackPalettesPerForm;
+
+        return Mathf.Max(value, 1);
     }
 
     public static string GetCharacterFolderName(BomberCharacter character)
@@ -132,7 +136,7 @@ public static class BomberSkinResourceCatalog
 
     public static bool IsGeneratedSkin(BomberCharacter character, BomberSkin skin)
     {
-        if (!IsAvailableCharacter(character))
+        if ((int)skin < 1 || !IsAvailableCharacter(character))
             return false;
 
         string sheetPath = $"{GetGeneratedResourcesPath(character)}/{GetSheetName(character, skin)}";

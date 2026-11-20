@@ -1080,7 +1080,8 @@ public static partial class SaveSystem
     {
         BomberCharacter selectedCharacter = (BomberCharacter)character;
 
-        if (!Enum.IsDefined(typeof(BomberSkin), skin))
+        if (!Enum.IsDefined(typeof(BomberSkin), skin) &&
+            !BomberSkinResourceCatalog.IsGeneratedSkin(selectedCharacter, (BomberSkin)skin))
             skin = (int)defaultSkin;
 
         skin = (int)BomberSkinResourceCatalog.NormalizeGeneratedSkin(

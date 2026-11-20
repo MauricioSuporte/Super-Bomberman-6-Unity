@@ -21,14 +21,16 @@ public static class BomberSkinSheetGenerator
             string characterFolderName,
             string sourceSheetAssetPath,
             string paletteAssetPath,
-            string outputFolderAssetPath)
+            string outputFolderAssetPath, int skinOffset = 0)
         {
             CharacterFolderName = characterFolderName;
             SourceSheetAssetPath = sourceSheetAssetPath;
             PaletteAssetPath = paletteAssetPath;
             OutputFolderAssetPath = outputFolderAssetPath;
+            SkinOffset = skinOffset;
         }
 
+        public int SkinOffset { get; }
         public string CharacterFolderName { get; }
         public string SourceSheetAssetPath { get; }
         public string PaletteAssetPath { get; }
@@ -85,7 +87,7 @@ public static class BomberSkinSheetGenerator
             if (!string.IsNullOrWhiteSpace(name) && !HasGeneratedSheetSuffix(name) &&
                 name.IndexOf("palette", StringComparison.OrdinalIgnoreCase) < 0 &&
                 name.IndexOf("pallete", StringComparison.OrdinalIgnoreCase) < 0)
-                names.Add(name);
+                names.Add(name == "CossackBomberSamll" || name == "CossackBomberBig" ? "CossackBomber" : name);
 
             if (AssetImporter.GetAtPath(path) is not TextureImporter importer ||
                 importer.textureType != TextureImporterType.Sprite)
@@ -252,12 +254,14 @@ public static class BomberSkinSheetGenerator
         if (source == null || palette == null)
             return false;
 
-        int skinCount = Mathf.Min(BombermanSkins.Length, palette.width - 1);
+        int limit = sheetSource.CharacterFolderName == "CossackBomber"
+            ? BomberSkinResourceCatalog.CossackPalettesPerForm : BombermanSkins.Length;
+        int skinCount = Mathf.Min(limit, palette.width - 1);
         bool generatedAny = false;
 
         for (int i = 0; i < skinCount; i++)
         {
-            BomberSkin skin = BombermanSkins[i];
+            BomberSkin skin = (BomberSkin)(sheetSource.SkinOffset + i + 1);
             int paletteColumn = i + 1;
             string sheetName = BomberSkinResourceCatalog.GetSheetName(sheetSource.CharacterFolderName, skin);
             string outputPath = $"{sheetSource.OutputFolderAssetPath}/{sheetName}.png";
@@ -328,6 +332,17 @@ public static class BomberSkinSheetGenerator
             if (palettePath == null || sourceSheetPath == null)
             {
                 Debug.LogWarning($"[BomberSkinSheetGenerator] '{characterFolderName}' needs one source sprite sheet and one palette PNG.");
+                continue;
+            }
+
+            if (characterFolderName == "CossackBomber")
+            {
+                string output = $"{characterFolder}/Generated/{characterFolderName}";
+                yield return new CharacterSkinSheetSource(characterFolderName,
+                    $"{characterFolder}/CossackBomberSamll.png", palettePath, output);
+                yield return new CharacterSkinSheetSource(characterFolderName,
+                    $"{characterFolder}/CossackBomberBig.png", palettePath, output,
+                    BomberSkinResourceCatalog.CossackPalettesPerForm);
                 continue;
             }
 

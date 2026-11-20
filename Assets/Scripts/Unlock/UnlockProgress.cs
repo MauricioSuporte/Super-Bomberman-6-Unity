@@ -44,7 +44,12 @@ public static class UnlockProgress
 
     public static bool IsUnlocked(BomberSkin skin)
     {
-        return SaveSystem.Data.unlockedSkins.Contains(skin.ToString());
+        int palette = BomberSkinResourceCatalog.GetPaletteNumber(skin);
+        if (palette > BomberSkinResourceCatalog.BombermanSkins.Length &&
+            palette <= BomberSkinResourceCatalog.CossackPalettesPerForm)
+            return true;
+
+        return (int)skin > 0 && SaveSystem.Data.unlockedSkins.Contains(((BomberSkin)palette).ToString());
     }
 
     public static bool IsBossRushUnlocked()
