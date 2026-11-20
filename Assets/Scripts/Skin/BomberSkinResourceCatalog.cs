@@ -6,6 +6,8 @@ public static class BomberSkinResourceCatalog
 {
     const string BombersResourcesPath = "Sprites/Bombers";
     const int DynamicCharacterIdOffset = 1000;
+    public const string MetadataResourcePath = "BomberSkinCatalog";
+    public const string MetadataHeader = "SB6-SKIN-CATALOG-1";
 
     public const string BombermanGeneratedResourcesPath = "Sprites/Bombers/Bomberman/Generated/Bomberman";
     public const string LadyBomberGeneratedResourcesPath = "Sprites/Bombers/LadyBomber/Generated/LadyBomber";
@@ -20,6 +22,7 @@ public static class BomberSkinResourceCatalog
 
     static readonly Dictionary<BomberCharacter, string> characterFolders = new();
     static BomberCharacter[] availableCharacters;
+    static readonly HashSet<string> generatedSheets = new(StringComparer.Ordinal);
 
     public static readonly BomberSkin[] BombermanSkins =
     {
@@ -79,6 +82,7 @@ public static class BomberSkinResourceCatalog
     {
         availableCharacters = null;
         characterFolders.Clear();
+        generatedSheets.Clear();
     }
 
     public static bool IsAvailableCharacter(BomberCharacter character)
@@ -132,7 +136,7 @@ public static class BomberSkinResourceCatalog
             return false;
 
         string sheetPath = $"{GetGeneratedResourcesPath(character)}/{GetSheetName(character, skin)}";
-        return Resources.LoadAll<Sprite>(sheetPath).Length > 0;
+        return generatedSheets.Contains(sheetPath);
     }
 
     public static BomberSkin NormalizeGeneratedSkin(BomberCharacter character, BomberSkin skin)
@@ -159,22 +163,28 @@ public static class BomberSkinResourceCatalog
         AddCharacter(BomberCharacter.LadyBomber, "LadyBomber");
         AddCharacter(BomberCharacter.TinyBomber, "TinyBomber");
 
-        Texture2D[] textures = Resources.LoadAll<Texture2D>(BombersResourcesPath);
+        // Discovering the roster must not decode/upload every generated palette sheet.
+        // The existing Editor skin generator writes the same names and sprite presence.
+        TextAsset metadata = Resources.Load<TextAsset>(MetadataResourcePath);
+        if (metadata == null)
+            throw new InvalidOperationException("Missing bomber skin catalog. Run Generate Missing Bomber Skin Sheets before building.");
+        string[] lines = metadata.text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length == 0 || lines[0] != MetadataHeader)
+            throw new InvalidOperationException("Invalid bomber skin catalog header.");
+
         List<string> dynamicFolderNames = new();
-
-        for (int i = 0; i < textures.Length; i++)
+        generatedSheets.Clear();
+        for (int i = 1; i < lines.Length; i++)
         {
-            Texture2D texture = textures[i];
-            if (texture == null || IsPalette(texture.name) || IsGeneratedSheet(texture.name))
-                continue;
-
-            if (string.Equals(texture.name, "Bomberman", StringComparison.Ordinal) ||
-                string.Equals(texture.name, "LadyBomber", StringComparison.Ordinal) ||
-                string.Equals(texture.name, "TinyBomber", StringComparison.Ordinal) ||
-                dynamicFolderNames.Contains(texture.name))
-                continue;
-
-            dynamicFolderNames.Add(texture.name);
+            if (lines[i].StartsWith("skin:", StringComparison.Ordinal))
+                generatedSheets.Add(lines[i].Substring(5));
+            else if (lines[i].StartsWith("character:", StringComparison.Ordinal))
+            {
+                string name = lines[i].Substring(10);
+                if (name != "Bomberman" && name != "LadyBomber" && name != "TinyBomber" &&
+                    !dynamicFolderNames.Contains(name))
+                    dynamicFolderNames.Add(name);
+            }
         }
 
         dynamicFolderNames.Sort(StringComparer.OrdinalIgnoreCase);
@@ -206,27 +216,6 @@ public static class BomberSkinResourceCatalog
     static void AddCharacter(BomberCharacter character, string folderName)
     {
         characterFolders[character] = folderName;
-    }
-
-    static bool IsPalette(string assetName)
-    {
-        return assetName.IndexOf("palette", StringComparison.OrdinalIgnoreCase) >= 0 ||
-               assetName.IndexOf("pallete", StringComparison.OrdinalIgnoreCase) >= 0;
-    }
-
-    static bool IsGeneratedSheet(string assetName)
-    {
-        if (string.IsNullOrWhiteSpace(assetName))
-            return false;
-
-        int i = assetName.Length - 1;
-        if (i < 0 || !char.IsDigit(assetName[i]))
-            return false;
-
-        while (i >= 0 && char.IsDigit(assetName[i]))
-            i--;
-
-        return i >= 0;
     }
 
     static int ComputeDynamicCharacterId(string folderName)

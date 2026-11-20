@@ -11,6 +11,21 @@ import release
 
 
 class ReleaseProfileTests(unittest.TestCase):
+    def test_workflow_uploads_each_client_platform_separately(self):
+        workflow = (release.ROOT / ".github/workflows/online-release.yml").read_text(encoding="utf-8-sig")
+        uploads = [step for step in workflow.split("      - ")
+                   if "uses: actions/upload-artifact@" in step]
+        for platform, extension in (("Windows", "zip"), ("Linux", "zip"), ("Android", "apk")):
+            with self.subTest(platform=platform):
+                matching = [step for step in uploads
+                            if f"path: Build/CI/SB6-{platform}-*.{extension}" in step]
+                self.assertEqual(1, len(matching))
+                self.assertIn(f"name: SB6-{platform}-${{{{ env.SB6_ARTIFACT_TIMESTAMP }}}}", matching[0])
+                self.assertIn("if-no-files-found: error", matching[0])
+                for other in ("Windows", "Linux", "Android"):
+                    if other != platform:
+                        self.assertNotIn(f"Build/CI/SB6-{other}-", matching[0])
+
     def test_repository_directory_and_game_protocols_agree(self):
         self.assertGreater(release.protocol(), 0)
 

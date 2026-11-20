@@ -20,6 +20,81 @@ The README buttons use stable aliases in the `online-v0.5.0` channel:
 the first complete publication of these changes; no assets are published merely
 by editing this checkout.
 
+Actions uploads each client separately: `SB6-Windows-<timestamp>`,
+`SB6-Linux-<timestamp>` and `SB6-Android-<timestamp>`. Linux ZIP and Android APK
+must not share an upload step. `ReleaseProfileTests` guards that separation.
+
+Validation on 2026-11-15: RoomDirectory 16/16 and CI 219/219 tests passed,
+including repository protocol alignment and platform artifact separation.
+The full Unity EditMode baseline ran in the open Editor: 1179/1180 passed;
+`OnlineRoomEditModeTests.ClownIntroResetKeepsItsAlreadyRunningCoroutineAlive`
+failed before runtime changes. No production C# or Unity content change remains.
+
+USB diagnosis on Samsung SM-G781B / Android 13 identified the installed APK as
+source `392dd3326f967eecdebdc84c719efdee78914b55` (2026-11-08). Original
+process remained alive on a dark screen in Vulkan and forced OpenGL ES attempts;
+no fatal crash for the original package was captured. Root cause is unconfirmed.
+An isolated, locally signed debuggable copy of that APK is installed as
+`com.mauriciosuporte.sb6diagnostic00`; game code/assets are unchanged, manifest
+and resource package differ. It is a diagnostic copy, not a corrected release.
+Native capture awaits the user unlocking the sleeping phone. A new instrumented
+APK build failed when the local Editor exhausted memory during a concurrent CI
+build; texture allocation errors preceded its crash. Temporary instrumentation,
+build settings and generated serialization changes were archived and restored.
+Logs, APK identities, test results and cleanup manifest are retained locally in
+`Build/AndroidDiagnosis/`. Real offline/online Android acceptance remains pending.
+
+Android startup follow-up (2026-11-20): native sampling on the same phone
+found the main thread in `libz.inflate` during a long boot. The original signed
+APK remained dark at 66.7 seconds and showed its title/menu at 104.5 seconds in
+a fresh process. `BomberSkinResourceCatalog` previously loaded all character
+textures for roster discovery and loaded sprite sheets to check palette
+existence during P1-P6 save normalization. These queries now use
+`Resources/BomberSkinCatalog.txt`, refreshed by the existing skin generator and
+build preprocessor from importer sprite metadata without loading textures.
+Custom character ids, sort order, resource paths, skin fallbacks and protocol
+remain unchanged.
+
+The corrected release-mode IL2CPP APK built successfully in Unity 6000.6.0f1
+(ARM32/ARM64, zero build errors; five existing engine/Mirror/TMP warnings), and
+was installed on the Samsung SM-G781B, Android 13. First intro graphics were
+captured at 3.16 seconds and the title/menu was verified at 33.38 seconds. These
+are observations, not an exact first-menu timestamp; the normal intro plays in
+between. APK SHA256:
+`e04859026ba24fada3cc5ceff85aa7a9ec2d84c399ca607950f6461295aae7f3`.
+It uses the local debug signing key, version 0.5.0/code 1, and is a test artifact,
+not a published update. The user authorized removal of the original installation
+and its test saves; production signing in CI is unchanged.
+
+Real-device checks passed for fresh save creation, character/palette selection,
+WorldMap, Stage_1-1, pause/resume and a normal cold relaunch to the menu. A local
+dedicated server plus two real clients (current-source Editor owner/observer and
+corrected Android client) entered BattleMode_1 with four server-controlled COMs.
+Both clients rendered the selected characters and colors; Android movement and
+bomb placement, death presentation, synchronized pause/resume and room teardown
+were observed. USB carried unchanged KCP packets through a temporary loopback
+relay. The dedicated executable is the published Windows baseline at source
+`6cbb452506cfb9338592718dfd1edba5da393ee6`; the Editor and APK add the uncommitted
+catalog optimization. All report protocol 74 and the matching commit identity;
+no compatibility gate was disabled. This is interoperability evidence, not a
+claim of identical DLLs across roles. The Android-as-admin path, host with the
+corrected APK, online campaign/Boss Rush and natural repeated-round completion
+remain outside this manual sample.
+
+Both Python suites passed (RoomDirectory 16, CI 219, including the real protocol
+regression). All six new catalog cases passed; a final targeted run also passed
+the previously failing Clown and Lobby cases (8/8). The first full EditMode run
+was 1181/1186, with five failures; all five passed isolated repeats. A final full
+baseline repeat finished 1182/1186: the three domain-reload failures persisted
+(ThreeRoomBrowser, LobbyCanHostAndReturnToTitle, MinecartNativeCancellation), as
+did the mount-death frame timing assertion. All six new catalog tests passed.
+Curl timeout 28 and MCP reconnect messages accompanied reloads; these results
+do not establish a fully green baseline. Their cause remains pending, and the
+isolated passes do not override the full-run failures. Logs, screenshots, identities, raw Unity test results
+and cleanup records are in `Build/AndroidDiagnosis/2026-11-20/`. Phone USB stay-awake,
+Editor worker count, save isolation and player name were restored; the relay,
+temporary server and original-code diagnostic app were removed/stopped.
+
 The runner needs Unity Linux Dedicated Server, Linux Player and Android build
 support (SDK/NDK/OpenJDK). Android publishing requires a permanent signing key:
 

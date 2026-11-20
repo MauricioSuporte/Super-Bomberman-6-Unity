@@ -90,14 +90,21 @@ jobs:
           compression-level: 0
           if-no-files-found: error
           retention-days: 14
-      - name: Linux and Android clients for players
+      - name: Linux client for players
         if: env.SB6_RELEASE_TARGET == 'both'
         uses: actions/upload-artifact@v7
         with:
-          name: SB6-Linux-Android-${{ env.SB6_ARTIFACT_TIMESTAMP }}
-          path: |
-            Build/CI/SB6-Linux-*.zip
-            Build/CI/SB6-Android-*.apk
+          name: SB6-Linux-${{ env.SB6_ARTIFACT_TIMESTAMP }}
+          path: Build/CI/SB6-Linux-*.zip
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+      - name: Android client for players
+        if: env.SB6_RELEASE_TARGET == 'both'
+        uses: actions/upload-artifact@v7
+        with:
+          name: SB6-Android-${{ env.SB6_ARTIFACT_TIMESTAMP }}
+          path: Build/CI/SB6-Android-*.apk
           compression-level: 0
           if-no-files-found: error
           retention-days: 14

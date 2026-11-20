@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Text;
+using UnityEditor.U2D.Sprites;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -65,6 +67,64 @@ public static class BomberSkinSheetGenerator
 
         BomberHudPortraitGenerator.GenerateAll();
         BomberCharacterSelectPortraitGenerator.GenerateAll();
+        GenerateResourceCatalog();
+    }
+
+    [MenuItem("Tools/Sprites/Refresh Bomber Skin Resource Catalog")]
+    public static void GenerateResourceCatalog()
+    {
+        var names = new SortedSet<string>(StringComparer.Ordinal);
+        var sheets = new SortedSet<string>(StringComparer.Ordinal);
+        var factories = new SpriteDataProviderFactories();
+        factories.Init();
+        foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { BombersRootAssetPath }))
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            string name = Path.GetFileNameWithoutExtension(path);
+            // Match the former runtime texture-name discovery, including custom characters.
+            if (!string.IsNullOrWhiteSpace(name) && !HasGeneratedSheetSuffix(name) &&
+                name.IndexOf("palette", StringComparison.OrdinalIgnoreCase) < 0 &&
+                name.IndexOf("pallete", StringComparison.OrdinalIgnoreCase) < 0)
+                names.Add(name);
+
+            if (AssetImporter.GetAtPath(path) is not TextureImporter importer ||
+                importer.textureType != TextureImporterType.Sprite)
+                continue;
+            bool hasSprites = importer.spriteImportMode == SpriteImportMode.Single;
+            if (importer.spriteImportMode == SpriteImportMode.Multiple)
+            {
+                var provider = factories.GetSpriteEditorDataProviderFromObject(importer);
+                if (provider != null)
+                {
+                    provider.InitSpriteEditorDataProvider();
+                    hasSprites = provider.GetSpriteRects().Length > 0;
+                }
+            }
+            if (hasSprites)
+            {
+                string resourcePath = path.Substring("Assets/Resources/".Length);
+                sheets.Add(resourcePath.Substring(0, resourcePath.LastIndexOf('.')));
+            }
+        }
+        var text = new StringBuilder(BomberSkinResourceCatalog.MetadataHeader).Append('\n');
+        foreach (string name in names) text.Append("character:").Append(name).Append('\n');
+        foreach (string path in sheets) text.Append("skin:").Append(path).Append('\n');
+        const string output = "Assets/Resources/" + BomberSkinResourceCatalog.MetadataResourcePath + ".txt";
+        string content = text.ToString();
+        if (File.Exists(output) && File.ReadAllText(output, Encoding.UTF8) == content)
+            return;
+        File.WriteAllText(output, content, new UTF8Encoding(false));
+        AssetDatabase.ImportAsset(output, ImportAssetOptions.ForceSynchronousImport);
+    }
+
+    static bool HasGeneratedSheetSuffix(string name)
+    {
+        int last = name.Length - 1;
+        if (!char.IsDigit(name[last]))
+            return false;
+        while (last >= 0 && char.IsDigit(name[last]))
+            last--;
+        return last >= 0;
     }
 
     static void UpdatePlayerPrefabPalette1References()
