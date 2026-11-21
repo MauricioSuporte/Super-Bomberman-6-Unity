@@ -640,6 +640,7 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.15
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  pursuePlayers: 1
   bombVisionDistance: 10
   reemergeAbilityCooldown: 10
 --- !u!114 &8638696913730581265

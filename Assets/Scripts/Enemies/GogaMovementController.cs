@@ -4,6 +4,9 @@ using UnityEngine;
 public sealed class GogaMovementController : JunctionTurningEnemyMovementController
 {
     private const float SubmergedDuration = 8f, FrameDuration = .12f;
+    [SerializeField] private bool pursuePlayers;
+    private readonly GridAStarPathfinder2D pathfinder = new();
+
     [Header("Submerge Ability")]
     [SerializeField, Min(0.1f)] private float bombVisionDistance = 10f;
     [SerializeField, Min(0f)] private float reemergeAbilityCooldown = 10f;
@@ -68,6 +71,53 @@ public sealed class GogaMovementController : JunctionTurningEnemyMovementControl
             if (stateTimer <= 0f) StartCoroutine(ExitSubmersion());
         }
         else if (rb != null) rb.linearVelocity = Vector2.zero;
+    }
+
+    protected override void DecideNextTile()
+    {
+        if (pursuePlayers && TryFollowPlayer())
+            return;
+
+        base.DecideNextTile();
+    }
+
+    private bool TryFollowPlayer()
+    {
+        MovementController closest = null;
+        float bestDistance = float.PositiveInfinity;
+        foreach (var player in FindObjectsByType<MovementController>())
+        {
+            if (!player.isActiveAndEnabled || player.isDead || !player.CompareTag("Player"))
+                continue;
+
+            float distance = ((Vector2)player.transform.position - rb.position).sqrMagnitude;
+            if (distance < bestDistance)
+            {
+                closest = player;
+                bestDistance = distance;
+            }
+        }
+
+        if (closest == null)
+            return false;
+
+        Vector2 offset = ((Vector2)closest.transform.position - rb.position) / tileSize;
+        Vector2 goal = rb.position + new Vector2(Mathf.Round(offset.x), Mathf.Round(offset.y)) * tileSize;
+        if (goal == rb.position)
+        {
+            targetTile = rb.position;
+            return true;
+        }
+
+        var path = pathfinder.FindPath(rb.position, goal, tileSize, obstacleMask, gameObject, 256, 256, 0.8f);
+        if (path == null || path.Count < 2 || IsTileBlocked(path[1]))
+            return false;
+
+        targetTile = path[1];
+        direction = (targetTile - rb.position).normalized;
+        isStuck = false;
+        UpdateSpriteDirection(direction);
+        return true;
     }
 
     protected override void UpdateSpriteDirection(Vector2 dir)
