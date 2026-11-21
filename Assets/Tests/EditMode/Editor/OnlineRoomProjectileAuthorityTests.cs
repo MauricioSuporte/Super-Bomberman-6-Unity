@@ -428,17 +428,22 @@ public sealed partial class OnlineRoomEditModeTests
         finally { Object.DestroyImmediate(core); Object.DestroyImmediate(actor); }
     }
 
-    [TestCase("Stage_1-1", false, 1, 1)]
-    [TestCase("Stage_1-2", false, 1, 2)]
-    [TestCase("Stage_2-5", false, 1, 2)]
-    [TestCase("Stage_World3Hall", false, 1, 2)]
-    [TestCase("Stage_3-6", false, 5, 5)]
-    [TestCase("Stage_1-2", true, 1, 1)]
-    [TestCase("BattleMode_1", false, 1, 1)]
-    public void CampaignStageLoadPreservesUpgradesAndAppliesMinimumAfterFirstStage(string scene, bool bossRush, int radius, int expected)
+    [TestCase("Stage_1-1", false, null, 1, 1)]
+    [TestCase("Stage_1-2", false, null, 1, 1)]
+    [TestCase("Stage_1-1", false, "Stage_2-5", 1, 2)]
+    [TestCase("Stage_World3Hall", false, "Stage_1-1", 1, 2)]
+    [TestCase("Stage_3-6", false, "Stage_1-1", 5, 5)]
+    [TestCase("Stage_1-2", true, "Stage_1-1", 1, 1)]
+    [TestCase("BattleMode_1", false, "Stage_1-1", 1, 1)]
+    public void CampaignExplosionMinimumUsesSlotProgress(string scene, bool bossRush, string clearedStage, int radius, int expected)
     {
+        var slot = new Assets.Scripts.SaveSystem.StageSlot();
+        slot.unlockedStages.Add(scene);
+        if (clearedStage != null)
+            slot.clearedStages.Add(clearedStage);
+
         var resolve = typeof(PlayerPersistentStats).GetMethod("ResolveSceneExplosionRadius", BindingFlags.Static | BindingFlags.NonPublic);
-        Assert.AreEqual(expected, resolve.Invoke(null, new object[] { radius, scene, bossRush }));
+        Assert.AreEqual(expected, resolve.Invoke(null, new object[] { radius, scene, bossRush, slot }));
     }
 
     [Test]
