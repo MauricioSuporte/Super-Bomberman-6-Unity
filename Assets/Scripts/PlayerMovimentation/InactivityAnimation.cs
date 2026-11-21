@@ -410,14 +410,19 @@ public sealed class InactivityAnimation : MonoBehaviour
             HudPortraitStateNotifier.SetInactive(movement.PlayerId, false);
     }
 
-    private bool TryStartManualEmote()
+    public bool CanUseManualEmoteDirection()
     {
-        if (!CompareTag("Player"))
+        if (!isActiveAndEnabled || externalPoseActive || movement == null ||
+            (movement.SuppressInactivityAnimation &&
+             (!TryGetComponent<CorneredAnimation>(out var cornered) || !cornered.IsPlaying)))
             return false;
 
-        if (TryGetComponent<PowerGloveAbility>(out var powerGlove) &&
-            powerGlove != null &&
-            powerGlove.IsHoldingBomb)
+        return !TryGetComponent<PowerGloveAbility>(out var glove) || !glove.IsHoldingBomb;
+    }
+
+    private bool TryStartManualEmote()
+    {
+        if (!CompareTag("Player") || !CanUseManualEmoteDirection())
             return false;
 
         var input = PlayerInputManager.Instance;

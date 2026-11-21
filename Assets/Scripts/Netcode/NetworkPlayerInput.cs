@@ -59,6 +59,7 @@ namespace Assets.Scripts.Netcode
             PlayerAction.MoveRight, PlayerAction.ActionA, PlayerAction.ActionB,
             PlayerAction.ActionC, PlayerAction.Select, PlayerAction.ActionL, PlayerAction.ActionR
         };
+        internal const int EmoteModifierMask = 1 << 8; // ActionL in the network Actions array.
         const int ValidMask = (1 << 10) - 1;
         const int MaxQueuedTicks = 8;
         // A received frame plus, per action button, the tick its press came from: the frame's own tick unless the press was

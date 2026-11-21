@@ -847,17 +847,14 @@ public partial class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        if (TryGetComponent<InactivityAnimation>(out var inactivity) &&
-            inactivity != null &&
-            inactivity.SuppressMovementInput)
-        {
-            ApplyDirectionFromVector(Vector2.zero);
-            ResetDualInputAxes();
-            return;
-        }
-
         var input = PlayerInputManager.Instance;
-        if (input == null && !insideNetworkTick)
+        bool emoteModifierHeld = insideNetworkTick
+            ? (networkHeldMask & Assets.Scripts.Netcode.NetworkPlayerInput.EmoteModifierMask) != 0
+            : input != null && input.Get(playerId, PlayerAction.ActionL);
+        // A network motor tick can run before the emote Update consumes this direction.
+        if ((input == null && !insideNetworkTick) ||
+            (TryGetComponent<InactivityAnimation>(out var inactivity) &&
+             (inactivity.SuppressMovementInput || (emoteModifierHeld && inactivity.CanUseManualEmoteDirection()))))
         {
             ApplyDirectionFromVector(Vector2.zero);
             ResetDualInputAxes();
