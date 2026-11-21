@@ -126,15 +126,15 @@ public sealed class EskimoMovementController : JunctionTurningEnemyMovementContr
         slideElapsed += Time.fixedDeltaTime;
         float distance = Mathf.Round(slideElapsed * slideSpeed * SlidePixelsPerUnit) / SlidePixelsPerUnit;
 
-        // Check every tile crossed this physics step. The slide has no distance
-        // limit; only a blocked tile ends it.
+        // Check the destination before leaving each tile center, including partial steps.
         float currentDistance = Vector2.Dot(rb.position - slideStart, direction);
         int firstTile = Mathf.FloorToInt(currentDistance / tileSize) + 1;
-        int lastTile = Mathf.FloorToInt(distance / tileSize);
+        int lastTile = Mathf.CeilToInt(distance / tileSize);
         for (int tile = firstTile; tile <= lastTile; tile++)
         {
             if (IsTileBlocked(slideStart + direction * (tile * tileSize)))
             {
+                rb.position = slideStart + direction * ((tile - 1) * tileSize);
                 EndSlideAndResumeWalking();
                 return;
             }

@@ -7,6 +7,24 @@ using UnityEngine.Tilemaps;
 
 public abstract class BattleModeComEditModeTests
 {
+    [TestCase(typeof(StageAssets.ExitBlocker))]
+    [TestCase(typeof(StageAssets.World3RoomTwoTransition))]
+    public void EskimoCharge_StopsAtRoomExit(System.Type exitComponent)
+    {
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemies/Eskimo.prefab");
+        var controller = prefab.GetComponent<EnemyMovementController>();
+        var exit = new GameObject("Room exit", typeof(BoxCollider2D), exitComponent);
+        try
+        {
+            var blocksCharge = controller.GetType().GetMethod("IsChargeBlocker", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.IsTrue((bool)blocksCharge.Invoke(null, new object[] { exit.GetComponent<BoxCollider2D>() }));
+        }
+        finally
+        {
+            Object.DestroyImmediate(exit);
+        }
+    }
+
     [TestCase(1, -1, 0, 6)]
     [TestCase(1, 1, 0, 8)]
     [TestCase(8, -1, 0, 1)]

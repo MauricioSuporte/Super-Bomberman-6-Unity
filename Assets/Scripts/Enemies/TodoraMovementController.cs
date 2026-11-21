@@ -522,6 +522,8 @@ public sealed class TodoraMovementController : JunctionTurningEnemyMovementContr
         string tag = collider.tag;
         return tag == DestructiblesTag ||
                tag == IndestructiblesTag ||
+               collider.TryGetComponent<StageAssets.ExitBlocker>(out _) ||
+               collider.TryGetComponent<StageAssets.World3RoomTwoTransition>(out _) ||
                collider.name.StartsWith(CoreMechanismsName, System.StringComparison.Ordinal);
     }
 
