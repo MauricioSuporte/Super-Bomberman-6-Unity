@@ -18,7 +18,6 @@ public sealed class FragileFloor : MonoBehaviour
 
     [Header("Sounds")]
     [SerializeField] private AudioClip crackSfx;
-    [SerializeField] private AudioClip blockSfx;
 
     private Tilemap _groundTilemap;
     private Tilemap _destructiblesTilemap;
@@ -222,7 +221,6 @@ public sealed class FragileFloor : MonoBehaviour
             _indestructiblesTilemap.RefreshTile(_cell);
         }
 
-        GameMusicController.Instance?.PlaySfx(blockSfx);
         MarkBlocked();
     }
 
