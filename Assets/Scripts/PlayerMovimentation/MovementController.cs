@@ -1760,6 +1760,8 @@ public partial class MovementController : MonoBehaviour, IKillable
         return GetWalkAnimationFrameTime() * ReferenceWalkAnimationFrameCount / frameCount;
     }
 
+    public bool AnimateFootstepsAtRest { get; set; }
+
     public float WalkAnimationDurationMultiplier { get; private set; } = 1f;
 
     public void SetWalkAnimationDurationMultiplier(float multiplier)
@@ -3384,17 +3386,23 @@ public partial class MovementController : MonoBehaviour, IKillable
         if (IsSpriteLocked)
             return;
 
+        var target = spriteRenderer != null ? spriteRenderer : activeSpriteRenderer;
+        bool isIdle = direction == Vector2.zero;
+        if (isIdle && AnimateFootstepsAtRest && !isMounted && target != null &&
+            (target == spriteRendererDown || target == spriteRendererUp ||
+             target == spriteRendererLeft || target == spriteRendererRight))
+            isIdle = false;
+
         if (spriteRenderer == null)
         {
             if (activeSpriteRenderer != null)
             {
-                activeSpriteRenderer.idle = (direction == Vector2.zero);
+                activeSpriteRenderer.idle = isIdle;
                 activeSpriteRenderer.RefreshFrame();
             }
             return;
         }
 
-        bool isIdle = (direction == Vector2.zero);
         if (IsPlayer())
             ApplyWalkAnimationTiming(spriteRenderer);
 

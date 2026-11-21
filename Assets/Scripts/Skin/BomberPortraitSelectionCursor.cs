@@ -16,6 +16,7 @@ public sealed class BomberPortraitSelectionCursor : MonoBehaviour
     Image suffix;
     Texture2D palette;
     Texture2D kamikazePalette;
+    Texture2D cossackPalette;
     float animationTime;
 
     public void Initialize(int playerId)
@@ -28,6 +29,7 @@ public sealed class BomberPortraitSelectionCursor : MonoBehaviour
         controls[0] = CreatePart("L");
         controls[1] = CreatePart("Plus");
         controls[2] = CreatePart("R");
+        cossackPalette = Resources.Load<Texture2D>("Sprites/Bombers/CossackBomber/CossackBomberPallete");
         palette = Resources.Load<Texture2D>(ResourcesRoot + "SelectionPalette");
         kamikazePalette = Resources.Load<Texture2D>(ResourcesRoot + "KamikazeSelectionPalette");
     }
@@ -55,11 +57,14 @@ public sealed class BomberPortraitSelectionCursor : MonoBehaviour
         string characterFolder = BomberSkinResourceCatalog.GetCharacterFolderName(character);
         bool usesKamikazePalette = characterFolder == "KamikazeBomber" || characterFolder == "Bookworm";
         Texture2D selectedPalette = usesKamikazePalette ? kamikazePalette : palette;
+        if (characterFolder == "CossackBomber")
+            selectedPalette = cossackPalette;
         if (selectedPalette != null)
         {
             int column = BomberSkinResourceCatalog.GetPaletteNumber(skin);
             // These characters share white helmets across many skins; the suit carries their main color.
-            int row = selectedPalette.height - 1 - (usesKamikazePalette ? 8 : 0);
+            int rowFromTop = characterFolder == "CossackBomber" ? 7 : (usesKamikazePalette ? 8 : 0);
+            int row = selectedPalette.height - 1 - rowFromTop;
             tint = column < selectedPalette.width ? selectedPalette.GetPixel(column, row) : Color.clear;
             if (tint.a == 0) tint = selectedPalette.GetPixel(0, row);
         }

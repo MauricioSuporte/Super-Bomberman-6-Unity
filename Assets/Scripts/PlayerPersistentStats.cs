@@ -26,7 +26,7 @@ public static partial class PlayerPersistentStats
         public int SpeedInternal = BaseSpeedNormal + (SpeedStep * 9);
         public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
-        public bool HasPowerGlove = false;
+        public bool HasPowerGlove = true;
         public bool HasLineBomb = false;
         public bool CanPassBombs = true;
         public bool CanPassDestructibles = true;

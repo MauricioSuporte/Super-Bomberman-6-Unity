@@ -18,7 +18,7 @@ public class PlayerBomberSkinController : MonoBehaviour
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
     // Sprite-sheet animation indices. Update this block when the shared bomber template changes.
     static readonly int[] BombermanAfkFrames = { 130, 129, 128, 129, 130, 131, 132, 131 };
-    static readonly int[] BombermanPalette2AfkFrames = { 128, 129, 130, 131, 132, 131, 130, 129 };
+    static readonly int[] ForwardReverseAfkFrames = { 128, 129, 130, 131, 132, 131, 130, 129 };
     static readonly float[] BombermanPalette2AfkDurations = { 1.2f, 0.18f, 0.18f, 1.2f, 0.6f, 1.2f, 0.18f, 0.18f };
     // Attachment frames 7, 6, 8, 6, played four times and held on frame 6.
     static readonly int[] BombermanPalette2EndStageFrames =
@@ -63,6 +63,7 @@ public class PlayerBomberSkinController : MonoBehaviour
         128, 129, 130, 131, 132, 133, 134, 135, 136,
         137, 138, 139, 140, 141, 142, 143, 144
     };
+    static readonly int[] CossackBomberEndStageFrames = { 108, 109, 110, 133 };
     static readonly int[] MinerBomberEndStageFrames = { 2, 108, 109, 110, 133 };
     static readonly int[] KamikazeBomberEndStageFrames = { 108, 109, 110, 128, 129 };
     static readonly int[] MechaBomberEndStageFrames =
@@ -212,7 +213,7 @@ public class PlayerBomberSkinController : MonoBehaviour
             inactivity.KeepPrimaryLoopUntilInput = usePalette2Animations;
 
         int[] afkFrames = usePalette2Animations
-            ? BombermanPalette2AfkFrames
+            ? ForwardReverseAfkFrames
             : GetAfkFrames(character);
         float afkSpeedMultiplier = GetAfkSpeedMultiplier(character);
         ApplyFrameSequence(
@@ -264,6 +265,7 @@ public class PlayerBomberSkinController : MonoBehaviour
         MovementController movement = GetComponentInParent<MovementController>(true);
         if (movement != null)
         {
+            movement.AnimateFootstepsAtRest = BomberSkinResourceCatalog.GetCharacterFolderName(character) == "CossackBomber";
             ApplySingleFrame(movement.mountedSpriteDown, "MountedDown", 14, targetMap, skin);
             ApplySingleFrame(movement.mountedSpriteRight, "MountedRight", 37, targetMap, skin);
             ApplySingleFrame(movement.mountedSpriteLeft, "MountedLeft", 60, targetMap, skin);
@@ -463,6 +465,9 @@ public class PlayerBomberSkinController : MonoBehaviour
             return BombermanPalette2EndStageFrames;
 
         string folderName = BomberSkinResourceCatalog.GetCharacterFolderName(character);
+        if (folderName == "CossackBomber")
+            return CossackBomberEndStageFrames;
+
         if (folderName == "MinerBomber")
             return MinerBomberEndStageFrames;
 
@@ -486,6 +491,9 @@ public class PlayerBomberSkinController : MonoBehaviour
     static int[] GetAfkFrames(BomberCharacter character)
     {
         string folderName = BomberSkinResourceCatalog.GetCharacterFolderName(character);
+        if (folderName == "CossackBomber")
+            return ForwardReverseAfkFrames;
+
         if (folderName == "MinerBomber")
             return MinerBomberAfkFrames;
 
