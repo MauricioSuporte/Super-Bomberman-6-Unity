@@ -1007,16 +1007,22 @@ public class GameManager : MonoBehaviour
 
     IEnumerator RestartRoundRoutine()
     {
-        if (Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage)
+        bool cooperative = Assets.Scripts.Netcode.BombermanNetworkManager.IsCoopStage;
+        float restartDelay = cooperative && BossRushSession.IsActive
+            ? NormalGameDeathFadeDuration
+            : Mathf.Max(restartAfterDeathSeconds, NormalGameDeathFadeDuration);
+        var music = GameMusicController.Instance;
+        if (!BossRushSession.IsActive && music != null && music.deathMusic != null)
+            restartDelay = Mathf.Max(restartDelay, music.deathMusic.length);
+        yield return new WaitForSecondsRealtime(restartDelay);
+
+        if (cooperative)
         {
-            yield return new WaitForSecondsRealtime(NormalGameDeathFadeDuration);
             PlayerPersistentStats.RollbackStage();
             if (BossRushSession.IsActive) Assets.Scripts.Netcode.BombermanNetworkManager.ServerReturnToLobby();
             else Assets.Scripts.Netcode.BombermanNetworkManager.ServerStartNextRound();
             yield break;
         }
-        float restartDelay = Mathf.Max(restartAfterDeathSeconds, NormalGameDeathFadeDuration);
-        yield return new WaitForSecondsRealtime(restartDelay);
 
         if (!BossRushSession.IsActive &&
             SaveSystem.GetActiveNormalGameDifficulty() == NormalGameDifficulty.Hard)

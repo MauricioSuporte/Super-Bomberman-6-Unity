@@ -10,6 +10,34 @@ using Mirror;
 
 public sealed partial class OnlineRoomEditModeTests
 {
+    [TestCase(7, 7f)]
+    [TestCase(1, 4f)]
+    public void NormalGameRetryWaitsForBothDeathMusicAndStageDelay(int clipSeconds, float expectedDelay)
+    {
+        var previousMusic = GameMusicController.Instance;
+        var actor = new GameObject("NormalGameRetry");
+        actor.SetActive(false);
+        var clip = AudioClip.Create("Defeat", 8000 * clipSeconds, 1, 8000, false);
+        try
+        {
+            var music = actor.AddComponent<GameMusicController>();
+            music.deathMusic = clip;
+            GameMusicController.Instance = music;
+            var manager = actor.AddComponent<GameManager>();
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var routine = (System.Collections.IEnumerator)typeof(GameManager)
+                .GetMethod("RestartRoundRoutine", flags).Invoke(manager, null);
+            Assert.IsTrue(routine.MoveNext());
+            Assert.AreEqual(expectedDelay, ((WaitForSecondsRealtime)routine.Current).waitTime);
+        }
+        finally
+        {
+            GameMusicController.Instance = previousMusic;
+            Object.DestroyImmediate(actor);
+            Object.DestroyImmediate(clip);
+        }
+    }
+
     [Test]
     public void BattleShuffleRoundUsesOnlyActiveSpawnsAndRetainsItsPermutation()
     {
