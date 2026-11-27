@@ -8,9 +8,7 @@ public sealed class JellyFish94MovementController : JunctionTurningEnemyMovement
     [Header("Jellyfish Hover")]
     [SerializeField, Min(0f)] private float hoverBottomHeight = 0.32f;
     [SerializeField, Min(0f)] private float hoverTopHeight = 0.48f;
-    [SerializeField, Min(0.01f)] private float fallDuration = 0.5f;
-    [SerializeField, Min(0.01f)] private float impulseDuration = 0.25f;
-    [SerializeField, Min(0.01f)] private float riseDuration = 0.5f;
+    [SerializeField, Range(1f, 5f)] private float riseImpulsePower = 3f;
 
     [Header("Shock Ability")]
     [SerializeField, Min(1)] private int movementLoopsBeforeShock = 2;
@@ -240,16 +238,38 @@ public sealed class JellyFish94MovementController : JunctionTurningEnemyMovement
     {
         float top = Mathf.Max(hoverTopHeight, hoverBottomHeight);
         float bottom = Mathf.Min(hoverTopHeight, hoverBottomHeight);
-        int frame = activeSprite != null ? activeSprite.CurrentFrame : 0;
-        float frameTime = activeSprite != null ? activeSprite.DebugFrameTimer : 0f;
-        float impulseHeight = bottom + (top - bottom) * 0.18f;
 
-        return frame switch
+        if (activeSprite == null || activeSprite.animationSprite == null)
+            return top;
+
+        int frameCount = activeSprite.animationSprite.Length;
+        if (frameCount < 2)
+            return top;
+
+        int frame = Mathf.Clamp(activeSprite.CurrentFrame, 0, frameCount - 1);
+        float frameDuration = activeSprite.animationTime;
+        float[] durations = activeSprite.frameDurations;
+
+        if (activeSprite.useSequenceDuration)
+            frameDuration = activeSprite.sequenceDuration / frameCount;
+        else if (durations != null && durations.Length == frameCount)
+            frameDuration = durations[frame];
+
+        float frameProgress = Mathf.Clamp01(
+            activeSprite.DebugFrameTimer / Mathf.Max(0.0001f, frameDuration));
+        float phase = frame + frameProgress;
+        int fallFrames = frameCount / 2;
+
+        if (phase < fallFrames)
         {
-            0 => Mathf.Lerp(top, bottom, Mathf.Clamp01(frameTime / fallDuration)),
-            1 => Mathf.Lerp(bottom, impulseHeight, Mathf.Clamp01(frameTime / impulseDuration)),
-            _ => Mathf.Lerp(impulseHeight, top, Mathf.Clamp01(frameTime / riseDuration))
-        };
+            float t = phase / fallFrames;
+            float eased = (1f - Mathf.Cos(t * Mathf.PI)) * 0.5f;
+            return Mathf.Lerp(top, bottom, eased);
+        }
+
+        float rise = Mathf.Clamp01((phase - fallFrames) / (frameCount - fallFrames));
+        float impulse = 1f - Mathf.Pow(1f - rise, riseImpulsePower);
+        return Mathf.Lerp(bottom, top, impulse);
     }
 
     private void ApplyHoverOffset(float hoverHeight)

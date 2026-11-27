@@ -1,0 +1,704 @@
+fileFormatVersion: 2
+guid: 15fc80fcc75d66b48912ad9634333c75
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6108905104485615491
+    second: Jelly Fish94_0
+  - first:
+      213: 7075521935346346819
+    second: Jelly Fish94_1
+  - first:
+      213: -2830895014446686736
+    second: Jelly Fish94_2
+  - first:
+      213: 365634110914261402
+    second: Jelly Fish94_3
+  - first:
+      213: -5480189921756349058
+    second: Jelly Fish94_4
+  - first:
+      213: 426939870077613682
+    second: Jelly Fish94_5
+  - first:
+      213: -2845805004550286912
+    second: Jelly Fish94_6
+  - first:
+      213: 5720494942344599955
+    second: Jelly Fish94_7
+  - first:
+      213: 3992947864968994189
+    second: Jelly Fish94_8
+  - first:
+      213: -6987960403302161966
+    second: Jelly Fish94_9
+  - first:
+      213: -7958902105846395805
+    second: Jelly Fish94_10
+  - first:
+      213: -1669369631811703976
+    second: Jelly Fish94_11
+  - first:
+      213: 4110594764469953358
+    second: Jelly Fish94_12
+  - first:
+      213: 1079213935345394205
+    second: Jelly Fish94_13
+  - first:
+      213: 3864730422409542884
+    second: Jelly Fish94_14
+  - first:
+      213: -642682811989830092
+    second: Jelly Fish94_15
+  - first:
+      213: -174660666043572516
+    second: Jelly Fish94_16
+  - first:
+      213: 5286913657847288441
+    second: Jelly Fish94_17
+  - first:
+      213: 749129019718417128
+    second: Jelly Fish94_18
+  - first:
+      213: 8037309566524156589
+    second: Jelly Fish94_19
+  - first:
+      213: 2131478164760732930
+    second: Jelly Fish94_20
+  - first:
+      213: -5683408766592299972
+    second: Jelly Fish94_21
+  - first:
+      213: 4269696043025467086
+    second: Jelly Fish94_22
+  - first:
+      213: 4209376018822115130
+    second: Jelly Fish94_23
+  - first:
+      213: 1172458006168470663
+    second: Jelly Fish94_24
+  - first:
+      213: -7856319090548508874
+    second: Jelly Fish94_25
+  - first:
+      213: -3735809479145504211
+    second: Jelly Fish94_26
+  - first:
+      213: 3565839587363577597
+    second: Jelly Fish94_27
+  - first:
+      213: 6861037955295935583
+    second: Jelly Fish94_28
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Jelly Fish94_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 200
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7870908c2fc83ba0800000000000000
+      internalID: -6108905104485615491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_1
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 200
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34badc466bd413260800000000000000
+      internalID: 7075521935346346819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_2
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 200
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fd1b7babf3a6b8d0800000000000000
+      internalID: -2830895014446686736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_3
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 200
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a917fc2694ef21500800000000000000
+      internalID: 365634110914261402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_4
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 200
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7d790c2d4472f3b0800000000000000
+      internalID: -5480189921756349058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_5
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 150
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2767d60cc8bcce500800000000000000
+      internalID: 426939870077613682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_6
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 150
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c150c31d6ba188d0800000000000000
+      internalID: -2845805004550286912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_7
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 150
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3995ed177d7436f40800000000000000
+      internalID: 5720494942344599955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_8
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 150
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8d912a7decc96730800000000000000
+      internalID: 3992947864968994189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_9
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 150
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d1eda87907c50f90800000000000000
+      internalID: -6987960403302161966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 100
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36ccaeae3bc4c8190800000000000000
+      internalID: -7958902105846395805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_11
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 100
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85be9012a2535d8e0800000000000000
+      internalID: -1669369631811703976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_12
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 100
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e43efcfc824cb0930800000000000000
+      internalID: 4110594764469953358
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_13
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 100
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d12e9e43b532afe00800000000000000
+      internalID: 1079213935345394205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_14
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 100
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ecbd5cc7d742a530800000000000000
+      internalID: 3864730422409542884
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_15
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 50
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 436d818336bb417f0800000000000000
+      internalID: -642682811989830092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_16
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 50
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cde5d34bc0b739df0800000000000000
+      internalID: -174660666043572516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_17
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 50
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9721626e5f3ee5940800000000000000
+      internalID: 5286913657847288441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_18
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 50
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8eab047dfd0756a00800000000000000
+      internalID: 749129019718417128
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_19
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 50
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: daa658e97724a8f60800000000000000
+      internalID: 8037309566524156589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Jelly Fish94_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 52
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 205a0190918849d10800000000000000
+      internalID: 2131478164760732930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 0000502bc8d05034ab2dcb2a121019a6
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":52.0,"y":50.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      Jelly Fish94_0: -6108905104485615491
+      Jelly Fish94_1: 7075521935346346819
+      Jelly Fish94_10: -7958902105846395805
+      Jelly Fish94_11: -1669369631811703976
+      Jelly Fish94_12: 4110594764469953358
+      Jelly Fish94_13: 1079213935345394205
+      Jelly Fish94_14: 3864730422409542884
+      Jelly Fish94_15: -642682811989830092
+      Jelly Fish94_16: -174660666043572516
+      Jelly Fish94_17: 5286913657847288441
+      Jelly Fish94_18: 749129019718417128
+      Jelly Fish94_19: 8037309566524156589
+      Jelly Fish94_2: -2830895014446686736
+      Jelly Fish94_20: 2131478164760732930
+      Jelly Fish94_3: 365634110914261402
+      Jelly Fish94_4: -5480189921756349058
+      Jelly Fish94_5: 426939870077613682
+      Jelly Fish94_6: -2845805004550286912
+      Jelly Fish94_7: 5720494942344599955
+      Jelly Fish94_8: 3992947864968994189
+      Jelly Fish94_9: -6987960403302161966
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -352,8 +352,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2f2070389c6d1244eb2d2c3d9a1167c3
-      internalID: -862355220
+      spriteID: be30dbc1e2f4c024ab2bbafe2fe2704d
+      internalID: -1421616007
       vertices: []
       indices: 
       edges: []
@@ -374,8 +374,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 961044db48b7dab47b12d775e18d8a01
-      internalID: 1185904956
+      spriteID: d18fa84b0f8f9a048ac9621d83c1a085
+      internalID: 1627049217
       vertices: []
       indices: 
       edges: []
@@ -396,8 +396,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 178aad88b4b43e345a2a1d2227f963c2
-      internalID: -731237779
+      spriteID: ab5d0e330e851e945882e2016ce70d3b
+      internalID: 100711269
       vertices: []
       indices: 
       edges: []
@@ -418,8 +418,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: fb2231b205eb55447b005f485c7d2f79
-      internalID: -322265931
+      spriteID: 743e5bb81ed1ad44684f8058a08244e3
+      internalID: -1220334674
       vertices: []
       indices: 
       edges: []
@@ -440,8 +440,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ff7f8fd5a229f59418015d02d2da4776
-      internalID: 1409683353
+      spriteID: ebfc77a96f52b5f4cae4876e4481b838
+      internalID: -1448044088
       vertices: []
       indices: 
       edges: []
@@ -462,8 +462,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b3c1eeb0d11aa5044af788d2d60d4c4a
-      internalID: -1126771797
+      spriteID: b65ccedb29445b84f8a2e4f129a2816c
+      internalID: 1155418316
       vertices: []
       indices: 
       edges: []
@@ -484,8 +484,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 398146ff5bc34fb4a8da83f40ecccda2
-      internalID: 866505328
+      spriteID: af687a88bcabe1d4a93ca5ebf21a3601
+      internalID: -1750001764
       vertices: []
       indices: 
       edges: []
@@ -506,8 +506,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ba94f5b944b709f45ba2e08d1c1c344f
-      internalID: -1155504557
+      spriteID: 36d512670d402bf438abe89f30bd3349
+      internalID: -908706741
       vertices: []
       indices: 
       edges: []
@@ -528,8 +528,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7ef29a50a4cef5848bfce7092a348fd1
-      internalID: 436364003
+      spriteID: 786368ff2a1f74f438183dc9a64b8d91
+      internalID: -499555836
       vertices: []
       indices: 
       edges: []
@@ -550,8 +550,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e2263b19a6a2d714cbcbe5da1a196130
-      internalID: -1296182959
+      spriteID: e9c13ad63e5c25846bb8eec96a16b27b
+      internalID: 1855756173
       vertices: []
       indices: 
       edges: []
@@ -560,7 +560,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 52ea2bf09d7a8a04e82d4cfc869e598a
+    spriteID: b96be3d1a03f4e34985121b7ec700cef
     internalID: 0
     vertices: []
     indices: 
@@ -574,15 +574,15 @@ TextureImporter:
     nameFileIdTable:
       Green Wing_0: -2526856135960867237
       Green Wing_1: -5520255699988024678
-      Green Wing_10: 1185904956
-      Green Wing_11: -731237779
-      Green Wing_12: -322265931
-      Green Wing_13: 1409683353
-      Green Wing_14: -1126771797
-      Green Wing_15: 866505328
-      Green Wing_16: -1155504557
-      Green Wing_17: 436364003
-      Green Wing_18: -1296182959
+      Green Wing_10: 1627049217
+      Green Wing_11: 100711269
+      Green Wing_12: -1220334674
+      Green Wing_13: -1448044088
+      Green Wing_14: 1155418316
+      Green Wing_15: -1750001764
+      Green Wing_16: -908706741
+      Green Wing_17: -499555836
+      Green Wing_18: 1855756173
       Green Wing_2: 9067668399574706662
       Green Wing_3: 1913120506036986777
       Green Wing_4: -6754606117579255961
@@ -590,7 +590,7 @@ TextureImporter:
       Green Wing_6: 7788657212057813768
       Green Wing_7: -8799154974354187078
       Green Wing_8: 7203752723817217495
-      Green Wing_9: -862355220
+      Green Wing_9: -1421616007
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -41,6 +41,72 @@ TextureImporter:
   - first:
       213: -8594822894215953719
     second: Korobokkuru_12
+  - first:
+      213: 8460498926261183087
+    second: Korobokkuru_13
+  - first:
+      213: 7284879888971249617
+    second: Korobokkuru_14
+  - first:
+      213: 6954826347552592906
+    second: Korobokkuru_15
+  - first:
+      213: -7592601570321935501
+    second: Korobokkuru_16
+  - first:
+      213: 5083314166595220226
+    second: Korobokkuru_17
+  - first:
+      213: -5356325206090795498
+    second: Korobokkuru_18
+  - first:
+      213: 5947595665885206145
+    second: Korobokkuru_19
+  - first:
+      213: -2546119725752273715
+    second: Korobokkuru_20
+  - first:
+      213: -1928489519793611128
+    second: Korobokkuru_21
+  - first:
+      213: 6794233326249070515
+    second: Korobokkuru_22
+  - first:
+      213: -5746092582278702142
+    second: Korobokkuru_23
+  - first:
+      213: 9086007953000189749
+    second: Korobokkuru_24
+  - first:
+      213: 2142799645955277869
+    second: Korobokkuru_25
+  - first:
+      213: -4958667976879369647
+    second: Korobokkuru_26
+  - first:
+      213: -7890544758791109790
+    second: Korobokkuru_27
+  - first:
+      213: -7715362132563535663
+    second: Korobokkuru_28
+  - first:
+      213: -6402728371089597408
+    second: Korobokkuru_29
+  - first:
+      213: -7645836590256597744
+    second: Korobokkuru_30
+  - first:
+      213: -5088421507425030678
+    second: Korobokkuru_31
+  - first:
+      213: -84911064971091056
+    second: Korobokkuru_32
+  - first:
+      213: -5226118642927525411
+    second: Korobokkuru_33
+  - first:
+      213: 258910082661886100
+    second: Korobokkuru_34
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -155,11 +221,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 36
-        width: 18
-        height: 18
+        y: 97
+        width: 20
+        height: 23
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -176,12 +242,12 @@ TextureImporter:
       name: Korobokkuru_1
       rect:
         serializedVersion: 2
-        x: 18
-        y: 36
-        width: 18
-        height: 18
+        x: 19
+        y: 97
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -198,12 +264,12 @@ TextureImporter:
       name: Korobokkuru_2
       rect:
         serializedVersion: 2
-        x: 36
-        y: 36
-        width: 18
-        height: 18
+        x: 39
+        y: 96
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -220,12 +286,12 @@ TextureImporter:
       name: Korobokkuru_3
       rect:
         serializedVersion: 2
-        x: 54
-        y: 36
-        width: 18
-        height: 18
+        x: 59
+        y: 97
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -242,12 +308,12 @@ TextureImporter:
       name: Korobokkuru_4
       rect:
         serializedVersion: 2
-        x: 0
-        y: 18
-        width: 18
-        height: 18
+        x: 79
+        y: 97
+        width: 21
+        height: 23
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -264,12 +330,12 @@ TextureImporter:
       name: Korobokkuru_5
       rect:
         serializedVersion: 2
-        x: 18
-        y: 18
-        width: 18
-        height: 18
+        x: 99
+        y: 97
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -286,12 +352,12 @@ TextureImporter:
       name: Korobokkuru_6
       rect:
         serializedVersion: 2
-        x: 36
-        y: 18
-        width: 18
-        height: 18
+        x: 119
+        y: 96
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -308,12 +374,12 @@ TextureImporter:
       name: Korobokkuru_7
       rect:
         serializedVersion: 2
-        x: 54
-        y: 18
-        width: 18
-        height: 18
+        x: 139
+        y: 97
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -330,12 +396,12 @@ TextureImporter:
       name: Korobokkuru_8
       rect:
         serializedVersion: 2
-        x: 72
-        y: 18
-        width: 18
-        height: 18
+        x: 0
+        y: 73
+        width: 20
+        height: 23
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -352,12 +418,12 @@ TextureImporter:
       name: Korobokkuru_9
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 18
-        height: 18
+        x: 19
+        y: 73
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -374,12 +440,12 @@ TextureImporter:
       name: Korobokkuru_10
       rect:
         serializedVersion: 2
-        x: 18
-        y: 0
-        width: 18
-        height: 18
+        x: 39
+        y: 72
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -396,12 +462,12 @@ TextureImporter:
       name: Korobokkuru_11
       rect:
         serializedVersion: 2
-        x: 36
-        y: 0
-        width: 18
-        height: 18
+        x: 59
+        y: 73
+        width: 21
+        height: 22
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -418,12 +484,12 @@ TextureImporter:
       name: Korobokkuru_12
       rect:
         serializedVersion: 2
-        x: 54
-        y: 0
-        width: 18
-        height: 18
+        x: 79
+        y: 73
+        width: 21
+        height: 23
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -436,11 +502,495 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_13
+      rect:
+        serializedVersion: 2
+        x: 99
+        y: 73
+        width: 21
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f622f52a2fab96570800000000000000
+      internalID: 8460498926261183087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_14
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 72
+        width: 21
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d7b48d79a7191560800000000000000
+      internalID: 7284879888971249617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_15
+      rect:
+        serializedVersion: 2
+        x: 139
+        y: 73
+        width: 21
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a04566007b1848060800000000000000
+      internalID: 6954826347552592906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_16
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 49
+        width: 20
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37353ef5919a1a690800000000000000
+      internalID: -7592601570321935501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_17
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 51
+        width: 20
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2037e9d4d4f8b8640800000000000000
+      internalID: 5083314166595220226
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_18
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 51
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 616bc75aa928aa5b0800000000000000
+      internalID: -5356325206090795498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_19
+      rect:
+        serializedVersion: 2
+        x: 60
+        y: 51
+        width: 20
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1869db41fba1a8250800000000000000
+      internalID: 5947595665885206145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_20
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 51
+        width: 20
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc4bbee699d5aacd0800000000000000
+      internalID: -2546119725752273715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_21
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 51
+        width: 18
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88e53a3dff0ac35e0800000000000000
+      internalID: -1928489519793611128
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_22
+      rect:
+        serializedVersion: 2
+        x: 122
+        y: 51
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bf423c7637f94e50800000000000000
+      internalID: 6794233326249070515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_23
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 51
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cb55c29d37c140b0800000000000000
+      internalID: -5746092582278702142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_24
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 27
+        width: 20
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53f43f0f71cf71e70800000000000000
+      internalID: 9086007953000189749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_25
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 25
+        width: 21
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d244ff9cce0ccbd10800000000000000
+      internalID: 2142799645955277869
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_26
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 25
+        width: 22
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15210074fb54f2bb0800000000000000
+      internalID: -4958667976879369647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_27
+      rect:
+        serializedVersion: 2
+        x: 59
+        y: 25
+        width: 19
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2638fe709572f7290800000000000000
+      internalID: -7890544758791109790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_28
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 25
+        width: 17
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d8dc07a4078de490800000000000000
+      internalID: -7715362132563535663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_29
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 26
+        width: 14
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02c93e73870f427a0800000000000000
+      internalID: -6402728371089597408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_30
+      rect:
+        serializedVersion: 2
+        x: 124
+        y: 26
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 015521b612884e590800000000000000
+      internalID: -7645836590256597744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_31
+      rect:
+        serializedVersion: 2
+        x: 139
+        y: 26
+        width: 21
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aed297e399b4269b0800000000000000
+      internalID: -5088421507425030678
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_32
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2
+        width: 20
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 093e5e616d552def0800000000000000
+      internalID: -84911064971091056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_33
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 2
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd1224e88c81977b0800000000000000
+      internalID: -5226118642927525411
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Korobokkuru_34
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 2
+        width: 13
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49824d13955d79300800000000000000
+      internalID: 258910082661886100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 74065a83d4279094e8a308619aeaaffa
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -448,17 +998,37 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":18.0,"y":18.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
       Korobokkuru_0: -3150124816572242309
       Korobokkuru_1: 1586524352179943795
       Korobokkuru_10: 5230910901055653415
       Korobokkuru_11: -877043802566044629
       Korobokkuru_12: -8594822894215953719
+      Korobokkuru_13: 8460498926261183087
+      Korobokkuru_14: 7284879888971249617
+      Korobokkuru_15: 6954826347552592906
+      Korobokkuru_16: -7592601570321935501
+      Korobokkuru_17: 5083314166595220226
+      Korobokkuru_18: -5356325206090795498
+      Korobokkuru_19: 5947595665885206145
       Korobokkuru_2: 8945455828719053704
+      Korobokkuru_20: -2546119725752273715
+      Korobokkuru_21: -1928489519793611128
+      Korobokkuru_22: 6794233326249070515
+      Korobokkuru_23: -5746092582278702142
+      Korobokkuru_24: 9086007953000189749
+      Korobokkuru_25: 2142799645955277869
+      Korobokkuru_26: -4958667976879369647
+      Korobokkuru_27: -7890544758791109790
+      Korobokkuru_28: -7715362132563535663
+      Korobokkuru_29: -6402728371089597408
       Korobokkuru_3: -8180673872778749113
+      Korobokkuru_30: -7645836590256597744
+      Korobokkuru_31: -5088421507425030678
+      Korobokkuru_32: -84911064971091056
+      Korobokkuru_33: -5226118642927525411
+      Korobokkuru_34: 258910082661886100
       Korobokkuru_4: 5764120353673754868
       Korobokkuru_5: -8657926934486610726
       Korobokkuru_6: 6385524322954671459

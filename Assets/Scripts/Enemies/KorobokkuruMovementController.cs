@@ -23,12 +23,12 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
 
     [Header("Korobokkuru timing")]
     [SerializeField, Min(0.01f)] private float transformSeconds = 0.2f;
-    [SerializeField, Min(0.01f)] private float jumpSeconds = 1.5f;
-    [SerializeField, Min(0f)] private float jumpIdleSeconds = 0.25f;
+    [SerializeField, Min(0.01f)] private float jumpSeconds = 0.8f;
+    [SerializeField, Min(0f)] private float jumpIdleSeconds = 0.2f;
     [SerializeField, Range(0f, 1f)] private float continueJumpChance = 0.65f;
 
     [Header("Korobokkuru jump")]
-    [SerializeField, Min(0f)] private float jumpHeightInTiles = 2f;
+    [SerializeField, Min(0f)] private float jumpHeightInTiles = 1.25f;
     [SerializeField, Range(0.1f, 1f)] private float landingCheckSizeInTiles = 0.8f;
 
     private AnimatedSpriteRenderer jumpingSprite;
@@ -53,6 +53,8 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         CacheVisuals();
         korobokkuruHealth = GetComponent<CharacterHealth>();
         base.Awake();
+        if (Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally)
+            SetShadows(jumping: false);
     }
 
     protected override void Start()
@@ -105,6 +107,19 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         }
     }
 
+    protected override void UpdateSpriteDirection(Vector2 dir)
+    {
+        if (isDead || isInDamagedLoop)
+            return;
+
+        // Repositioning and collision recovery must not select walking
+        // visuals while a transformation or bounce is in progress.
+        if (state != MovementState.Walking)
+            return;
+
+        base.UpdateSpriteDirection(dir);
+    }
+
     protected override void DecideNextTile()
     {
         if (state != MovementState.Walking)
@@ -144,7 +159,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         ClearJumpOffsets();
         SetShadows(jumping: false);
         SetVisualEnabled(jumpingSprite, false);
-        SetVisualEnabled(transformSprite, false);
+        HideTransformVisual();
         base.Die();
     }
 
@@ -156,13 +171,14 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         isStuck = false;
         state = MovementState.Transforming;
         stateTimer = 0f;
-        ShowTransformVisual();
+        ShowTransformVisual(reverse: false);
     }
 
     private void UpdateTransform()
     {
         stateTimer += Time.fixedDeltaTime;
-        if (stateTimer < transformSeconds)
+        UpdateTransformFrame(reverse: false);
+        if (stateTimer + 0.00001f < transformSeconds)
             return;
 
         Vector2 landing = rb.position + pendingJumpDirection * tileSize * JumpDistanceInTiles;
@@ -193,6 +209,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         float progress = Mathf.Clamp01(stateTimer / jumpSeconds);
         float horizontalProgress = EaseOutQuad(progress);
         rb.MovePosition(Vector2.Lerp(jumpStart, jumpTarget, horizontalProgress));
+        UpdateJumpFrame(progress);
         ApplyJumpOffset(Mathf.Sin(progress * Mathf.PI) * jumpHeightInTiles * tileSize);
         UpdateJumpInvulnerability();
 
@@ -202,17 +219,18 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         rb.position = jumpTarget;
         SnapToGrid();
         ClearJumpOffsets();
-        SetShadows(jumping: false);
         SetJumpInvulnerability(false);
         state = MovementState.JumpIdle;
         stateTimer = 0f;
         ShowJumpVisual(animate: false);
+        SetShadows(jumping: true);
     }
 
     private void UpdateJumpIdle()
     {
         stateTimer += Time.fixedDeltaTime;
-        if (stateTimer < jumpIdleSeconds)
+        UpdateLandingFrame();
+        if (stateTimer + 0.00001f < Mathf.Max(0.2f, jumpIdleSeconds))
             return;
 
         if (Random.value <= continueJumpChance && TryChooseJumpLanding(out Vector2 landing))
@@ -231,13 +249,14 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         ClearJumpOffsets();
         SetShadows(jumping: false);
         SetJumpInvulnerability(false);
-        ShowTransformVisual();
+        ShowTransformVisual(reverse: true);
     }
 
     private void UpdateLandingTransform()
     {
         stateTimer += Time.fixedDeltaTime;
-        if (stateTimer < transformSeconds)
+        UpdateTransformFrame(reverse: true);
+        if (stateTimer + 0.00001f < transformSeconds)
             return;
 
         ResumeWalking();
@@ -378,7 +397,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         return child != null ? child.gameObject : null;
     }
 
-    private void ShowTransformVisual()
+    private void ShowTransformVisual(bool reverse)
     {
         HideSpecialVisualsExcept(transformSprite);
         if (transformSprite == null)
@@ -387,12 +406,33 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
         SetVisualEnabled(transformSprite, true);
         transformSprite.idle = false;
         transformSprite.loop = false;
+        transformSprite.pingPong = false;
+        transformSprite.SetManualAnimationUpdate(true);
         transformSprite.RestartAnimation();
+        UpdateTransformFrame(reverse);
+    }
+
+    private void UpdateTransformFrame(bool reverse)
+    {
+        if (transformSprite == null || transformSprite.animationSprite == null ||
+            transformSprite.animationSprite.Length == 0)
+            return;
+
+        int frameCount = transformSprite.animationSprite.Length;
+        float frameDuration = Mathf.Max(0.0001f, transformSeconds / frameCount);
+        int frame = Mathf.Clamp(
+            Mathf.FloorToInt((stateTimer + 0.00001f) / frameDuration),
+            0, frameCount - 1);
+
+        transformSprite.CurrentFrame = reverse ? frameCount - 1 - frame : frame;
+        transformSprite.RefreshFrame();
     }
 
     private void HideTransformVisual()
     {
         SetVisualEnabled(transformSprite, false);
+        if (transformSprite != null)
+            transformSprite.SetManualAnimationUpdate(false);
     }
 
     private void ShowJumpVisual(bool animate)
@@ -402,45 +442,112 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
             return;
 
         SetVisualEnabled(jumpingSprite, true);
-        jumpingSprite.idle = !animate;
+        jumpingSprite.idle = false;
+        jumpingSprite.loop = false;
+        jumpingSprite.pingPong = false;
+        jumpingSprite.SetManualAnimationUpdate(true);
+        jumpingSprite.RestartAnimation();
+
         if (animate)
-        {
-            jumpingSprite.loop = true;
-            jumpingSprite.RestartAnimation();
-        }
+            UpdateJumpFrame(0f);
         else
-        {
-            jumpingSprite.CurrentFrame = 0;
-            jumpingSprite.RefreshFrame();
-        }
+            UpdateLandingFrame();
+    }
+
+    private void SetJumpFrame(int frame)
+    {
+        if (jumpingSprite == null || jumpingSprite.animationSprite == null ||
+            jumpingSprite.animationSprite.Length == 0)
+            return;
+
+        jumpingSprite.CurrentFrame = frame;
+        jumpingSprite.RefreshFrame();
+    }
+
+    private void UpdateJumpFrame(float progress)
+    {
+        // 21: takeoff, 22: rising, 23: apex, 18: falling.
+        int frame = progress < 0.125f ? 3 :
+            progress < 0.375f ? 4 :
+            progress < 0.75f ? 5 : 0;
+        SetJumpFrame(frame);
+    }
+
+    private void UpdateLandingFrame()
+    {
+        // 19 and 20 are ground-contact squash frames, never airborne.
+        float duration = Mathf.Max(0.2f, jumpIdleSeconds);
+        SetJumpFrame(stateTimer + 0.00001f < duration * 0.5f ? 1 : 2);
     }
 
     private void HideSpecialVisualsExcept(AnimatedSpriteRenderer keep)
     {
         if (jumpingSprite != keep)
+        {
             SetVisualEnabled(jumpingSprite, false);
+            if (jumpingSprite != null)
+                jumpingSprite.SetManualAnimationUpdate(false);
+        }
         if (transformSprite != keep)
-            SetVisualEnabled(transformSprite, false);
+            HideTransformVisual();
         SetVisualEnabled(spriteUp, false);
         SetVisualEnabled(spriteDown, false);
         SetVisualEnabled(spriteLeft, false);
         SetVisualEnabled(spriteRight, false);
     }
 
+    private void LateUpdate()
+    {
+        if (!Assets.Scripts.Netcode.NetSync.ShouldSimulateLocally) return;
+        if (!isDead && !isInDamagedLoop && state != MovementState.Walking)
+        {
+            AnimatedSpriteRenderer expected =
+                state == MovementState.Jumping || state == MovementState.JumpIdle
+                    ? jumpingSprite : transformSprite;
+
+            // Restore the state-owned visual without restarting its animation.
+            HideSpecialVisualsExcept(expected);
+            if (expected != null && !expected.enabled)
+            {
+                SetVisualEnabled(expected, true);
+                expected.idle = false;
+                expected.SetManualAnimationUpdate(true);
+                if (state == MovementState.Jumping)
+                    UpdateJumpFrame(Mathf.Clamp01(stateTimer / jumpSeconds));
+                else if (state == MovementState.JumpIdle)
+                    UpdateLandingFrame();
+                else
+                    UpdateTransformFrame(state == MovementState.LandingTransform);
+            }
+            else if (expected != null && expected.TryGetComponent(out SpriteRenderer renderer))
+                renderer.enabled = true;
+        }
+
+        SetShadows(jumping: state == MovementState.Jumping ||
+            state == MovementState.JumpIdle);
+    }
+
     private void SetShadows(bool jumping)
     {
-        if (bigShadow != null)
+        bool visible = jumping && !isDead && !isInDamagedLoop &&
+            jumpingSprite != null && jumpingSprite.isActiveAndEnabled &&
+            jumpingSprite.animationSprite != null &&
+            jumpingSprite.animationSprite.Length > 0;
+
+        int frame = visible ? jumpingSprite.CurrentFrame : -1;
+        bool high = state == MovementState.Jumping &&
+            (frame == 4 || frame == 5);
+
+        // Keep shadow objects active for network renderer tracking.
+        if (bigShadow != null && !bigShadow.activeSelf)
             bigShadow.SetActive(true);
-        if (smallShadow != null)
+        if (smallShadow != null && !smallShadow.activeSelf)
             smallShadow.SetActive(true);
 
-        // The small shadow is deliberately not given the jump arc. It stays
-        // on the Rigidbody's ground position while only the Jumping visual is
-        // offset upward, matching SnowMan's ground-shadow behavior.
         if (bigShadowRenderer != null)
-            bigShadowRenderer.enabled = !jumping;
+            bigShadowRenderer.enabled = visible && !high;
         if (smallShadowRenderer != null)
-            smallShadowRenderer.enabled = jumping;
+            smallShadowRenderer.enabled = visible && high;
     }
 
     private void ApplyJumpOffset(float height)
@@ -464,7 +571,7 @@ public sealed class KorobokkuruMovementController : JunctionTurningEnemyMovement
     {
         return state == MovementState.Jumping && jumpingSprite != null && jumpingSprite.enabled &&
             jumpingSprite.animationSprite != null && jumpingSprite.animationSprite.Length > 0 &&
-            jumpingSprite.animationSprite[jumpingSprite.CurrentFrame] != jumpingSprite.idleSprite;
+            stateTimer < jumpSeconds;
     }
 
     private void SetJumpInvulnerability(bool value)
