@@ -87,7 +87,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 2}
+  m_Size: {x: 1.3125, y: 1.375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -109,17 +109,22 @@ MonoBehaviour:
   animationSprite:
   - {fileID: 7873444928579934181, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   - {fileID: 4438351552130452648, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: 7873444928579934181, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   - {fileID: -8484647995636279456, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 4438351552130452648, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 7873444928579934181, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -6142298138049817622, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -6977608548097279171, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -6142298138049817622, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   allowFlipX: 0
-  animationTime: 0.25
+  animationTime: 0.15
   useSequenceDuration: 1
-  sequenceDuration: 0.4
+  sequenceDuration: 1.25
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -207,12 +212,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -4738246450746947362, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  m_Sprite: {fileID: -696631596, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1.5}
+  m_Size: {x: 1.3125, y: 1.375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -230,13 +235,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -4738246450746947362, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  idleSprite: {fileID: -696631596, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   animationSprite:
-  - {fileID: -4738246450746947362, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: -4738246450746947362, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: -4738246450746947362, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: -4738246450746947362, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: -4738246450746947362, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -696631596, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -696631596, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -696631596, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -696631596, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -696631596, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   - {fileID: -5626790304026278073, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: 3883846565180421844, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
   - {fileID: -2891138887690315046, guid: 3876012151c75034284b5b9da7224aa9, type: 3}
@@ -252,6 +257,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 0
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -535,6 +541,8 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
+  passesThroughDestructibles: 0
+  junctionPassDestructiblesTag: Destructibles
 --- !u!1 &8135197778495855839
 GameObject:
   m_ObjectHideFlags: 0
@@ -617,12 +625,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1464250414856482592, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  m_Sprite: {fileID: -9015712233347586576, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 2}
+  m_Size: {x: 1.3125, y: 1.3125}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -640,21 +648,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 1464250414856482592, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  idleSprite: {fileID: -9015712233347586576, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   animationSprite:
-  - {fileID: 1464250414856482592, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: -4471450805393876877, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: 1464250414856482592, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: -6142298138049817622, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -9015712233347586576, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 4838273121214122010, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -4738246450746947362, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 4838273121214122010, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -9015712233347586576, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 2395320859671871474, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 8880057042153463702, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 2395320859671871474, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   allowFlipX: 0
-  animationTime: 0.25
+  animationTime: 0.15
   useSequenceDuration: 1
-  sequenceDuration: 0.4
+  sequenceDuration: 1.25
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
@@ -742,12 +755,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6977608548097279171, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  m_Sprite: {fileID: -4523704186244890359, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 2}
+  m_Size: {x: 1.375, y: 1.375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -765,21 +778,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: -6977608548097279171, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  idleSprite: {fileID: -4523704186244890359, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   animationSprite:
-  - {fileID: -6977608548097279171, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: 1742208062423336634, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: -6977608548097279171, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
-  - {fileID: -4182094963593053772, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -4523704186244890359, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 3928241519830650071, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 8216540443689173089, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 3928241519830650071, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -4523704186244890359, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -7806912352768373113, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: 3827960232505481234, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
+  - {fileID: -7806912352768373113, guid: 99850ae726f48e24b96d4cbddd92c232, type: 3}
   allowFlipX: 0
-  animationTime: 0.25
+  animationTime: 0.15
   useSequenceDuration: 1
-  sequenceDuration: 0.4
+  sequenceDuration: 1.25
   frameDurations: []
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
   loopStartFrame: 0
+  loopRestartDelay: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
