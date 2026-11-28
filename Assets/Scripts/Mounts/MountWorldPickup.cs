@@ -38,6 +38,10 @@ public sealed class MountWorldPickup : MonoBehaviour
 
     public void Init(MountedType t) => type = t;
 
+    void OnEnable() => ComSceneObjects<MountWorldPickup>.Invalidate();
+
+    void OnDisable() => ComSceneObjects<MountWorldPickup>.Invalidate();
+
     void Awake()
     {
         _col = GetComponent<Collider2D>();

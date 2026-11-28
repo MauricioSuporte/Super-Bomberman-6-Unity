@@ -13,6 +13,9 @@ public class PlayerBomberSkinController : MonoBehaviour
     readonly Dictionary<BomberSkin, Dictionary<int, Sprite>> skinFrameMaps = new();
     readonly Dictionary<AnimatedSpriteRenderer, float> baseAnimationTimes = new();
 
+    readonly List<AnimatedSpriteRenderer> renderers = new();
+    readonly Dictionary<string, AnimatedSpriteRenderer> renderersByName = new();
+
     const float LadyBomberEndStageSpeedMultiplier = 1.5f;
     const float KamikazeBomberAfkSpeedMultiplier = 1.25f;
     static readonly int[] WalkFramePattern = { -1, -2, -1, 0, 1, 2, 1, 0 };
@@ -200,6 +203,7 @@ public class PlayerBomberSkinController : MonoBehaviour
             return;
         }
 
+        IndexRenderers();
         for (int i = 0; i < WalkDefinitions.Length; i++)
         {
             WalkDefinition definition = WalkDefinitions[i];
@@ -426,37 +430,26 @@ public class PlayerBomberSkinController : MonoBehaviour
         return map;
     }
 
-    AnimatedSpriteRenderer FindAnimatedRenderer(string rendererName)
+    void IndexRenderers()
     {
-        var animated = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < animated.Length; i++)
+        renderersByName.Clear();
+        GetComponentsInChildren(true, renderers);
+        foreach (AnimatedSpriteRenderer renderer in renderers)
         {
-            AnimatedSpriteRenderer renderer = animated[i];
-            if (renderer == null)
+            if (renderer == null || IsInsideMountedLouie(renderer))
                 continue;
 
-            if (!IsRendererNameMatch(renderer.gameObject.name, rendererName))
-                continue;
-
-            if (IsInsideMountedLouie(renderer))
-                continue;
-
-            return renderer;
+            string name = renderer.gameObject.name;
+            renderersByName.TryAdd(name, renderer);
+            if (name.EndsWith("Rigth", System.StringComparison.Ordinal))
+                renderersByName.TryAdd(name.Replace("Rigth", "Right"), renderer);
         }
-
-        return null;
     }
 
-    static bool IsRendererNameMatch(string actualName, string expectedName)
+    AnimatedSpriteRenderer FindAnimatedRenderer(string rendererName)
     {
-        if (actualName == expectedName)
-            return true;
-
-        if (expectedName == "Right" && actualName == "Rigth")
-            return true;
-
-        return expectedName.EndsWith("Right", System.StringComparison.Ordinal) &&
-               actualName == expectedName.Replace("Right", "Rigth");
+        renderersByName.TryGetValue(rendererName, out var renderer);
+        return renderer;
     }
 
     public static int[] GetEndStageFrames(BomberCharacter character, BomberSkin skin = BomberSkin.Palette1)
@@ -691,8 +684,9 @@ public class PlayerBomberSkinController : MonoBehaviour
         if (renderer.TryGetComponent<SpriteRenderer>(out var spriteRenderer) && spriteRenderer != null)
             spriteRenderer.sprite = renderer.idleSprite;
 
-        SLog(
-            $"ApplyWalkDefinition | skin={skin} renderer={definition.RendererName} " +
+        if (enableSurgicalLogs)
+            SLog(
+                $"ApplyWalkDefinition | skin={skin} renderer={definition.RendererName} " +
             $"idle={definition.IdleFrame} frames={string.Join(",", GetWalkFrames(definition.IdleFrame))}"
         );
     }
@@ -764,7 +758,8 @@ public class PlayerBomberSkinController : MonoBehaviour
         if (renderer.TryGetComponent<SpriteRenderer>(out var spriteRenderer) && spriteRenderer != null)
             spriteRenderer.sprite = renderer.idleSprite;
 
-        SLog($"ApplyFrameSequence | skin={skin} renderer={rendererName} idle={idleFrame} frames={string.Join(",", frames)}");
+        if (enableSurgicalLogs)
+            SLog($"ApplyFrameSequence | skin={skin} renderer={rendererName} idle={idleFrame} frames={string.Join(",", frames)}");
     }
 
     void ApplyAnimationSpeed(AnimatedSpriteRenderer renderer, float speedMultiplier)

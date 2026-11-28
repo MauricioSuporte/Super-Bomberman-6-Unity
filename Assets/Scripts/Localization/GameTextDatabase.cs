@@ -278,11 +278,14 @@ public static partial class GameTextDatabase
         Voices = "VOICES",
         On = "ON",
         Off = "OFF",
-        ResetWarning = "THIS WILL ERASE:",
-        ResetNormalSaves = "ALL NORMAL GAME SAVES",
-        ResetUnlocks = "UNLOCKED SKINS / MODES",
+        ResetWarning = "ERASE ALL SAVE DATA?",
+        ResetNormalSaves = "ALL CAMPAIGN SLOTS",
+        ResetUnlocks = "UNLOCKED SKINS, MODES AND ARENAS",
         ResetBossRushRecords = "BOSS RUSH RECORDS",
-        ResetControls = "CONTROLS",
+        ResetControls = "RESETS CONTROLS, VIDEO AND BATTLE SETUP",
+        ResetAchievementsLanguage = "ACHIEVEMENTS AND LANGUAGE SETTING",
+        ResetPermanent = "THIS CANNOT BE UNDONE",
+        ResetFailed = "COULD NOT ERASE SAVE",
         Cancel = "CANCEL",
         PushStart = "PUSH START BUTTON",
         BossRushLocked = "UNLOCKED BY CLEARING NORMAL GAME",
@@ -319,11 +322,14 @@ public static partial class GameTextDatabase
         VideoBackgrounds = new[] { "黒", "ゲームぼかし" },
         On = "オン",
         Off = "オフ",
-        ResetWarning = "消去されます:",
-        ResetNormalSaves = "通常ゲームのセーブ",
-        ResetUnlocks = "解放スキン / モード",
+        ResetWarning = "全セーブデータを消去しますか？",
+        ResetNormalSaves = "全スロットのゲーム進行",
+        ResetUnlocks = "解放したスキン・モード・ステージ",
         ResetBossRushRecords = "ボスラッシュ記録",
-        ResetControls = "操作設定",
+        ResetControls = "操作・画面・バトル設定も初期化",
+        ResetAchievementsLanguage = "実績と設定した言語",
+        ResetPermanent = "元に戻せません",
+        ResetFailed = "セーブを消去できませんでした",
         Cancel = "キャンセル",
         PushStart = "スタートボタンをおしてください",
         BossRushLocked = "ノーマルゲームクリアで解放",
@@ -361,11 +367,14 @@ public static partial class GameTextDatabase
         VideoBackgrounds = new[] { "NEGRO", "JUEGO BORROSO" },
         On = "SÍ",
         Off = "NO",
-        ResetWarning = "ESTO BORRARÁ:",
-        ResetNormalSaves = "PARTIDAS DEL MODO NORMAL",
-        ResetUnlocks = "SKINS / MODOS DESBLOQUEADOS",
-        ResetBossRushRecords = "RÉCORDS DE JEFE RUSH",
-        ResetControls = "CONTROLES",
+        ResetWarning = "¿BORRAR TODOS LOS DATOS?",
+        ResetNormalSaves = "TODAS LAS PARTIDAS",
+        ResetUnlocks = "SKINS, MODOS Y ARENAS DESBLOQUEADOS",
+        ResetBossRushRecords = "RÉCORDS DE BOSS RUSH",
+        ResetControls = "REINICIA MANDOS, VÍDEO Y BATALLA",
+        ResetAchievementsLanguage = "LOGROS E IDIOMA CONFIGURADO",
+        ResetPermanent = "ESTO ES IRREVERSIBLE",
+        ResetFailed = "NO SE PUDO BORRAR",
         Cancel = "CANCELAR",
         PushStart = "PULSA START",
         BossRushLocked = "SE DESBLOQUEA AL COMPLETAR JUEGO NORMAL",
@@ -403,11 +412,14 @@ public static partial class GameTextDatabase
         VideoBackgrounds = new[] { "PRETO", "JOGO BORRADO" },
         On = "SIM",
         Off = "NÃO",
-        ResetWarning = "ISTO VAI APAGAR:",
-        ResetNormalSaves = "SAVES DO JOGO NORMAL",
-        ResetUnlocks = "SKINS / MODOS LIBERADOS",
-        ResetBossRushRecords = "RECORDES DE CHEFES",
-        ResetControls = "CONTROLES",
+        ResetWarning = "APAGAR TODOS OS DADOS?",
+        ResetNormalSaves = "TODOS OS SLOTS DA CAMPANHA",
+        ResetUnlocks = "SKINS, MODOS E ARENAS LIBERADOS",
+        ResetBossRushRecords = "RECORDES DO BOSS RUSH",
+        ResetControls = "REDEFINE CONTROLES, VÍDEO E BATALHA",
+        ResetAchievementsLanguage = "CONQUISTAS E IDIOMA SELECIONADO",
+        ResetPermanent = "ESTA AÇÃO É IRREVERSÍVEL",
+        ResetFailed = "FALHA AO APAGAR O SAVE",
         Cancel = "CANCELAR",
         PushStart = "PRECIONE  START",
         BossRushLocked = "LIBERADO AO COMPLETAR O JOGO NORMAL",
@@ -437,6 +449,7 @@ public static partial class GameTextDatabase
         ToStartMapping = "TO START MAPPING",
         EscBToCancel = "ESC / B TO CANCEL",
         EscToCancel = "ESC TO CANCEL",
+        HoldBToCancel = "HOLD B TO CANCEL",
         ChooseButtonFor = "CHOOSE A BUTTON FOR:",
         ConfirmPlaceBomb = "CONFIRM / PLACE BOMB",
         ReturnExplodeControlBomb = "RETURN / EXPLODE CONTROL BOMB",
@@ -486,6 +499,7 @@ public static partial class GameTextDatabase
         ToStartMapping = "割り当てを開始",
         EscBToCancel = "ESC / B でキャンセル",
         EscToCancel = "ESC でキャンセル",
+        HoldBToCancel = "B 長押しでキャンセル",
         ChooseButtonFor = "ボタンを選択:",
         ConfirmPlaceBomb = "決定 / 爆弾を置く",
         ReturnExplodeControlBomb = "戻る / リモコン爆弾を爆破",
@@ -535,6 +549,7 @@ public static partial class GameTextDatabase
         ToStartMapping = "PARA EMPEZAR",
         EscBToCancel = "ESC / B PARA CANCELAR",
         EscToCancel = "ESC PARA CANCELAR",
+        HoldBToCancel = "MANTÉN B PARA CANCELAR",
         ChooseButtonFor = "ELIGE UN BOTÓN PARA:",
         ConfirmPlaceBomb = "CONFIRMAR / PONER BOMBA",
         ReturnExplodeControlBomb = "VOLVER / EXPLOTAR BOMBA CONTROL",
@@ -584,6 +599,7 @@ public static partial class GameTextDatabase
         ToStartMapping = "PARA COMEÇAR",
         EscBToCancel = "ESC / B PARA CANCELAR",
         EscToCancel = "ESC PARA CANCELAR",
+        HoldBToCancel = "SEGURE B PARA CANCELAR",
         ChooseButtonFor = "ESCOLHA UM BOTÃO PARA:",
         ConfirmPlaceBomb = "CONFIRMAR / COLOCAR BOMBA",
         ReturnExplodeControlBomb = "VOLTAR / EXPLODIR BOMBA CONTROLE",
@@ -1271,6 +1287,9 @@ public sealed class TitleScreenText
     public string ResetUnlocks;
     public string ResetBossRushRecords;
     public string ResetControls;
+    public string ResetAchievementsLanguage;
+    public string ResetPermanent;
+    public string ResetFailed;
     public string Cancel;
     public string PushStart;
     public string BossRushLocked;
@@ -1300,6 +1319,7 @@ public sealed class ControlsMenuText
     public string ToStartMapping;
     public string EscBToCancel;
     public string EscToCancel;
+    public string HoldBToCancel;
     public string ChooseButtonFor;
     public string ConfirmPlaceBomb;
     public string ReturnExplodeControlBomb;

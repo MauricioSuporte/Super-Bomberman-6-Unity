@@ -14,21 +14,24 @@ public static class HudCharacterPortraitCatalog
 
     static readonly Dictionary<string, Sprite> cache = new();
 
+    static readonly Dictionary<(BomberCharacter, BomberSkin, int), Sprite> selectionCache = new();
+
     // Selection sheets contain neutral and focused portraits, top to bottom.
     public static Sprite LoadSelection(BomberCharacter character, BomberSkin skin, int expressionIndex)
     {
+        expressionIndex = Mathf.Clamp(expressionIndex, 0, 1);
+        var key = (character, skin, expressionIndex);
+        if (selectionCache.TryGetValue(key, out Sprite cached))
+            return cached;
+
         string sheet = BomberSkinResourceCatalog.GetSheetName(character, skin);
         string folder = BomberSkinResourceCatalog.GetCharacterFolderName(character);
         string path = $"Sprites/CharacterSelect/{folder}/{sheet}_{Mathf.Clamp(expressionIndex, 0, 1)}";
-        if (!cache.TryGetValue(path, out Sprite portrait))
-        {
-            string defaultSheet = BomberSkinResourceCatalog.GetSheetName(character, BomberSkin.Palette1);
-            string defaultPath = $"Sprites/CharacterSelect/{folder}/{defaultSheet}_{Mathf.Clamp(expressionIndex, 0, 1)}";
-            portrait = Resources.Load<Sprite>(path) ?? Resources.Load<Sprite>(defaultPath) ??
-                Load(character, skin, DefaultExpression);
-            cache[path] = portrait;
-        }
-
+        string defaultSheet = BomberSkinResourceCatalog.GetSheetName(character, BomberSkin.Palette1);
+        string defaultPath = $"Sprites/CharacterSelect/{folder}/{defaultSheet}_{Mathf.Clamp(expressionIndex, 0, 1)}";
+        Sprite portrait = Resources.Load<Sprite>(path) ?? Resources.Load<Sprite>(defaultPath) ??
+            Load(character, skin, DefaultExpression);
+        selectionCache[key] = portrait;
         return portrait;
     }
 

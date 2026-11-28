@@ -1288,7 +1288,7 @@ public class ControlsConfigMenu : MonoBehaviour
                         var pReset = PlayerInputManager.Instance.GetPlayer(confirmResetPlayerId);
                         pReset.ResetToDefault();
 
-                        SaveSystem.SetControlPlayerActive(confirmResetPlayerId, false);
+                        SaveSystem.SetControlPlayerActive(confirmResetPlayerId, MobileControlsAutoBootstrap.IsPortMaster && confirmResetPlayerId == 1);
                         SaveSystem.SaveControlsFromInputManager();
 
                         PlaySfx(resetSfx, resetVolume);
@@ -1321,7 +1321,7 @@ public class ControlsConfigMenu : MonoBehaviour
                 var joyBtn = ReadAnyGamepadButtonDownThisFrame();
                 KeyCode? key = ReadAnyKeyboardKeyDownNoMouse();
 
-                bool rawGamepadActionBCancel = joyBtn.HasValue && joyBtn.Value.btn == 1;
+                bool rawGamepadActionBCancel = joyBtn.HasValue && !MobileControlsAutoBootstrap.IsPortMaster && joyBtn.Value.btn == 1;
                 bool rawKeyboardEscCancel = key.HasValue && key.Value == KeyCode.Escape;
 
                 if (escCancel || actionBCancel || mouseCancel || rawGamepadActionBCancel || rawKeyboardEscCancel)
@@ -1340,7 +1340,7 @@ public class ControlsConfigMenu : MonoBehaviour
                 bool startByMouse = leftClick &&
                                     TryGetPointerHoveredLinkId(pointer.screenPosition, out string clickedWaitLink) &&
                                     clickedWaitLink == LINK_WAIT_START;
-                bool startByRawInput = dpad.HasValue || joyBtn.HasValue || key.HasValue;
+                bool startByRawInput = !MobileControlsAutoBootstrap.IsPortMaster && (dpad.HasValue || joyBtn.HasValue || key.HasValue);
 
                 if (startByMappedInput || startByMouse || startByRawInput)
                 {
@@ -1366,7 +1366,23 @@ public class ControlsConfigMenu : MonoBehaviour
 
                 var p = PlayerInputManager.Instance.GetPlayer(targetPlayerId);
 
-                if (escCancel || mouseCancel)
+                var dpad = ReadAnyDpadDownThisFrame();
+                var joyBtn = ReadAnyGamepadButtonDownThisFrame();
+                KeyCode? key = ReadAnyKeyboardKeyDownNoMouse();
+                bool heldBack = false;
+                if (MobileControlsAutoBootstrap.IsPortMaster && joyBtn.HasValue && joyBtn.Value.btn == 0)
+                {
+                    var device = InputSystem.GetDeviceById(joyBtn.Value.deviceId);
+                    float pressedAt = Time.unscaledTime;
+                    while (device != null && device.added && UniversalControllerInput.ReadButtonHeld(device, 0))
+                    {
+                        if (Time.unscaledTime - pressedAt >= 0.5f)
+                            heldBack = true;
+                        yield return null;
+                    }
+                }
+
+                if (escCancel || mouseCancel || heldBack)
                 {
                     if (bulkSnapshot != null)
                         p.ApplyBindings(bulkSnapshot);
@@ -1380,10 +1396,6 @@ public class ControlsConfigMenu : MonoBehaviour
                     yield return null;
                     continue;
                 }
-
-                var dpad = ReadAnyDpadDownThisFrame();
-                var joyBtn = ReadAnyGamepadButtonDownThisFrame();
-                KeyCode? key = ReadAnyKeyboardKeyDownNoMouse();
 
                 if (key.HasValue)
                 {
@@ -1784,7 +1796,7 @@ public class ControlsConfigMenu : MonoBehaviour
                 $"<align=center><size={footerSize}>" +
                 $"<color={colorHint}>{text.ChooseButtonFor}</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
                 blocked +
-                $"<color={colorPlayerSelectedRed}>{text.EscToCancel}</color>\n\n" +
+                $"<color={colorPlayerSelectedRed}>{(MobileControlsAutoBootstrap.IsPortMaster ? text.HoldBToCancel : text.EscToCancel)}</color>\n\n" +
                 $"<color={colorHint}>A:</color> <color={colorWhite}>{text.ConfirmPlaceBomb}</color>\n" +
                 $"<color={colorHint}>B:</color> <color={colorWhite}>{text.ReturnExplodeControlBomb}</color>\n" +
                 $"<color={colorHint}>C:</color> <color={colorWhite}>{text.Abilities}</color>\n" +

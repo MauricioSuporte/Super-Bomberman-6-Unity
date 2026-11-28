@@ -88,6 +88,10 @@ public class BombExplosion : MonoBehaviour
         IsRevengeBomb = isRevengeBomb;
     }
 
+    void OnEnable() => ComSceneObjects<BombExplosion>.Invalidate();
+
+    void OnDisable() => ComSceneObjects<BombExplosion>.Invalidate();
+
     void Awake()
     {
         CaptureDefaultSprites();

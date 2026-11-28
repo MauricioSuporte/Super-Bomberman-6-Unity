@@ -219,9 +219,10 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
     // Sprite sheets are loaded only when a character/skin becomes visible.
     // This keeps opening time independent from the total number of registered skins.
-    readonly Dictionary<string, Sprite> idleCache = new();
-    readonly Dictionary<string, Dictionary<int, Sprite>> sheetFrameCache = new();
-    readonly Dictionary<string, bool> generatedSkinAvailabilityCache = new();
+    readonly HashSet<(BomberCharacter, BomberSkin)> fullPreviewSheets = new();
+    readonly Dictionary<(BomberCharacter, BomberSkin), Sprite> idleCache = new();
+    readonly Dictionary<(BomberCharacter, BomberSkin), Dictionary<int, Sprite>> sheetFrameCache = new();
+    readonly Dictionary<(BomberCharacter, BomberSkin), bool> generatedSkinAvailabilityCache = new();
     readonly Dictionary<BomberCharacter, List<int>> randomSkinCandidateIndexCache = new();
     readonly HashSet<BomberCharacter> warmedRandomSkinCandidateCharacters = new();
 
@@ -348,7 +349,6 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         TickDownClock();
         TickEndStageClocks();
         UpdateSlotVisuals();
-        UpdateSelectedSkinsListVisuals();
         UpdateFooterHintVisual();
         UpdateUnlockHint();
 
@@ -359,9 +359,6 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         if (!menuActive)
             return;
 
-#if !UNITY_SERVER
-        Canvas.ForceUpdateCanvases();
-#endif
         UpdateAllCursorsToSelected();
         CycleOverlappedCursors();
         UpdateSelectedSkinsListVisuals();
@@ -533,7 +530,6 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
             PreconfirmBattleModeSelectionFromSavedSkins();
 
         UpdateSlotVisuals();
-        UpdateSelectedSkinsListVisuals();
         UpdateFooterHintVisual();
         ApplyFinalEndStageVisualsImmediate();
         UpdateUnlockHint();
@@ -548,7 +544,6 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 #endif
 
         UpdateSlotVisuals();
-        UpdateSelectedSkinsListVisuals();
         UpdateFooterHintVisual();
         ApplyFinalEndStageVisualsImmediate();
         UpdateAllCursorsToSelected();
@@ -933,7 +928,7 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
     bool IsGeneratedSkinCached(BomberCharacter character, BomberSkin skin)
     {
-        string key = GetSheetCacheKey(character, skin);
+        var key = (character, skin);
         if (!generatedSkinAvailabilityCache.TryGetValue(key, out bool isGenerated))
         {
             isGenerated = BomberSkinResourceCatalog.IsGeneratedSkin(character, skin);
@@ -989,11 +984,6 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         return selectableSkins != null && selectableSkins.Count > 0
             ? selectableSkins[0]
             : BomberSkin.Palette1;
-    }
-
-    static string GetSheetCacheKey(BomberCharacter character, BomberSkin skin)
-    {
-        return character + ":" + skin;
     }
 
     // Selection confirmation: attachment frames 7, 6, 8, 6, twice.
@@ -2360,12 +2350,14 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
                 imageRt.anchoredPosition = new Vector2(0f, selectedSkinSpriteYOffset * scale);
                 imageRt.sizeDelta = spriteSize;
 
-                visual.image.sprite = GetSpriteByFrame(character, skin, frame) ?? GetIdleSprite(character, skin);
+                bool showPreview = cursor.confirmed || isActive;
+                if (showPreview)
+                    visual.image.sprite = GetSpriteByFrame(character, skin, frame) ?? GetIdleSprite(character, skin);
                 Color imageColor = Color.white;
                 if (!cursor.confirmed)
                     imageColor.a = selectedSkinPreviewAlpha;
                 visual.image.color = imageColor;
-                visual.image.enabled = (cursor.confirmed || isActive) && visual.image.sprite != null;
+                visual.image.enabled = showPreview && visual.image.sprite != null;
             }
         }
     }
@@ -2819,7 +2811,7 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
 
     Sprite GetIdleSprite(BomberCharacter character, BomberSkin skin)
     {
-        string key = GetSheetCacheKey(character, skin);
+        var key = (character, skin);
         if (idleCache.TryGetValue(key, out var cached))
             return cached;
 
@@ -2834,22 +2826,30 @@ public partial class BomberSkinSelectMenu : MonoBehaviour
         if (map == null)
             return null;
 
-        if (map.TryGetValue(frameIndex, out var s))
-            return s;
+        if (map.TryGetValue(frameIndex, out var sprite))
+            return sprite;
 
-        return null;
+        // Custom scene animation frames can still refer to the complete sheet.
+        map = GetOrBuildFrameMap(character, skin, true);
+        return map.TryGetValue(frameIndex, out sprite) ? sprite : null;
     }
 
-    Dictionary<int, Sprite> GetOrBuildFrameMap(BomberCharacter character, BomberSkin skin)
+    Dictionary<int, Sprite> GetOrBuildFrameMap(BomberCharacter character, BomberSkin skin, bool fullSheet = false)
     {
-        string cacheKey = GetSheetCacheKey(character, skin);
-        if (sheetFrameCache.TryGetValue(cacheKey, out var map) && map != null)
+        var cacheKey = (character, skin);
+        if ((!fullSheet || fullPreviewSheets.Contains(cacheKey)) &&
+            sheetFrameCache.TryGetValue(cacheKey, out var map))
             return map;
 
         string spritesResourcesPath = BomberSkinResourceCatalog.GetGeneratedResourcesPath(character);
         string sheetName = BomberSkinResourceCatalog.GetSheetName(character, skin);
         string sheetPath = $"{spritesResourcesPath}/{sheetName}";
-        var sprites = Resources.LoadAll<Sprite>(sheetPath);
+        var sprites = fullSheet ? null : Resources.LoadAll<Sprite>($"SelectionPreviews/{sheetName}");
+        if (sprites == null || sprites.Length == 0)
+        {
+            sprites = Resources.LoadAll<Sprite>(sheetPath);
+            fullPreviewSheets.Add(cacheKey);
+        }
 
         map = new Dictionary<int, Sprite>();
 

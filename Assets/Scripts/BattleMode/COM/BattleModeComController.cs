@@ -251,6 +251,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private Vector2Int openingFarmLastAppliedDir;
     private float openingFarmLastAppliedTime = -10f;
     private int abilitySystemVersion = -1;
+    private int abilityRefreshFrame = -1;
+    private AbilitySystem refreshedAbilitySystem;
     private int lastKickLoadDiagnosticFrame = -9999;
     private bool subscribedToHealthDeath;
     private bool subscribedToMovementDeath;
@@ -440,13 +442,14 @@ public sealed class BattleModeComController : MonoBehaviour
         if (indestructibleTileResolver == null)
         {
             indestructibleTileResolver =
-                FindAnyObjectByType<IndestructibleTileResolver>();
+                ComSceneObjects<IndestructibleTileResolver>.First();
         }
 
         if (suddenDeathController == null || !suddenDeathController.isActiveAndEnabled)
-            suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
+            suddenDeathController = ComSceneObjects<BattleSuddenDeathController>.First();
 
-        explosionMask = LayerMask.GetMask("Explosion");
+        if (explosionMask == 0)
+            explosionMask = LayerMask.GetMask("Explosion");
     }
 
     private void SubscribeToHealthDeath()
@@ -488,7 +491,13 @@ public sealed class BattleModeComController : MonoBehaviour
     private void RefreshComAbilities()
     {
         using var detailSample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.Abilities, playerId);
+        if (Application.isPlaying && abilityRefreshFrame == Time.frameCount &&
+            refreshedAbilitySystem != null && refreshedAbilitySystem.Version == abilitySystemVersion)
+            return;
+
         AbilitySystem abilitySystem = EnsureKnownComAbilityScripts();
+        refreshedAbilitySystem = abilitySystem;
+        abilityRefreshFrame = Time.frameCount;
         int currentVersion = abilitySystem != null ? abilitySystem.Version : -1;
 
         bool hasDestroyedEntry = false;
@@ -1124,7 +1133,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
         Vector2Int myTile = WorldToTile(transform.position);
         float currentDangerSeconds = GetDangerSeconds(myTile, null);
-        bool inDanger = IsTileThreatened(myTile, null);
+        bool inDanger = !float.IsInfinity(currentDangerSeconds);
         if (TryGetComponent(out BattleModeComTankThreatAwarenessAbility tankAwareness) &&
             tankAwareness.HasImmediateThreat(myTile, out float tankThreatSeconds))
         {
@@ -1438,6 +1447,8 @@ public sealed class BattleModeComController : MonoBehaviour
         finally
         {
             sceneQuerySnapshotActive = false;
+            decisionWorldDanger.Clear();
+            decisionWalkability.Clear();
             decisionItems = null; decisionMounts = null; decisionExplosions = null;
         }
     }
@@ -10120,7 +10131,9 @@ public sealed class BattleModeComController : MonoBehaviour
         return count;
     }
 
+    readonly Dictionary<Vector2Int, float> decisionWorldDanger = new();
     bool sceneQuerySnapshotActive;
+    readonly Dictionary<(Vector2Int tile, bool startingTile, bool allowPortal), bool> decisionWalkability = new();
     ItemPickup[] decisionItems;
     MountWorldPickup[] decisionMounts;
     BombExplosion[] decisionExplosions;
@@ -10128,22 +10141,22 @@ public sealed class BattleModeComController : MonoBehaviour
     private ItemPickup[] FindSceneItems()
     {
         using var sample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.SceneQueries, playerId);
-        if (!sceneQuerySnapshotActive) return FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
-        return decisionItems ??= FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        if (!sceneQuerySnapshotActive) return ComSceneObjects<ItemPickup>.Get();
+        return decisionItems ??= ComSceneObjects<ItemPickup>.Get();
     }
 
     private MountWorldPickup[] FindSceneMounts()
     {
         using var sample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.SceneQueries, playerId);
-        if (!sceneQuerySnapshotActive) return FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
-        return decisionMounts ??= FindObjectsByType<MountWorldPickup>(FindObjectsInactive.Exclude);
+        if (!sceneQuerySnapshotActive) return ComSceneObjects<MountWorldPickup>.Get();
+        return decisionMounts ??= ComSceneObjects<MountWorldPickup>.Get();
     }
 
     private BombExplosion[] FindSceneExplosions()
     {
         using var sample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.SceneQueries, playerId);
-        if (!sceneQuerySnapshotActive) return FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
-        return decisionExplosions ??= FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
+        if (!sceneQuerySnapshotActive) return ComSceneObjects<BombExplosion>.Get();
+        return decisionExplosions ??= ComSceneObjects<BombExplosion>.Get();
     }
 
     private bool WouldPlannedBombHitUsefulItem(
@@ -10371,6 +10384,20 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int tile,
         Vector2Int startTile,
         bool allowStage7Portal = false)
+    {
+        if (!sceneQuerySnapshotActive)
+            return CheckWalkableTile(tile, startTile, allowStage7Portal);
+
+        var key = (tile, tile == startTile, allowStage7Portal);
+        if (!decisionWalkability.TryGetValue(key, out bool walkable))
+        {
+            walkable = CheckWalkableTile(tile, startTile, allowStage7Portal);
+            decisionWalkability.Add(key, walkable);
+        }
+        return walkable;
+    }
+
+    private bool CheckWalkableTile(Vector2Int tile, Vector2Int startTile, bool allowStage7Portal)
     {
         if (!HasGroundTile(tile))
             return false;
@@ -10621,10 +10648,22 @@ public sealed class BattleModeComController : MonoBehaviour
     private float GetDangerSeconds(Vector2Int tile, List<Vector2Int> plannedBlastTiles)
     {
         using var detailSample = GameplayPerformanceCapture.Measure(GameplayPerformancePhase.Danger, playerId);
-        float danger = float.PositiveInfinity;
-        if (plannedBlastTiles != null && plannedBlastTiles.Contains(tile))
-            danger = bombController != null ? Mathf.Max(0.5f, bombController.bombFuseTime) : 2f;
+        if (!sceneQuerySnapshotActive || !decisionWorldDanger.TryGetValue(tile, out float danger))
+        {
+            danger = GetWorldDangerSeconds(tile);
+            if (sceneQuerySnapshotActive)
+                decisionWorldDanger[tile] = danger;
+        }
 
+        if (plannedBlastTiles != null && plannedBlastTiles.Contains(tile))
+            danger = Mathf.Min(danger, bombController != null ? Mathf.Max(0.5f, bombController.bombFuseTime) : 2f);
+
+        return danger;
+    }
+
+    private float GetWorldDangerSeconds(Vector2Int tile)
+    {
+        float danger = float.PositiveInfinity;
         // Stage abilities can announce hazards before their runtime object exists.
         for (int i = 0; i < comAbilities.Count; i++)
         {
@@ -12011,5 +12050,30 @@ public sealed class BattleModeComController : MonoBehaviour
     {
         string sceneName = SceneManager.GetActiveScene().name;
         return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+// COM players updating in the same frame can reuse the scene scan until membership changes.
+internal static class ComSceneObjects<T> where T : Component
+{
+    static T[] objects;
+    static int frame;
+
+    internal static void Invalidate() => objects = null;
+
+    internal static T First()
+    {
+        var current = Get();
+        return current.Length > 0 ? current[0] : null;
+    }
+
+    internal static T[] Get()
+    {
+        if (objects == null || frame != Time.frameCount)
+        {
+            objects = UnityEngine.Object.FindObjectsByType<T>(FindObjectsInactive.Exclude);
+            frame = Time.frameCount;
+        }
+        return objects;
     }
 }

@@ -22,7 +22,11 @@ public static class PixelPerfectViewport
         int screenHeight = Mathf.Max(1, Screen.height);
         int referenceWidth = Mathf.Max(1, pixelPerfectCamera.refResolutionX);
         int referenceHeight = Mathf.Max(1, pixelPerfectCamera.refResolutionY);
-        int displayMode = Application.isPlaying ? Mathf.Clamp(SaveSystem.GetVideoSettings().displayMode, 0, 2) : 0;
+        var settings = Application.isPlaying ? SaveSystem.GetVideoSettings() : null;
+        int displayMode = settings == null ? 0 : Mathf.Clamp(settings.displayMode, 0, 2);
+        if (settings != null && Application.platform == RuntimePlatform.Android)
+            return ResolveAndroidPixelRect(screenWidth, screenHeight, referenceWidth, referenceHeight,
+                settings.fullscreen, settings.windowSizeMultiplier, displayMode);
         if (displayMode != 0)
             return ResolveExpandedPixelRect(screenWidth, screenHeight, referenceWidth, referenceHeight, displayMode == 2);
 
@@ -80,6 +84,21 @@ public static class PixelPerfectViewport
         }
 
         return Centered(zoom * renderWidth, zoom * renderHeight, screenWidth, screenHeight);
+    }
+
+    public static Rect ResolveAndroidPixelRect(int width, int height, int refWidth, int refHeight,
+        bool fullscreen, int windowMultiplier, int displayMode)
+    {
+        float fit = Mathf.Min((float)width / refWidth, (float)height / refHeight);
+        float scale = fullscreen ? fit : Mathf.Min(fit, Mathf.Max(1, windowMultiplier));
+        if (displayMode == 2)
+        {
+            float fraction = scale / fit;
+            return Centered(Mathf.RoundToInt(width * fraction), Mathf.RoundToInt(height * fraction), width, height);
+        }
+        if (displayMode == 0 && scale >= 1f)
+            scale = Mathf.Floor(scale);
+        return Centered(Mathf.RoundToInt(refWidth * scale), Mathf.RoundToInt(refHeight * scale), width, height);
     }
 
     public static Rect ResolveExpandedPixelRect(int screenWidth, int screenHeight,

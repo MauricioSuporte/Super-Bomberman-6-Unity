@@ -608,7 +608,7 @@ public sealed class BattleModeComTankThreatAwarenessAbility : MonoBehaviour, IBa
 
     private void AddActiveShotThreats()
     {
-        TankShot[] shots = FindObjectsByType<TankShot>(FindObjectsInactive.Exclude);
+        TankShot[] shots = ComSceneObjects<TankShot>.Get();
         for (int i = 0; i < shots.Length; i++)
         {
             TankShot shot = shots[i];

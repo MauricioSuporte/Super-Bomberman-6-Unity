@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f04696a3eb3a17448b9c53d2f0dafad7, type: 3}
   m_Name: Stage_World3Hall
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.CoopSceneCatalog
-  contentHash: 899D05B387CF01654466BF46AD3DE52FEB999C8002C89A5DF9A5D265018D52E6
+  contentHash: 312271960AE432F73EB1C3B180D17875CDF8ED6D74DDA66B868F1AC3EEA98396
   sprites:
   - {fileID: 21300000, guid: 0071492598ef6b242b83c5d0e2f81927, type: 3}
   - {fileID: 21300000, guid: 05267943b815b8e4b8756add93c97057, type: 3}
@@ -2051,6 +2051,7 @@ MonoBehaviour:
   - Sounds/Explosions/PierceBombExplosion/PierceExposion7
   - Sounds/Explosions/PierceBombExplosion/PierceExposion8
   - Sounds/Explosions/PierceBombExplosion/PierceExposion9
+  - Sounds/Fragile
   - Sounds/ItemCollect
   - Sounds/KickBomb
   - Sounds/KickItemPickup

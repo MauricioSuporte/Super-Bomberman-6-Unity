@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f04696a3eb3a17448b9c53d2f0dafad7, type: 3}
   m_Name: Stage_1-7
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.CoopSceneCatalog
-  contentHash: 773DFE066291B4C3F443DFE36C7C8ACA4E69D82DA276E12A28C4AF9F7B7D0D26
+  contentHash: 8E1E2E35425BDB45B88793CB32CAAFA617422E337E0238872ACE1F7420272347
   sprites:
   - {fileID: 21300000, guid: 0071492598ef6b242b83c5d0e2f81927, type: 3}
   - {fileID: 21300000, guid: 05267943b815b8e4b8756add93c97057, type: 3}
@@ -2211,6 +2211,7 @@ MonoBehaviour:
   - Sounds/Explosions/PierceBombExplosion/PierceExposion7
   - Sounds/Explosions/PierceBombExplosion/PierceExposion8
   - Sounds/Explosions/PierceBombExplosion/PierceExposion9
+  - Sounds/Fragile
   - Sounds/ItemCollect
   - Sounds/KickBomb
   - Sounds/KickItemPickup

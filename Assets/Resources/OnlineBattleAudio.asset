@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f04696a3eb3a17448b9c53d2f0dafad7, type: 3}
   m_Name: OnlineBattleAudio
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Scripts.Netcode.CoopSceneCatalog
-  contentHash:
+  contentHash: 
   sprites: []
   tiles: []
   materials: []
@@ -232,6 +232,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: ccdbb268f7ff90f419b1ee828d07069f, type: 3}
   - {fileID: 8300000, guid: cd6517427d8b0024f9c25483a9d91116, type: 3}
   - {fileID: 8300000, guid: ce0ca761e372457ca254ba3311cc5b9a, type: 3}
+  - {fileID: 8300000, guid: ce51eab86b144f5ea27ea2d87ad64233, type: 3}
   - {fileID: 8300000, guid: cfa5520aaecc11b46a33db8ca416fe32, type: 3}
   - {fileID: 8300000, guid: cff75257bcf52f948ba41c9f15cf3520, type: 3}
   - {fileID: 8300000, guid: d09be99ae21a8d540ac21a0593b254f5, type: 3}

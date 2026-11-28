@@ -152,6 +152,7 @@ public partial class ItemPickup
     }
     void OnDisable()
     {
+        ComSceneObjects<ItemPickup>.Invalidate();
         SetNetworkItemMotionSorting(false);
         itemMotionQueue.Clear(); itemMotionPeers.Clear(); expiredItemMotionPeers.Clear(); itemPresentationActive = false; hasItemRevision = false; itemMotionWasPresented = false;
     }

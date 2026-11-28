@@ -281,7 +281,7 @@ public sealed class TouchControlsMenu : MonoBehaviour, IBeginDragHandler, IDragH
     {
         resetSound?.Invoke();
         JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(new SavedTouchControls()), Settings);
-        SaveSystem.SetMobileTouchButtonsVisible(true);
+        SaveSystem.SetMobileTouchButtonsVisible(!MobileControlsAutoBootstrap.IsPortMaster);
         SaveSystem.SaveTouchControls();
         confirmReset = false;
         Draw();

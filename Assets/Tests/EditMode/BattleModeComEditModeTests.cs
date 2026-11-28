@@ -7,6 +7,75 @@ using UnityEngine.Tilemaps;
 
 public abstract class BattleModeComEditModeTests
 {
+    [Test]
+    public void AndroidViewportRestoresShapeAfterWindowAndScalingChanges()
+    {
+        var pixel = PixelPerfectViewport.ResolveAndroidPixelRect(1024, 768, 256, 224, true, 1, 0);
+        Assert.AreEqual(new Rect(128, 48, 768, 672), pixel);
+        var stretched = PixelPerfectViewport.ResolveAndroidPixelRect(1024, 768, 256, 224, true, 1, 2);
+        Assert.AreEqual(new Rect(0, 0, 1024, 768), stretched);
+        var window = PixelPerfectViewport.ResolveAndroidPixelRect(1024, 768, 256, 224, false, 2, 1);
+        Assert.AreEqual(new Rect(256, 160, 512, 448), window);
+        var proportional = PixelPerfectViewport.ResolveAndroidPixelRect(1024, 768, 256, 224, true, 2, 1);
+        Assert.AreEqual(new Vector2(512, 384), proportional.center);
+        Assert.AreEqual(256f / 224f, proportional.width / proportional.height, 0.002f);
+        Assert.AreEqual(pixel, PixelPerfectViewport.ResolveAndroidPixelRect(1024, 768, 256, 224, true, 2, 0));
+    }
+
+    [Test]
+    public void HandheldProfileResetRestoresNintendoMenuAndGameBindings()
+    {
+        var platform = typeof(MobileControlsAutoBootstrap).GetField("portMaster", BindingFlags.Static | BindingFlags.NonPublic);
+        var previous = platform.GetValue(null);
+        try
+        {
+            platform.SetValue(null, true);
+            var profile = new PlayerInputProfile(1);
+            profile.SetBinding(PlayerAction.ActionA, Binding.FromKey(KeyCode.Space));
+            profile.ResetToDefault();
+            Assert.AreEqual(BindKind.JoyButton, profile.GetBinding(PlayerAction.ActionA).kind);
+            Assert.AreEqual(1, profile.GetBinding(PlayerAction.ActionA).joyButton);
+            Assert.AreEqual(0, profile.GetBinding(PlayerAction.ActionB).joyButton);
+            Assert.AreEqual(8, profile.GetBinding(PlayerAction.Start).joyButton);
+            Assert.AreEqual(9, profile.GetBinding(PlayerAction.Select).joyButton);
+            Assert.AreEqual(BindKind.DPad, profile.GetBinding(PlayerAction.MoveRight).kind);
+
+            platform.SetValue(null, false);
+            Assert.AreEqual(KeyCode.C, new PlayerInputProfile(1).GetBinding(PlayerAction.ActionA).key);
+        }
+        finally
+        {
+            platform.SetValue(null, previous);
+        }
+    }
+
+    [Test]
+    public void ComExplosionScanReusesResultsUntilPoolMembershipChanges()
+    {
+        var instance = new GameObject("Pooled explosion");
+        try
+        {
+            var explosion = instance.AddComponent<BombExplosion>();
+            ComSceneObjects<BombExplosion>.Invalidate();
+            var active = ComSceneObjects<BombExplosion>.Get();
+            CollectionAssert.Contains(active, explosion);
+            Assert.AreSame(active, ComSceneObjects<BombExplosion>.Get());
+
+            instance.SetActive(false);
+            // Ordinary MonoBehaviour lifecycle messages are not dispatched in EditMode.
+            typeof(BombExplosion).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(explosion, null);
+            CollectionAssert.DoesNotContain(ComSceneObjects<BombExplosion>.Get(), explosion);
+            instance.SetActive(true);
+            typeof(BombExplosion).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(explosion, null);
+            CollectionAssert.Contains(ComSceneObjects<BombExplosion>.Get(), explosion);
+        }
+        finally
+        {
+            Object.DestroyImmediate(instance);
+            ComSceneObjects<BombExplosion>.Invalidate();
+        }
+    }
+
     [TestCase(typeof(StageAssets.ExitBlocker))]
     [TestCase(typeof(StageAssets.World3RoomTwoTransition))]
     public void EskimoCharge_StopsAtRoomExit(System.Type exitComponent)

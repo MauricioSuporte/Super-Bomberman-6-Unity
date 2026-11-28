@@ -933,6 +933,7 @@ public static partial class SaveSystem
     private static SaveData CreateDefaultData()
     {
         SaveData d = new SaveData();
+        d.videoSettings.mobileTouchButtonsVisible = !MobileControlsAutoBootstrap.IsPortMaster;
         NormalizeData(d);
         return d;
     }
@@ -1045,7 +1046,7 @@ public static partial class SaveSystem
 
         if (!d.videoSettings.mobileTouchButtonsVisibilityInitialized)
         {
-            d.videoSettings.mobileTouchButtonsVisible = true;
+            d.videoSettings.mobileTouchButtonsVisible = !MobileControlsAutoBootstrap.IsPortMaster;
             d.videoSettings.mobileTouchButtonsVisibilityInitialized = true;
         }
 
@@ -1320,7 +1321,8 @@ public static partial class SaveSystem
 
     private static BattleModePlayerControlMode NormalizeBattleModePlayerControlMode(int mode)
     {
-        if (Enum.IsDefined(typeof(BattleModePlayerControlMode), mode))
+        if (mode == (int)BattleModePlayerControlMode.Man ||
+            mode == (int)BattleModePlayerControlMode.Com)
             return (BattleModePlayerControlMode)mode;
 
         return BattleModePlayerControlMode.Off;

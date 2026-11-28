@@ -207,7 +207,7 @@ public class TitleScreenController : MonoBehaviour
 
     bool bossRushInspectorDefaultUnlocked;
     public bool BossRushInspectorOverrideUnlocked => bossRushInspectorDefaultUnlocked;
-    bool IsVideoMenuAvailable => allowVideoMenu && !Application.isMobilePlatform;
+    bool IsVideoMenuAvailable => allowVideoMenu;
 
     Vector2 _lastMouseScreenPosition;
     bool _hasLastMouseScreenPosition;
@@ -268,7 +268,7 @@ public class TitleScreenController : MonoBehaviour
 
     const int RESET_SAVE_IDX_CANCEL = 0;
     const int RESET_SAVE_IDX_CONFIRM = 1;
-    const int RESET_SAVE_SELECTABLE_LINE_START = 6;
+    const int RESET_SAVE_SELECTABLE_LINE_START = 8;
 
     int menuIndex;
     bool updateAvailable;
@@ -559,6 +559,13 @@ public class TitleScreenController : MonoBehaviour
         if (!IsVideoMenuAvailable)
             return;
 
+        // Android presents a native surface. Window size and scaling belong to its viewport.
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            ForceRecomputeLayoutAfterResolutionChange();
+            return;
+        }
+
         Resolution curRes = Screen.currentResolution;
 
         if (_videoFullscreen)
@@ -699,6 +706,7 @@ public class TitleScreenController : MonoBehaviour
 
         ApplyScaledFontSettings();
         RefreshMenuTextInternal();
+        RefreshResetPanel();
         UpdateCursorPosition();
         UpdatePushStartPosition();
         UpdateFooterPosition();
@@ -865,6 +873,12 @@ public class TitleScreenController : MonoBehaviour
             Mathf.Round(menuBoxSize.x * _currentUiScale),
             Mathf.Round(menuBoxSize.y * _currentUiScale)
         );
+
+        if (menuMode == MenuMode.ResetSaveConfirm)
+        {
+            menuRect.sizeDelta = new Vector2(r.width * 0.84f, r.height * 0.72f);
+            pos = Vector2.zero;
+        }
 
         menuRect.anchoredPosition = new Vector2(
             Mathf.Round(pos.x),
@@ -2188,7 +2202,17 @@ public class TitleScreenController : MonoBehaviour
                     if (cursorRenderer != null)
                         yield return PlayCursorConfirm();
 
-                    ResetEntireSaveFile();
+                    if (!ResetEntireSaveFile())
+                    {
+                        locked = false;
+                        menuMode = MenuMode.Options;
+                        menuIndex = OptionsResetSaveIndex;
+                        RefreshMenuText();
+                        ShowBossRushLockedMessage(GameTextDatabase.Title.ResetFailed, bossRushLockedMessageHex, resetSaveCompletedShowSeconds);
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+                        continue;
+                    }
                     forceBossRushUnlocked = bossRushInspectorDefaultUnlocked;
 
                     PlayResetSaveCompletedSfx();
@@ -2373,12 +2397,49 @@ public class TitleScreenController : MonoBehaviour
         return $"#{rgbHexNoAlpha}{a:X2}";
     }
 
+    RectTransform resetPanel;
+
+    void RefreshResetPanel()
+    {
+        if (menuMode != MenuMode.ResetSaveConfirm || menuText == null)
+        {
+            if (resetPanel != null)
+                resetPanel.gameObject.SetActive(false);
+            return;
+        }
+
+        RectTransform label = menuText.rectTransform;
+        if (resetPanel == null)
+        {
+            var panel = new GameObject("ResetSavePanel", typeof(RectTransform), typeof(Image), typeof(UnityEngine.UI.Outline));
+            resetPanel = panel.GetComponent<RectTransform>();
+            resetPanel.SetParent(label.parent, false);
+            resetPanel.SetSiblingIndex(label.GetSiblingIndex());
+            Image background = panel.GetComponent<Image>();
+            background.color = new Color(0f, 0f, 0f, 0.88f);
+            background.raycastTarget = false;
+            var border = panel.GetComponent<UnityEngine.UI.Outline>();
+            border.effectColor = new Color(0.88f, 0.84f, 0.68f, 1f);
+            border.effectDistance = new Vector2(2f, -2f);
+        }
+
+        resetPanel.gameObject.SetActive(true);
+        menuText.ForceMeshUpdate();
+        Bounds bounds = menuText.textBounds;
+        float padding = MenuFontSizeScaled;
+        resetPanel.localRotation = label.localRotation;
+        resetPanel.localScale = label.localScale;
+        resetPanel.sizeDelta = new Vector2(bounds.size.x + 3f * padding, Mathf.Max(bounds.size.y, 2f * Mathf.Max(Mathf.Abs(bounds.max.y), Mathf.Abs(bounds.min.y))) + padding);
+        resetPanel.position = label.TransformPoint(label.rect.center);
+    }
+
     public void RefreshMenuText()
     {
         // Video may shift the label column. Always start from the authored layout,
         // including when returning to Options, Sound or the main title menu.
         ApplyMenuAnchoredPosition();
         RefreshMenuTextInternal();
+        RefreshResetPanel();
         UpdateCursorPosition();
 
         if (menuMode == MenuMode.ResetSaveConfirm || menuMode == MenuMode.Video)
@@ -2549,6 +2610,7 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuMode == MenuMode.ResetSaveConfirm)
         {
+            size = Mathf.Min(size, Mathf.Max(10, Mathf.FloorToInt(menuText.rectTransform.rect.width / 39f)));
             string l2 = $"<color={warnRgb}>{text.ResetWarning}</color>";
             string l3 = $"<color={pushStartHex}>{text.ResetNormalSaves}</color>";
             string l4 = $"<color={pushStartHex}>{text.ResetUnlocks}</color>";
@@ -2558,12 +2620,14 @@ public class TitleScreenController : MonoBehaviour
             string confirm = $"<color={warnRgb}>{text.ResetSave}</color>";
 
             menuText.text =
-                "<align=left>" +
+                "<align=center>" +
                 $"<size={size}>{l2}</size>\n" +
                 $"<size={size}>{l3}</size>\n" +
                 $"<size={size}>{l4}</size>\n" +
                 $"<size={size}>{l5}</size>\n" +
                 $"<size={size}>{l6}</size>\n" +
+                $"<size={size}>{text.ResetAchievementsLanguage}</size>\n" +
+                $"<size={size}><color={warnRgb}>{text.ResetPermanent}</color></size>\n" +
                 "\n" +
                 $"<size={size}>{cancel}</size>\n" +
                 $"<size={size}>{confirm}</size>" +
@@ -3005,7 +3069,7 @@ public class TitleScreenController : MonoBehaviour
         return Mathf.Clamp(menuIndex, 0, lineCount - 1);
     }
 
-    void ResetEntireSaveFile()
+    bool ResetEntireSaveFile()
     {
         try
         {
@@ -3013,11 +3077,15 @@ public class TitleScreenController : MonoBehaviour
             if (File.Exists(filePath))
                 File.Delete(filePath);
         }
-        catch (System.Exception)
+        catch (System.Exception error)
         {
+            Debug.LogWarning($"Save reset failed: {error.Message}");
+            return false;
         }
 
         SaveSystem.Reload();
+        SaveSystem.LoadControlsIntoInputManager();
+        return true;
     }
 
     void HideBossRushLockedMessageImmediate()

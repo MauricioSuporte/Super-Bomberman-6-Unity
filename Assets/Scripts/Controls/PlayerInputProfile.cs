@@ -43,6 +43,22 @@ public class PlayerInputProfile
     {
         defaultBindings.Clear();
 
+        if (id == 1 && MobileControlsAutoBootstrap.IsPortMaster)
+        {
+            defaultBindings[PlayerAction.MoveUp] = Binding.FromDpad(1, 0);
+            defaultBindings[PlayerAction.MoveDown] = Binding.FromDpad(1, 1);
+            defaultBindings[PlayerAction.MoveLeft] = Binding.FromDpad(1, 2);
+            defaultBindings[PlayerAction.MoveRight] = Binding.FromDpad(1, 3);
+            defaultBindings[PlayerAction.ActionA] = Binding.FromJoyButton(1, 1);
+            defaultBindings[PlayerAction.ActionB] = Binding.FromJoyButton(1, 0);
+            defaultBindings[PlayerAction.ActionC] = Binding.FromJoyButton(1, 2);
+            defaultBindings[PlayerAction.ActionL] = Binding.FromJoyButton(1, 4);
+            defaultBindings[PlayerAction.ActionR] = Binding.FromJoyButton(1, 5);
+            defaultBindings[PlayerAction.Start] = Binding.FromJoyButton(1, 8);
+            defaultBindings[PlayerAction.Select] = Binding.FromJoyButton(1, 9);
+            return;
+        }
+
         if (id == 1)
         {
             defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.UpArrow);

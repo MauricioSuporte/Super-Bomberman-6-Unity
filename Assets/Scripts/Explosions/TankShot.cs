@@ -17,6 +17,9 @@ public sealed class TankShot : MonoBehaviour
     [SerializeField] private bool pierceExplosion = false;
     [SerializeField] private bool chainBombOnHit = true;
 
+    void OnEnable() => ComSceneObjects<TankShot>.Invalidate();
+    void OnDisable() => ComSceneObjects<TankShot>.Invalidate();
+
     private Rigidbody2D _rb;
     private Collider2D _col;
     private Vector2 _dir;

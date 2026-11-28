@@ -97,6 +97,8 @@ public partial class ItemPickup : MonoBehaviour
         ApplyDefaultsEditor();
     }
 
+    void OnEnable() => ComSceneObjects<ItemPickup>.Invalidate();
+
     void Awake()
     {
         ApplyDefaultsRuntime();
